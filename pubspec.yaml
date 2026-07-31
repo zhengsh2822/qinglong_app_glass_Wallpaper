@@ -1,0 +1,67 @@
+name: qinglong_app
+description: 青龙面板第三方客户端
+publish_to: 'none'
+version: 3.0.0+300
+
+environment:
+  sdk: ^3.7.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  flutter_riverpod: ^2.6.1
+  shared_preferences: ^2.3.4
+  synchronized: ^3.1.0+1
+  back_button_interceptor: any
+  flutter_slidable: ^3.1.2
+  dio: ^5.7.0
+  logger: ^2.7.0
+  intl: any
+  get_it: ^8.0.2
+  highlight: ^0.7.0
+  drag_and_drop_lists: any
+  fluttertoast: ^8.2.8
+  flutter_displaymode: ^0.7.0
+  flip_card: any
+  url_launcher: any
+  share_plus: ^10.1.4
+  flutter_colorpicker: ^1.1.0
+  flutter_animator: ^3.2.2
+  local_auth: ^2.3.0
+  pretty_dio_logger: ^1.4.0
+  icloud_storage: any
+  path_provider: any
+  date_format: any
+  flutter_easyloading: any
+  custom_sliding_segmented_control: any
+  timeago: any
+  lottie: any
+  webview_flutter: any
+  permission_handler: any
+  flutter_keyboard_visibility: any
+  loading_animation_widget: any
+  get: any
+  timezone: any
+  image_picker: ^1.1.2
+  http: ^1.6.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/scan.json
+    - assets/images/
+    - assets/codemirror.html
+
+flutter_native_splash:
+  color: "#ffffff"
+  branding_mode: bottom
+  color_dark: "#000000"
+  fullscreen: false

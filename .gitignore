@@ -1,0 +1,68 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# Debug artifacts (error logs, build outputs, one-off scripts)
+err_*.txt
+err_*.dart.txt
+analyze_errors*.txt
+bad_files*.txt
+build_log*.txt
+build_output.txt
+restored_list.txt
+unmatched.txt
+errors.txt
+check_*.ps1
+fix_*.ps1
+find_*.ps1
+restore.ps1
+debug_helper.ps1
+/qinglong_app_v*.apk
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# Build outputs & session memory (not for version control)
+/apk_output/
+/SESSION_MEMORY.md
+/.trae/
+/build_apk.ps1

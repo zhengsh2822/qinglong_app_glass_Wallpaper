@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, user-scalable=no"/>
+    <link rel="stylesheet" href="file:///android_asset/codemirror/codemirror.css"/>
+    <link rel="stylesheet" href="file:///android_asset/codemirror/dialog.css"/>
+    <link rel="stylesheet" href="file:///android_asset/codemirror/foldgutter.css"/>
+    <title>Editor</title>
+    <style>
+      body { margin: 0px; padding: 0px; }
+      #content { width: 100%; height: 100%; display: block; }
+      .CodeMirror {float: left; width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+<div id="content"></div>
+<script src="file:///android_asset/codemirror/codemirror.js"></script>
+<script src="file:///android_asset/codemirror/search.js"></script>
+<script src="file:///android_asset/codemirror/dialog.js"></script>
+<script src="file:///android_asset/codemirror/searchcursor.js"></script>
+<script src="file:///android_asset/codemirror/match-highlighter.js"></script>
+<script src="file:///android_asset/codemirror/jump-to-line.js"></script>
+<script src="file:///android_asset/codemirror/foldcode.js"></script>
+<script src="file:///android_asset/codemirror/foldgutter.js"></script>
+<script src="file:///android_asset/codemirror/brace-fold.js"></script>
+<script src="file:///android_asset/codemirror/xml-fold.js"></script>
+<script src="file:///android_asset/codemirror/markdown-fold.js"></script>
+<script src="file:///android_asset/codemirror/comment-fold.js"></script>
+<script src="file:///android_asset/codemirror/indent-fold.js"></script>
+<script src="file:///android_asset/codemirror/shell.js"></script>
+<script src="file:///android_asset/codemirror/python.js"></script>
+<script src="file:///android_asset/codemirror/javascript.js"></script>
+<script src="file:///android_asset/codemirror/yaml.js"></script>
+<script>
+var editor;
+function initEditor(theme, mode) {
+  var element = document.querySelector("#content");
+  editor = CodeMirror(element, {
+    lineNumbers: false,
+    theme: theme,
+    mode: mode,
+    readOnly: true,
+    lineWrapping: true,
+    styleActiveLine: true,
+    matchBrackets: true,
+    foldGutter: mode == 'shell'?{}:{
+      rangeFinder: new CodeMirror.fold.combine(CodeMirror.fold.indent,CodeMirror.fold.comment)
+    },
+    gutters: mode == 'shell'?[]:["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+  });
+  editor.on('copy', function(cm, e) { e.codemirrorIgnore = true; });
+  editor.on("change", function(event) {
+    MessageInvoker.postMessage(event.getValue());
+  });
+  editor.refresh();
+}
+function searchText(){ editor.execCommand('findPersistent'); }
+function clearSearchText(){ editor.execCommand('clearSearch'); }
+</script>
+</body>
+</html>
