@@ -163,7 +163,8 @@ class SingleAccountPageState extends State<SingleAccountPage> {
         host: bean.host,
         name: history.userName,
         password: history.password,
-        alias: history.alias,
+        // alias 优先从 historyAccounts 取，回退到 tokenBeans，避免 historyAccounts 缺失时别名丢失
+        alias: history.alias ?? bean.alias,
       );
 
       getIt.registerSingleton(

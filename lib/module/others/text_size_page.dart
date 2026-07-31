@@ -368,7 +368,7 @@ class _ColorPickerSheetState extends ConsumerState<_ColorPickerSheet> {
     return GlassCard(
       margin: const EdgeInsets.all(15),
       padding: const EdgeInsets.fromLTRB(20, 15, 20, 20),
-      sigma: 20,
+      sigma: 16,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,

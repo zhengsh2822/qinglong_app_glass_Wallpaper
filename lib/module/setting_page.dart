@@ -205,7 +205,8 @@ class _SettingPageState extends ConsumerState<SettingPage> {
                           SingleAccountPageState.ofUserInfo(context).host,
                           "",
                           false,
-                          SingleAccountPageState.ofUserInfo(context).alias,
+                          // 使用 rawAlias 避免退出登录时把 host 当作 alias 保存
+                          SingleAccountPageState.ofUserInfo(context).rawAlias,
                         );
                         Navigator.of(context).pushNamedAndRemoveUntil(
                           Routes.routeLogin,

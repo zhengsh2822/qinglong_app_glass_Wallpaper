@@ -34,15 +34,19 @@ class WallpaperBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 全屏壁纸解码按设备宽度限制，避免大图全分辨率解码占用内存
+    // 用 displayWidth * 2 作为 cacheWidth（兼顾高分辨率屏幕清晰度）
+    final screenWidth = MediaQuery.of(context).size.width.toInt();
+    final decodeWidth = (screenWidth * 2).clamp(720, 2160);
     return SizedBox.expand(
       child: AnimatedBuilder(
         animation: WallpaperService.instance,
-        builder: (_, __) => _buildLayered(),
+        builder: (_, __) => _buildLayered(decodeWidth),
       ),
     );
   }
 
-  Widget _buildLayered() {
+  Widget _buildLayered(int decodeWidth) {
     final svc = WallpaperService.instance;
     final cfg = svc.config;
     // 背景模糊只作用于路由级（纯文字页面传了 overrideBlurSigma）
@@ -52,7 +56,7 @@ class WallpaperBackground extends StatelessWidget {
     final effectiveBlur = overrideBlurSigma != null
         ? (spBlur >= 0 ? spBlur : overrideBlurSigma!)
         : cfg.blurSigma;
-    final base = _buildBase(cfg);
+    final base = _buildBase(cfg, decodeWidth);
     // 关键：用 ImageFiltered 包裹底层背景，对壁纸自身做模糊，
     // 不采样 layer——避免跨路由模糊到下层路由的 page 内容。
     final blurredBase = effectiveBlur > 0
@@ -83,7 +87,7 @@ class WallpaperBackground extends StatelessWidget {
     );
   }
 
-  Widget _buildBase(WallpaperConfig cfg) {
+  Widget _buildBase(WallpaperConfig cfg, int decodeWidth) {
     switch (cfg.type) {
       case WallpaperType.gradient:
         return DecoratedBox(
@@ -109,6 +113,7 @@ class WallpaperBackground extends StatelessWidget {
           file,
           fit: BoxFit.cover,
           gaplessPlayback: true,
+          cacheWidth: decodeWidth,
         );
       case WallpaperType.network:
         final url = cfg.networkUrl;
@@ -124,6 +129,7 @@ class WallpaperBackground extends StatelessWidget {
             cached,
             fit: BoxFit.cover,
             gaplessPlayback: true,
+            cacheWidth: decodeWidth,
           );
         }
         // 下载中：用 Image.network 实时预览，loading/error 时回退默认渐变
@@ -131,6 +137,7 @@ class WallpaperBackground extends StatelessWidget {
           url,
           fit: BoxFit.cover,
           gaplessPlayback: true,
+          cacheWidth: decodeWidth,
           loadingBuilder: (_, child, progress) {
             if (progress == null) return child;
             return const DecoratedBox(

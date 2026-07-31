@@ -192,7 +192,7 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(18),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 20), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 20)),
+              filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 16), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 16)),
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.transparent,

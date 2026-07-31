@@ -12,6 +12,7 @@ import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/userinfo_viewmodel.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
@@ -90,7 +91,8 @@ class OtherPageState extends ConsumerState<OtherPage>
   void _editAlias() {
     final userInfo = SingleAccountPageState.ofUserInfo(context);
     final currentIndex = SingleAccountPageState.of(context)?.index ?? 0;
-    final currentAlias = userInfo.alias ?? "";
+    // 使用 rawAlias 获取真实别名（不回退到 host），避免 initialValue 显示成 host
+    final currentAlias = userInfo.rawAlias ?? "";
     showInputDialog(
       context,
       title: '修改名称',
@@ -108,13 +110,27 @@ class OtherPageState extends ConsumerState<OtherPage>
         userInfo.useSecretLogined,
         alias,
       );
+      // 同步更新 historyAccounts，若没有匹配 host 的 bean 则新建一个保存
       final multiVM = getIt<MultiAccountUserInfoViewModel>();
+      bool found = false;
       for (final bean in multiVM.historyAccounts) {
         if (bean.host == userInfo.host) {
           bean.alias = alias;
           multiVM.save2HistoryAccount(bean);
+          found = true;
           break;
         }
+      }
+      if (!found) {
+        multiVM.save2HistoryAccount(
+          UserInfoBean(
+            host: userInfo.host,
+            alias: alias,
+            userName: userInfo.userName,
+            password: userInfo.passWord,
+            useSecretLogined: userInfo.useSecretLogined,
+          ),
+        );
       }
       "名称已更新".toast();
       setState(() {});
@@ -228,6 +244,8 @@ class OtherPageState extends ConsumerState<OtherPage>
                               userIcon!,
                               width: 60,
                               height: 60,
+                              cacheWidth: 120,
+                              cacheHeight: 120,
                               errorBuilder: (_, __, ___) {
                                 return Image.asset(
                                   getImageByVIPLogo(),
@@ -795,8 +813,6 @@ class OtherPageState extends ConsumerState<OtherPage>
       );
       String now = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
-      print("...$before天之前的文件全部删除");
-
       Directory directory = Directory(
         "${await FileUtil(SingleAccountPageState.of(context)?.index ?? 0).localPath}/",
       );
@@ -812,17 +828,12 @@ class OtherPageState extends ConsumerState<OtherPage>
           if (b.difference(a).inDays > before) {
             if (await file.exists()) {
               await file.delete(recursive: true);
-              print("删除成功${file.path}");
             }
-          } else {
-            print("不用删除${file.path}");
           }
-        } else {
-          print("时间格式出错${file.path}");
         }
       }
     } catch (e) {
-      print(e);
+      // 静默处理：日志清理失败不影响应用使用
     }
   }
 

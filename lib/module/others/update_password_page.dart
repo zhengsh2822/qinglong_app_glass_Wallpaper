@@ -130,7 +130,8 @@ class _UpdatePasswordPageState extends ConsumerState<UpdatePasswordPage>
           name,
           password,
           false,
-          SingleAccountPageState.ofUserInfo(context).alias,
+          // 使用 rawAlias 避免把 host 当作 alias 保存到历史账号
+          SingleAccountPageState.ofUserInfo(context).rawAlias,
         );
       }
       Navigator.of(

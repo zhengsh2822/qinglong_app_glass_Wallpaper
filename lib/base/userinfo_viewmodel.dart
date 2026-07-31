@@ -99,6 +99,9 @@ class UserInfoViewModel {
 
   String? get alias => _alias ?? _host;
 
+  /// 直接访问 alias 字段（不回退到 host），用于编辑场景展示真实别名
+  String? get rawAlias => _alias;
+
   bool isLogined() {
     return token != null && token!.isNotEmpty;
   }

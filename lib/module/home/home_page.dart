@@ -271,8 +271,8 @@ class HomePageState extends ConsumerState<HomePage> {
                           ),
                           child: BackdropFilter(
                             filter: ImageFilter.blur(
-                              sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 25.0),
-                              sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 25.0),
+                              sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 20.0),
+                              sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 20.0),
                             ),
                             child: Container(
                               decoration: BoxDecoration(
@@ -312,8 +312,8 @@ class HomePageState extends ConsumerState<HomePage> {
                             ),
                             child: BackdropFilter(
                               filter: ImageFilter.blur(
-                                sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 25.0),
-                                sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 25.0),
+                                sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 20.0),
+                                sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 20.0),
                               ),
                               child: Container(
                                 decoration: BoxDecoration(

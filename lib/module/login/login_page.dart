@@ -77,10 +77,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         }
       }
 
-      if (SingleAccountPageState.ofUserInfo(context).alias != null &&
-          SingleAccountPageState.ofUserInfo(context).alias!.isNotEmpty) {
+      if (SingleAccountPageState.ofUserInfo(context).rawAlias != null &&
+          SingleAccountPageState.ofUserInfo(context).rawAlias!.isNotEmpty) {
         _aliasController.text =
-            SingleAccountPageState.ofUserInfo(context).alias!;
+            SingleAccountPageState.ofUserInfo(context).rawAlias!;
       }
     }
     // 监听输入变化以刷新登录按钮可用状态
@@ -573,7 +573,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         return ClipRRect(
           borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 20), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 20)),
+            filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 16), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 16)),
             child: Container(
               constraints: BoxConstraints(
                 maxHeight: MediaQuery.of(context).size.height * 0.7,
