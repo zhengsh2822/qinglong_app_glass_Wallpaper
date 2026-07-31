@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/cupertino_sheet.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
@@ -91,6 +92,8 @@ class _TaskDetailPageState extends ConsumerState<SubscribeDetailPage>
                             builder:
                                 (context) =>
                                     AddSubscribePage(taskBean: widget.taskBean),
+                            blurSigma: 8,
+                            blurTintColor: CyberColors.bg.withOpacity(0.50),
                           ),
                         )
                         .then((value) {

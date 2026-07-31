@@ -120,6 +120,8 @@ class _SubscribePageState extends ConsumerState<SubscribePage> {
                     WallpaperPageRoute(
                       builder:
                           (context) => const AddSubscribePage(taskBean: {}),
+                      blurSigma: 8,
+                      blurTintColor: CyberColors.bg.withOpacity(0.50),
                     ),
                   )
                   .then((value) {
@@ -308,6 +310,8 @@ class TaskItemCell extends StatelessWidget {
                         WallpaperPageRoute(
                           builder:
                               (context) => AddSubscribePage(taskBean: bean),
+                          blurSigma: 8,
+                          blurTintColor: CyberColors.bg.withOpacity(0.50),
                         ),
                       )
                       .then((value) {
@@ -431,6 +435,8 @@ class TaskItemCell extends StatelessWidget {
                         WallpaperPageRoute(
                           builder:
                               (context) => AddSubscribePage(taskBean: bean),
+                          blurSigma: 8,
+                          blurTintColor: CyberColors.bg.withOpacity(0.50),
                         ),
                       )
                       .then((value) {
