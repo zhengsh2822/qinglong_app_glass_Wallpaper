@@ -431,7 +431,11 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
           SingleAccountPageState.of(context)?.index ?? 0,
         ).sourcePath;
     Navigator.of(context).push(
-      WallpaperPageRoute(builder: (context) => FileDirectoryPage(path: path)),
+      WallpaperPageRoute(
+        builder: (context) => FileDirectoryPage(path: path),
+        blurSigma: 8,
+        blurTintColor: CyberColors.bg.withOpacity(0.50),
+      ),
     );
   }
 }

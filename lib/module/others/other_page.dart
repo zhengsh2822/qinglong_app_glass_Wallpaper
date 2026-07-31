@@ -18,8 +18,10 @@ import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/wallpaper_page_route.dart';
 import 'package:qinglong_app/module/in_app_purchase_page.dart';
+import 'package:qinglong_app/module/others/backup_page.dart';
 import 'package:qinglong_app/module/others/blur_settings_page.dart';
 import 'package:qinglong_app/module/others/change_account_page.dart';
+import 'package:qinglong_app/module/others/dependencies/dependency_setting_page.dart';
 import 'package:qinglong_app/module/others/sort_account_page.dart';
 import 'package:qinglong_app/module/others/text_size_page.dart';
 import 'package:qinglong_app/module/others/update_password_page.dart';
@@ -674,6 +676,20 @@ class OtherPageState extends ConsumerState<OtherPage>
                 Navigator.of(context).push(
                   WallpaperPageRoute(
                     builder: (context) => const BlurSettingsPage(),
+                  ),
+                );
+              }),
+              buildOtherFun2("依赖设置", CupertinoIcons.cube_box, () {
+                Navigator.of(context).push(
+                  WallpaperPageRoute(
+                    builder: (context) => const DependencySettingPage(),
+                  ),
+                );
+              }),
+              buildOtherFun2("备份恢复", CupertinoIcons.cloud_upload, () {
+                Navigator.of(context).push(
+                  WallpaperPageRoute(
+                    builder: (context) => const BackupPage(),
                   ),
                 );
               }),

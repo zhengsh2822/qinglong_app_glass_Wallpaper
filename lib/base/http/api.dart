@@ -632,6 +632,98 @@ class Api {
     );
   }
 
+  // ============ 依赖设置（系统设置 → 依赖设置） ============
+  // 青龙面板 v2.21+ 新增：依赖代理 + Node/Python/Linux 镜像源配置
+
+  /// 获取系统配置（含依赖设置字段：dependenceProxy/nodeMirror/pythonMirror/linuxMirror）
+  Future<HttpResponse<String>> systemConfig() async {
+    return await getIt<Http>(
+      instanceName: index.toString(),
+    ).get<String>(getIt<Url>(instanceName: index.toString()).systemConfig, null);
+  }
+
+  /// 更新依赖代理（http_proxy/https_proxy）
+  /// 传空字符串清除代理
+  Future<HttpResponse<String>> updateDependenceProxy(String proxy) async {
+    return await getIt<Http>(instanceName: index.toString()).put<String>(
+      getIt<Url>(instanceName: index.toString()).dependenceProxy,
+      {"dependenceProxy": proxy},
+    );
+  }
+
+  /// 更新 Node.js 镜像源（pnpm config set registry）
+  /// 传空字符串清除镜像源
+  /// 注意：此接口会触发 pnpm i -g 重装已安装的 nodejs 依赖，耗时较长
+  Future<HttpResponse<String>> updateNodeMirror(String mirror) async {
+    return await getIt<Http>(instanceName: index.toString()).put<String>(
+      getIt<Url>(instanceName: index.toString()).nodeMirror,
+      {"nodeMirror": mirror},
+    );
+  }
+
+  /// 更新 Python 镜像源（pip3 config set global.index-url）
+  /// 传空字符串清除镜像源
+  Future<HttpResponse<String>> updatePythonMirror(String mirror) async {
+    return await getIt<Http>(instanceName: index.toString()).put<String>(
+      getIt<Url>(instanceName: index.toString()).pythonMirror,
+      {"pythonMirror": mirror},
+    );
+  }
+
+  /// 更新 Linux 镜像源（仅 Linux 平台生效）
+  /// 传空字符串清除镜像源
+  Future<HttpResponse<String>> updateLinuxMirror(String mirror) async {
+    return await getIt<Http>(instanceName: index.toString()).put<String>(
+      getIt<Url>(instanceName: index.toString()).linuxMirror,
+      {"linuxMirror": mirror},
+    );
+  }
+
+  // ============ 压缩包备份与恢复 ============
+
+  /// 导出数据备份（生成 .tgz 压缩包）
+  /// [type] 可选，指定要备份的数据目录（config/scripts/deps/log等）
+  /// 不传 type 默认只备份 db + upload
+  /// [savePath] 本地保存路径
+  /// 成功返回 null，失败返回错误信息
+  Future<String?> exportData(String savePath, {List<String>? type}) async {
+    final body = <String, dynamic>{};
+    if (type != null && type.isNotEmpty) {
+      body['type'] = type;
+    }
+    return await getIt<Http>(
+      instanceName: index.toString(),
+    ).downloadFile(
+      getIt<Url>(instanceName: index.toString()).dataExport,
+      body,
+      savePath,
+    );
+  }
+
+  /// 导入数据恢复（上传 .tgz 压缩包）
+  /// [filePath] 本地 .tgz 文件路径
+  /// 返回服务器解压输出信息
+  Future<HttpResponse<String>> importData(String filePath) async {
+    return await getIt<Http>(
+      instanceName: index.toString(),
+    ).uploadFile<String>(
+      getIt<Url>(instanceName: index.toString()).dataImport,
+      filePath,
+      'data',
+    );
+  }
+
+  /// 重载系统（恢复后调用使配置生效）
+  /// [type] "data" 或 "system"
+  Future<HttpResponse<NullResponse>> reloadSystem(String type) async {
+    return await getIt<Http>(
+      instanceName: index.toString(),
+    ).put<NullResponse>(
+      getIt<Url>(instanceName: index.toString()).systemReload,
+      {"type": type},
+    );
+  }
+
   Future<HttpResponse<String>> addDependency(
     List<Map<String, dynamic>> list,
   ) async {

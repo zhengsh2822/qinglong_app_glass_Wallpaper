@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
@@ -49,6 +50,8 @@ class _FileDirectoryPageState extends ConsumerState<FileDirectoryPage> {
                     builder: (context) => FileDirectoryPage(
                       path: paths[index],
                     ),
+                    blurSigma: 8,
+                    blurTintColor: CyberColors.bg.withOpacity(0.50),
                   ),
                 );
               } else {
@@ -62,6 +65,8 @@ class _FileDirectoryPageState extends ConsumerState<FileDirectoryPage> {
                         absPath: paths[index],
                         canRestore: true,
                       ),
+                      blurSigma: 8,
+                      blurTintColor: CyberColors.bg.withOpacity(0.50),
                     ),
                   );
                 } catch (e) {

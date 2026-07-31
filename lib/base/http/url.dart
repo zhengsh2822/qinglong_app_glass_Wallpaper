@@ -207,6 +207,53 @@ class Url {
           ? "/open/dependencies/reinstall"
           : "/api/dependencies/reinstall";
 
+  // ============ 依赖设置（系统设置 → 依赖设置） ============
+  // 青龙面板 v2.21+ 新增：依赖代理 + Node/Python/Linux 镜像源配置
+  // 用于解决依赖安装慢/失败的问题（走国内镜像源）
+
+  get systemConfig =>
+      getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
+          ? "/open/system/config"
+          : "/api/system/config";
+
+  get dependenceProxy =>
+      getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
+          ? "/open/system/config/dependence-proxy"
+          : "/api/system/config/dependence-proxy";
+
+  get nodeMirror =>
+      getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
+          ? "/open/system/config/node-mirror"
+          : "/api/system/config/node-mirror";
+
+  get pythonMirror =>
+      getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
+          ? "/open/system/config/python-mirror"
+          : "/api/system/config/python-mirror";
+
+  get linuxMirror =>
+      getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
+          ? "/open/system/config/linux-mirror"
+          : "/api/system/config/linux-mirror";
+
+  // ============ 压缩包备份与恢复 ============
+  // 青龙面板数据导出（生成 .tgz 压缩包）和导入（恢复压缩包）
+
+  get dataExport =>
+      getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
+          ? "/open/system/data/export"
+          : "/api/system/data/export";
+
+  get dataImport =>
+      getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
+          ? "/open/system/data/import"
+          : "/api/system/data/import";
+
+  get systemReload =>
+      getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
+          ? "/open/system/reload"
+          : "/api/system/reload";
+
   get addScript =>
       getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
           ? "/open/scripts"

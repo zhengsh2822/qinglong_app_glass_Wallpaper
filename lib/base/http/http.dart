@@ -23,6 +23,9 @@ class Http {
   Dio? _dio;
   bool pushedLoginPage = false;
 
+  /// 非激活账号有待处理的登录失败弹窗，切换到该账号时触发
+  bool pendingExitLogin = false;
+
   String host;
   int index;
 
@@ -313,6 +316,91 @@ class Http {
     }
   }
 
+  /// 下载二进制流文件（用于数据导出 .tgz 压缩包备份）
+  /// [uri] 请求路径，[body] JSON 请求体，[savePath] 本地保存路径
+  /// 成功返回 null，失败返回错误信息
+  Future<String?> downloadFile(
+    String uri,
+    Map<String, dynamic> body,
+    String savePath,
+  ) async {
+    try {
+      _init();
+      final response = await _dio!.put(
+        uri,
+        data: body,
+        options: Options(responseType: ResponseType.bytes),
+      );
+
+      // 检查响应是否为二进制流（导出成功）还是 JSON（导出失败）
+      final data = response.data;
+      if (data is List<int>) {
+        final file = await File(savePath).create(recursive: true);
+        await file.writeAsBytes(data);
+        return null;
+      }
+
+      // 非 bytes 响应，可能是错误 JSON
+      final raw = data is String ? data : data.toString();
+      if (_isHtmlResponse(raw)) {
+        await _handleTokenExpired();
+        return "登录已过期，请重试";
+      }
+      return "服务器返回异常格式";
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        await _handleTokenExpired();
+        return "登录已过期，请重试";
+      }
+      return e.message ?? "网络请求失败";
+    } catch (e) {
+      return e.toString();
+    }
+  }
+
+  /// 上传文件（用于数据导入 .tgz 压缩包恢复）
+  /// [uri] 请求路径，[filePath] 本地文件路径，[fieldName] 上传字段名
+  /// 返回标准 HttpResponse，包含服务器解压输出信息
+  Future<HttpResponse<T>> uploadFile<T>(
+    String uri,
+    String filePath,
+    String fieldName, {
+    bool reloginRetry = false,
+  }) async {
+    try {
+      _init();
+      final formdata = FormData.fromMap({
+        fieldName: await MultipartFile.fromFile(filePath),
+      });
+
+      final response = await _dio!.put(uri, data: formdata);
+
+      _invalidateRelatedCache(uri);
+
+      var result = decodeResponse<T>(response, "data", false);
+
+      if (result.needRelogin && !reloginRetry) {
+        await _handleTokenExpired();
+        return uploadFile<T>(uri, filePath, fieldName, reloginRetry: true);
+      }
+      if (result.needRelogin && reloginRetry) {
+        exitLogin();
+      }
+
+      return result;
+    } on DioException catch (e) {
+      final result = exceptionHandler<T>(e, uri);
+      if (result.needRelogin && !reloginRetry) {
+        await _handleTokenExpired();
+        return uploadFile<T>(uri, filePath, fieldName, reloginRetry: true);
+      }
+      if (result.needRelogin && reloginRetry) {
+        exitLogin();
+      }
+      return result;
+    }
+  }
+
   void _invalidateRelatedCache(String uri) {
     final cache = HttpCache(index);
     final path = uri.split('?').first;
@@ -358,8 +446,17 @@ class Http {
 
   /// 刷新失败后弹窗让用户选择是否重新登录（不直接跳转）
   /// 用 pushedLoginPage 防止并发请求触发多个弹窗
+  /// 非激活账号不弹窗，标记 pendingExitLogin，切换到该账号时再弹
   Future<void> exitLogin() async {
     if (pushedLoginPage) return;
+
+    // 多账号场景：非激活账号不弹窗，标记待处理，切换到该账号时再弹
+    // 避免断网的非激活账号在后台请求失败时弹窗干扰用户
+    if (MultiAccountPageState.currentAccountIndex != index) {
+      pendingExitLogin = true;
+      return;
+    }
+
     pushedLoginPage = true;
 
     final navigatorKey = getIt<GlobalKey<NavigatorState>>(
@@ -395,8 +492,10 @@ class Http {
   }
 
   /// 复位登录页跳转标志，允许下次再次触发跳转
+  /// 同时清空待处理弹窗标记
   void resetExitLoginFlag() {
     pushedLoginPage = false;
+    pendingExitLogin = false;
   }
 
   // ============ 静默重新登录（token 过期自动刷新） ============
