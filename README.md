@@ -123,7 +123,7 @@
 - [whyour/qinglong](https://github.com/whyour/qinglong) — 青龙面板服务端
 - [ayoulx/qinglong-app](https://github.com/ayoulx/qinglong-app) — 原客户端项目
 - [yclown/ql_jd_cookie](https://github.com/yclown/ql_jd_cookie)@XanderYe - 原版京东助手作者
-- @yclown - 原版修改者
+- [yclown/jdck-android](https://github.com/yclown/jdck-android)@yclown - 原版修改者
 
 ### 开源依赖（Flutter / Dart 包）
 
