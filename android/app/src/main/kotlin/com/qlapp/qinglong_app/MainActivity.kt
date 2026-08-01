@@ -60,6 +60,11 @@ class MainActivity : FlutterActivity() {
     private var lifecycleSink: EventChannel.EventSink? = null
     private var processLifecycleObserver: DefaultLifecycleObserver? = null
 
+    // 金标联盟公平运行内存机制：内存预警/应用查杀广播 Receiver
+    // - itgsa.intent.action.TRIM：内存预警，应用应释放不必要的内存（图片缓存、HTTP 缓存等）
+    // - itgsa.intent.action.KILL：应用查杀，应用即将被系统杀死，应立即释放所有资源
+    private var memoryReceiver: BroadcastReceiver? = null
+
     // 悬浮时钟相关
     private var floatingView: FrameLayout? = null
     private var floatingWindowManager: WindowManager? = null
@@ -240,6 +245,57 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    /**
+     * 金标联盟公平运行内存机制：注册内存预警/应用查杀广播
+     *
+     * 金标联盟理事长成员（vivo、小米、OPPO、荣耀）定义的两个系统广播：
+     * - itgsa.intent.action.TRIM：内存预警，系统内存紧张，应用应释放不必要的内存
+     * - itgsa.intent.action.KILL：应用查杀，系统即将杀死应用，应立即释放所有资源
+     *
+     * 收到广播后通过 lifecycleSink 推送事件到 Flutter 端，由 Flutter 端清理
+     * 图片缓存、HTTP 缓存等，降低被系统杀死的概率。
+     *
+     * 注册方式：动态注册（Android 8.0+ 限制隐式广播静态注册）
+     * Android 13+ 需指定 RECEIVER_NOT_EXPORTED（系统广播不受此限制，仍可接收）
+     */
+    private fun registerMemoryReceiver() {
+        if (memoryReceiver != null) return
+        memoryReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                when (intent?.action) {
+                    "itgsa.intent.action.TRIM" -> {
+                        // 内存预警：通知 Flutter 端释放图片缓存、HTTP 缓存等
+                        lifecycleSink?.success("memory_trim")
+                    }
+                    "itgsa.intent.action.KILL" -> {
+                        // 应用查杀：通知 Flutter 端立即释放所有资源
+                        lifecycleSink?.success("memory_kill")
+                    }
+                }
+            }
+        }
+        val filter = IntentFilter().apply {
+            addAction("itgsa.intent.action.TRIM")
+            addAction("itgsa.intent.action.KILL")
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(memoryReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(memoryReceiver, filter)
+        }
+    }
+
+    private fun unregisterMemoryReceiver() {
+        if (memoryReceiver != null) {
+            try {
+                unregisterReceiver(memoryReceiver)
+            } catch (e: Exception) {
+                // ignore
+            }
+            memoryReceiver = null
+        }
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == FILE_PICKER_REQUEST_CODE) {
@@ -317,6 +373,7 @@ class MainActivity : FlutterActivity() {
             window.setDecorFitsSystemWindows(false)
         }
         registerProcessLifecycleObserver()
+        registerMemoryReceiver()
     }
 
     /**
@@ -373,6 +430,7 @@ class MainActivity : FlutterActivity() {
     override fun onDestroy() {
         super.onDestroy()
         unregisterSmsReceiver()
+        unregisterMemoryReceiver()
         stopFloatingWindow()
         // 移除 ProcessLifecycleObserver，避免内存泄漏
         processLifecycleObserver?.let {

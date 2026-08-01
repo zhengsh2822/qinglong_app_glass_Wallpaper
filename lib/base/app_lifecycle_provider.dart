@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
+import 'package:qinglong_app/base/http/http_cache.dart';
 
 /// 应用前后台生命周期状态
 enum AppLifecycleState {
@@ -9,6 +11,16 @@ enum AppLifecycleState {
   foreground,
   /// 应用在后台
   background,
+}
+
+/// 金标联盟公平运行内存机制：内存事件类型
+enum MemoryEvent {
+  /// 系统内存压力（onTrimMemory 回调）
+  pressure,
+  /// 金标联盟内存预警（itgsa.intent.action.TRIM）
+  trim,
+  /// 金标联盟应用查杀（itgsa.intent.action.KILL）
+  kill,
 }
 
 /// 金标联盟公平调度：应用前后台生命周期感知 Provider
@@ -36,6 +48,7 @@ class AppLifecycleProvider {
   AppLifecycleProvider._();
 
   StreamController<AppLifecycleState>? _controller;
+  StreamController<MemoryEvent>? _memoryController;
   StreamSubscription? _platformSub;
   AppLifecycleState _currentState = AppLifecycleState.foreground;
 
@@ -53,9 +66,24 @@ class AppLifecycleProvider {
     return _controller!.stream;
   }
 
+  /// 内存事件流
+  ///
+  /// 金标联盟公平运行内存机制：
+  /// - [MemoryEvent.pressure]：系统内存压力（onTrimMemory），应释放缓存
+  /// - [MemoryEvent.trim]：金标联盟内存预警（itgsa.intent.action.TRIM），应释放图片/HTTP 缓存
+  /// - [MemoryEvent.kill]：金标联盟应用查杀（itgsa.intent.action.KILL），应立即释放所有资源
+  ///
+  /// 订阅后本 Provider 会自动执行默认的内存清理（清空图片缓存和 HTTP 缓存），
+  /// 订阅者可额外响应（如清空业务缓存、保存未提交数据等）。
+  Stream<MemoryEvent> get memoryEventStream {
+    _ensureInitialized();
+    return _memoryController!.stream;
+  }
+
   void _ensureInitialized() {
     if (_controller != null) return;
     _controller = StreamController<AppLifecycleState>.broadcast();
+    _memoryController = StreamController<MemoryEvent>.broadcast();
     // 仅 Android 平台需要监听（iOS 不适用 ProcessLifecycleOwner）
     if (Platform.isAndroid) {
       _platformSub = _channel.receiveBroadcastStream().listen(
@@ -71,8 +99,13 @@ class AppLifecycleProvider {
                 _controller!.add(_currentState);
                 break;
               case 'memory_pressure':
-                // 内存压力事件，可由其他订阅者响应（如清理缓存）
-                // 这里不映射到 AppLifecycleState，仅作为扩展点
+                _handleMemoryEvent(MemoryEvent.pressure);
+                break;
+              case 'memory_trim':
+                _handleMemoryEvent(MemoryEvent.trim);
+                break;
+              case 'memory_kill':
+                _handleMemoryEvent(MemoryEvent.kill);
                 break;
             }
           }
@@ -84,11 +117,46 @@ class AppLifecycleProvider {
     }
   }
 
+  /// 处理内存事件：执行默认清理 + 推送给订阅者
+  void _handleMemoryEvent(MemoryEvent event) {
+    // 1. 默认清理：清空图片缓存和 HTTP 缓存
+    _performDefaultCleanup(event);
+    // 2. 推送给订阅者，让业务方额外响应
+    _memoryController?.add(event);
+  }
+
+  /// 默认内存清理：根据事件类型释放对应资源
+  ///
+  /// - pressure/trim：清空图片缓存 + HTTP 缓存（可快速恢复，降低内存占用）
+  /// - kill：清空所有缓存 + 立即释放图片缓存（应用即将被杀，尽力释放）
+  void _performDefaultCleanup(MemoryEvent event) {
+    try {
+      // 清空 Flutter 图片缓存（ImageCache 内部持有已解码图片，占用大量内存）
+      PaintingBinding.instance.imageCache.clear();
+      // 清空 HTTP 响应缓存（每个账号一份，全部清空）
+      HttpCache.clearAll();
+      switch (event) {
+        case MemoryEvent.kill:
+          // 应用查杀：强制立即释放图片缓存（evict 已解码的图片）
+          PaintingBinding.instance.imageCache.clearLiveImages();
+          break;
+        case MemoryEvent.pressure:
+        case MemoryEvent.trim:
+          // 内存压力/预警：清空缓存即可，无需额外操作
+          break;
+      }
+    } catch (_) {
+      // 清理过程中任何异常都忽略，避免影响订阅者
+    }
+  }
+
   /// 释放资源（仅在应用退出时调用，通常不需要手动调用）
   void dispose() {
     _platformSub?.cancel();
     _platformSub = null;
     _controller?.close();
     _controller = null;
+    _memoryController?.close();
+    _memoryController = null;
   }
 }
