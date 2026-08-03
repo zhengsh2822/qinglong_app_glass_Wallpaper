@@ -278,12 +278,36 @@ class Http {
     bool compute = true,
     String serializationName = "data",
     bool reloginRetry = false,
+    bool rawResponse = false,
+    Duration? receiveTimeout,
   }) async {
     try {
       _init();
-      var response = await _dio!.put(uri, data: json);
+
+      // 流式响应（Node/Linux 镜像源更新触发重装依赖）需要更长超时
+      Options? options;
+      if (rawResponse || receiveTimeout != null) {
+        options = Options(
+          receiveTimeout: receiveTimeout ?? const Duration(minutes: 5),
+        );
+      }
+
+      var response = await _dio!.put(uri, data: json, options: options);
 
       _invalidateRelatedCache(uri);
+
+      // 流式响应（octet-stream）不解析 JSON，直接根据 HTTP 状态码判断
+      if (rawResponse) {
+        if (response.statusCode == 200) {
+          return HttpResponse<T>(success: true, code: 200);
+        } else {
+          return HttpResponse<T>(
+            success: false,
+            code: response.statusCode ?? 0,
+            message: response.statusMessage ?? '请求失败',
+          );
+        }
+      }
 
       var result = decodeResponse<T>(response, serializationName, compute);
 
@@ -293,7 +317,9 @@ class Http {
         return put<T>(uri, json,
             compute: compute,
             serializationName: serializationName,
-            reloginRetry: true);
+            reloginRetry: true,
+            rawResponse: rawResponse,
+            receiveTimeout: receiveTimeout);
       }
       if (result.needRelogin && reloginRetry) {
         exitLogin();
@@ -301,13 +327,19 @@ class Http {
 
       return result;
     } on DioException catch (e) {
+      // 流式响应超时：服务器已接收请求并开始处理，设置已保存
+      if (rawResponse && e.type == DioExceptionType.receiveTimeout) {
+        return HttpResponse<T>(success: true, code: 200);
+      }
       final result = exceptionHandler<T>(e, uri);
       if (result.needRelogin && !reloginRetry) {
         await _handleTokenExpired();
         return put<T>(uri, json,
             compute: compute,
             serializationName: serializationName,
-            reloginRetry: true);
+            reloginRetry: true,
+            rawResponse: rawResponse,
+            receiveTimeout: receiveTimeout);
       }
       if (result.needRelogin && reloginRetry) {
         exitLogin();

@@ -653,11 +653,14 @@ class Api {
 
   /// 更新 Node.js 镜像源（pnpm config set registry）
   /// 传空字符串清除镜像源
-  /// 注意：此接口会触发 pnpm i -g 重装已安装的 nodejs 依赖，耗时较长
+  /// 注意：此接口返回 application/octet-stream 流式响应（重装依赖进度日志）
+  /// 非标准 JSON，需用 rawResponse 跳过 JSON 解析；重装依赖耗时较长，设 5 分钟超时
   Future<HttpResponse<String>> updateNodeMirror(String mirror) async {
     return await getIt<Http>(instanceName: index.toString()).put<String>(
       getIt<Url>(instanceName: index.toString()).nodeMirror,
       {"nodeMirror": mirror},
+      rawResponse: true,
+      receiveTimeout: const Duration(minutes: 5),
     );
   }
 
@@ -672,10 +675,14 @@ class Api {
 
   /// 更新 Linux 镜像源（仅 Linux 平台生效）
   /// 传空字符串清除镜像源
+  /// 注意：此接口返回 application/octet-stream 流式响应（重装依赖进度日志）
+  /// 非标准 JSON，需用 rawResponse 跳过 JSON 解析；重装依赖耗时较长，设 5 分钟超时
   Future<HttpResponse<String>> updateLinuxMirror(String mirror) async {
     return await getIt<Http>(instanceName: index.toString()).put<String>(
       getIt<Url>(instanceName: index.toString()).linuxMirror,
       {"linuxMirror": mirror},
+      rawResponse: true,
+      receiveTimeout: const Duration(minutes: 5),
     );
   }
 

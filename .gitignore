@@ -64,5 +64,6 @@ app.*.map.json
 # Build outputs & session memory (not for version control)
 /apk_output/
 /SESSION_MEMORY.md
+/对话记忆.md
 /.trae/
 /build_apk.ps1

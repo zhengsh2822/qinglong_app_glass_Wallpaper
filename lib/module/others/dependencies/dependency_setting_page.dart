@@ -4,7 +4,9 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:qinglong_app/base/app_colors.dart';
+import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
@@ -37,6 +39,12 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
   final _nodeController = TextEditingController();
   final _pythonController = TextEditingController();
   final _linuxController = TextEditingController();
+
+  /// 服务器端当前值，用于对比是否变化，避免发送无效请求
+  String _origProxy = '';
+  String _origNode = '';
+  String _origPython = '';
+  String _origLinux = '';
 
   bool _loading = true;
   bool _saving = false;
@@ -71,18 +79,28 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
     if (response.success && response.bean != null) {
       try {
         final decoded = jsonDecode(response.bean!);
+        // 青龙 API 返回结构：{code:200, data:{id, type, info:{dependenceProxy, nodeMirror, ...}}}
+        // response.bean 是 data 字段的 JSON 字符串，即 {id, type, info:{...}}
         final data = decoded is Map ? decoded['data'] ?? decoded : decoded;
         if (data is Map) {
-          _proxyController.text = data['dependenceProxy']?.toString() ?? '';
-          _nodeController.text = data['nodeMirror']?.toString() ?? '';
-          _pythonController.text = data['pythonMirror']?.toString() ?? '';
-          _linuxController.text = data['linuxMirror']?.toString() ?? '';
+          // 依赖设置字段在 info 对象下
+          final info = data['info'];
+          final cfg = info is Map ? info : data;
+          _proxyController.text = cfg['dependenceProxy']?.toString() ?? '';
+          _nodeController.text = cfg['nodeMirror']?.toString() ?? '';
+          _pythonController.text = cfg['pythonMirror']?.toString() ?? '';
+          _linuxController.text = cfg['linuxMirror']?.toString() ?? '';
+          // 保存原始值，用于保存时对比是否变化
+          _origProxy = _proxyController.text;
+          _origNode = _nodeController.text;
+          _origPython = _pythonController.text;
+          _origLinux = _linuxController.text;
         }
         setState(() => _loading = false);
       } catch (e) {
         setState(() {
           _loading = false;
-          _errorMsg = '解析配置失败';
+          _errorMsg = '解析配置失败: $e';
         });
       }
     } else {
@@ -100,12 +118,61 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
     setState(() => _saving = true);
 
     final api = SingleAccountPageState.ofApi(context);
-    final results = await Future.wait([
-      api.updateDependenceProxy(_proxyController.text.trim()),
-      api.updateNodeMirror(_nodeController.text.trim()),
-      api.updatePythonMirror(_pythonController.text.trim()),
-      api.updateLinuxMirror(_linuxController.text.trim()),
-    ]);
+
+    // 只发送变化的字段，避免发送无效请求（如代理地址为空时服务器 rm 不存在的文件会 500）
+    final newProxy = _proxyController.text.trim();
+    final newPython = _pythonController.text.trim();
+    final newNode = _nodeController.text.trim();
+    final newLinux = _linuxController.text.trim();
+
+    final labels = <String>[];
+    final fns = <Future<HttpResponse<String>> Function()>[];
+
+    if (newProxy != _origProxy) {
+      labels.add('依赖代理');
+      fns.add(() => api.updateDependenceProxy(newProxy));
+    }
+    if (newPython != _origPython) {
+      labels.add('Python镜像源');
+      fns.add(() => api.updatePythonMirror(newPython));
+    }
+    if (newNode != _origNode) {
+      labels.add('Node镜像源');
+      fns.add(() => api.updateNodeMirror(newNode));
+    }
+    if (newLinux != _origLinux) {
+      labels.add('Linux镜像源');
+      fns.add(() => api.updateLinuxMirror(newLinux));
+    }
+
+    // 无任何变化
+    if (labels.isEmpty) {
+      setState(() => _saving = false);
+      '配置未变化'.toast();
+      return;
+    }
+
+    final results = <HttpResponse<String>>[];
+    final detailLines = <String>[];
+
+    for (int i = 0; i < fns.length; i++) {
+      final label = labels[i];
+      detailLines.add('▶ $label');
+      try {
+        final r = await fns[i]();
+        results.add(r);
+        if (r.success) {
+          detailLines.add('  ✓ 成功');
+        } else {
+          final raw = r.message?.isNotEmpty == true ? r.message : 'code=${r.code}';
+          detailLines.add('  ✗ 失败: $raw');
+        }
+      } catch (e, st) {
+        detailLines.add('  ✗ 异常: $e');
+        results.add(HttpResponse<String>(success: false, code: -9999, message: e.toString()));
+      }
+      detailLines.add('');
+    }
 
     if (!mounted) return;
 
@@ -113,16 +180,45 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
     setState(() => _saving = false);
 
     if (allSuccess) {
-      '依赖设置已保存'.toast();
-      Navigator.of(context).pop();
+      // 更新原始值，避免重复保存
+      _origProxy = newProxy;
+      _origNode = newNode;
+      _origPython = newPython;
+      _origLinux = newLinux;
+
+      final hasMirror = newNode.isNotEmpty || newLinux.isNotEmpty;
+      if (hasMirror) {
+        '依赖设置已保存，镜像源更新后将在后台重装依赖'.toast();
+      } else {
+        '依赖设置已保存'.toast();
+      }
     } else {
-      // 部分失败：列出失败的项
-      final failed = <String>[];
-      if (!results[0].success) failed.add('依赖代理');
-      if (!results[1].success) failed.add('Node镜像源');
-      if (!results[2].success) failed.add('Python镜像源');
-      if (!results[3].success) failed.add('Linux镜像源');
-      '${failed.join('、')}保存失败'.toast();
+      final detail = detailLines.join('\n');
+      debugPrint('[DependencySetting] 保存失败:\n$detail');
+      await Clipboard.setData(ClipboardData(text: detail));
+      if (!mounted) return;
+      await showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: CyberColors.bg,
+          title: Text('保存失败', style: TextStyle(color: CyberColors.titleWhite)),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: SelectableText(
+                detail,
+                style: TextStyle(color: CyberColors.descColor, fontSize: 12, fontFamily: 'monospace'),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text('关闭', style: TextStyle(color: CyberColors.cyan)),
+            ),
+          ],
+        ),
+      );
     }
   }
 
