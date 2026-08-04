@@ -16,9 +16,12 @@ class LoadingWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LoadingAnimationWidget.staggeredDotsWave(
-      color: color,
-      size: size,
+    // RepaintBoundary 隔离无限循环动画，避免向上冒泡触发父级重绘
+    return RepaintBoundary(
+      child: LoadingAnimationWidget.staggeredDotsWave(
+        color: color,
+        size: size,
+      ),
     );
   }
 }

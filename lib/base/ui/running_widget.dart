@@ -29,7 +29,10 @@ class RunningWidget extends ConsumerWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          LoadingWidget(color: color, size: 12),
+          // RepaintBoundary 隔离 LoadingWidget 无限动画，避免向上冒泡触发列表重绘
+          RepaintBoundary(
+            child: LoadingWidget(color: color, size: 12),
+          ),
           const SizedBox(width: 3),
           Text(
             "运行中",

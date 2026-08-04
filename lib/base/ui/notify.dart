@@ -167,15 +167,12 @@ class _NotifyWidgetState extends State<NotifyWidget>
         curve: Curves.easeOutBack,
       ),
     );
-    _playController?.addListener(
-          () {
-        if (mounted) {
-          setState(() {
-            _offset = _offsetAnimation!.value;
-          });
-        }
-      },
-    );
+    // 动画结束时更新 _offset 为最终值，避免下次拖拽从旧位置开始
+    _playController?.addStatusListener((status) {
+      if (mounted && (status == AnimationStatus.completed || status == AnimationStatus.dismissed)) {
+        _offset = _offsetAnimation!.value;
+      }
+    });
     _playController?.forward();
   }
 
@@ -183,42 +180,55 @@ class _NotifyWidgetState extends State<NotifyWidget>
   Widget build(BuildContext context) {
     Size maxSize = MediaQuery.of(context).size;
 
-    return Positioned(
-      top: _offset,
-      child: GestureDetector(
-        onVerticalDragUpdate: (DragUpdateDetails details) {
+    // 子树只构建一次，动画期间由 AnimatedBuilder 复用 child 不重建
+    final content = GestureDetector(
+      onVerticalDragUpdate: (DragUpdateDetails details) {
+        _cancelT();
+        final double temp = _offset + details.delta.dy;
+        if (temp > widget.topOffset + childHeight) {
+          return;
+        }
+
+        if (temp > widget.topOffset) {
+          if (widget.disableDrag) return;
+        }
+
+        _offset = temp;
+        setState(() {});
+      },
+      onVerticalDragEnd: (details) {
+        if (_offset < widget.topOffset / 2) {
+          _close();
+        } else {
+          _reset2Target();
           _cancelT();
-          final double temp = _offset + details.delta.dy;
-          if (temp > widget.topOffset + childHeight) {
-            return;
-          }
-
-          if (temp > widget.topOffset) {
-            if (widget.disableDrag) return;
-          }
-
-          _offset = temp;
-          setState(() {});
-        },
-        onVerticalDragEnd: (details) {
-          if (_offset < widget.topOffset / 2) {
-            _close();
-          } else {
-            _reset2Target();
-            _cancelT();
-            _ready2DismissOverlay();
-          }
-        },
-        child: Material(
-          color: Colors.transparent,
-          child: ConstrainedBox(
-            key: childKey,
-            constraints: BoxConstraints.loose(maxSize),
-            child: widget.child,
-          ),
+          _ready2DismissOverlay();
+        }
+      },
+      child: Material(
+        color: Colors.transparent,
+        child: ConstrainedBox(
+          key: childKey,
+          constraints: BoxConstraints.loose(maxSize),
+          child: widget.child,
         ),
       ),
     );
+
+    // 动画期间用 AnimatedBuilder，避免全量重建子树
+    if (_playController != null && _offsetAnimation != null) {
+      return AnimatedBuilder(
+        animation: _playController!,
+        builder: (context, child) {
+          // 动画进行中用动画值，否则用 _offset（拖拽后的值）
+          final top = _playController!.isAnimating ? _offsetAnimation!.value : _offset;
+          return Positioned(top: top, child: child!);
+        },
+        child: content,
+      );
+    }
+
+    return Positioned(top: _offset, child: content);
   }
 
   void _reset2Target() {

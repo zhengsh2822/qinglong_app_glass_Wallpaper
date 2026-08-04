@@ -94,12 +94,16 @@ class _TabBarSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: tabController.animation!,
-      builder: (context, child) {
-        final double animValue = tabController.animation!.value;
-        final int count = tabs.length;
-        final effectiveSigma = SpUtil.getDouble(spCardBlurSigma, defValue: 15);
+    final int count = tabs.length;
+    final effectiveSigma = SpUtil.getDouble(spCardBlurSigma, defValue: 15);
+
+    // LayoutBuilder 提到 AnimatedBuilder 外层，避免每帧动画都重新布局
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double totalWidth = constraints.maxWidth;
+        final double tabWidth = totalWidth / count;
+        const double horizontalPadding = 3.0;
+        final double thumbWidth = tabWidth - horizontalPadding * 2;
 
         return Container(
           height: 35,
@@ -113,65 +117,63 @@ class _TabBarSlider extends StatelessWidget {
             borderRadius: BorderRadius.circular(24),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: effectiveSigma, sigmaY: effectiveSigma),
-              child: LayoutBuilder(
-            builder: (context, constraints) {
-              final double totalWidth = constraints.maxWidth;
-              final double tabWidth = totalWidth / count;
-              const double horizontalPadding = 3.0;
-              final double thumbWidth = tabWidth - horizontalPadding * 2;
-              final double thumbLeft = horizontalPadding + animValue * tabWidth;
+              child: AnimatedBuilder(
+                animation: tabController.animation!,
+                builder: (context, child) {
+                  final double animValue = tabController.animation!.value;
+                  final double thumbLeft = horizontalPadding + animValue * tabWidth;
 
-              return Stack(
-                children: [
-                  Positioned(
-                    left: thumbLeft,
-                    top: 3,
-                    bottom: 3,
-                    width: thumbWidth,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: thumbColor,
-                        borderRadius: BorderRadius.circular(22),
-                      ),
-                    ),
-                  ),
-                  Row(
-                    children: List.generate(count, (i) {
-                      final double distance = (animValue - i).abs();
-                      final double t = distance.clamp(0.0, 1.0);
-                      final Color textColor = Color.lerp(
-                        selectedTextColor,
-                        unselectedTextColor,
-                        t,
-                      )!;
-
-                      return Expanded(
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () {
-                            tabController.animateTo(
-                              i,
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeOutCubic,
-                            );
-                          },
-                          child: Center(
-                            child: Text(
-                              tabs[i],
-                              maxLines: 1,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: textColor,
-                              ),
-                            ),
+                  return Stack(
+                    children: [
+                      Positioned(
+                        left: thumbLeft,
+                        top: 3,
+                        bottom: 3,
+                        width: thumbWidth,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: thumbColor,
+                            borderRadius: BorderRadius.circular(22),
                           ),
                         ),
-                      );
-                    }),
-                  ),
-                ],
-              );
-            },
+                      ),
+                      Row(
+                        children: List.generate(count, (i) {
+                          final double distance = (animValue - i).abs();
+                          final double t = distance.clamp(0.0, 1.0);
+                          final Color textColor = Color.lerp(
+                            selectedTextColor,
+                            unselectedTextColor,
+                            t,
+                          )!;
+
+                          return Expanded(
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () {
+                                tabController.animateTo(
+                                  i,
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeOutCubic,
+                                );
+                              },
+                              child: Center(
+                                child: Text(
+                                  tabs[i],
+                                  maxLines: 1,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: textColor,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
           ),

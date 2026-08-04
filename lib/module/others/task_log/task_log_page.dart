@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -37,6 +39,7 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
   List<TaskLogBean> list = [];
 
   TextEditingController searchText = TextEditingController();
+  Timer? _searchDebounce;
 
   ScrollController controller = ScrollController();
 
@@ -55,7 +58,10 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
     super.initState();
     controller.addListener(floatingButtonVisibility);
     searchText.addListener(() {
-      setState(() {});
+      _searchDebounce?.cancel();
+      _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+        setState(() {});
+      });
     });
     // 提前发起网络请求，与路由 push 动画并行，不等动画完成。
     // LazyLoadState.onLazyLoad 仍作为兜底（若请求未完成则无副作用）。
@@ -710,6 +716,7 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     searchText.dispose();
     controller.dispose();
     super.dispose();

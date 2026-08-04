@@ -44,6 +44,10 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- 开启 Impeller 渲染引擎（降低 GPU 开销，提升滑动流畅度） -->
+        <meta-data
+            android:name="io.flutter.renderer"
+            android:value="impeller" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
