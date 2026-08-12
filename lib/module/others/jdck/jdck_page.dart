@@ -39,15 +39,18 @@ class _JdckPageState extends ConsumerState<JdckPage> {
     'com.qlapp.qinglong_app/sms',
   );
 
-  // SharedPreferences keys
-  static const String _spPhoneStr = 'jdck_phoneStr';
-  static const String _spSelectedPhone = 'jdck_selectedPhone';
-  static const String _spPasswordHidden = 'jdck_passwordHidden';
-  static const String _spSmsEnabled = 'jdck_smsEnabled';
-  static const String _spQlAddress = 'jdck_ql_address';
-  static const String _spQlClientId = 'jdck_ql_client_id';
-  static const String _spQlClientSecret = 'jdck_ql_client_secret';
-  static const String _spQlToken = 'jdck_ql_token';
+  // SharedPreferences keys — 按账号索引隔离，每个账号独立存储
+  // 历史数据（无后缀的 key）不再读取，首次写入即建立按账号独立的数据
+  int _accountIndex = 0;
+
+  String get _spPhoneStr => 'jdck_phoneStr_$_accountIndex';
+  String get _spSelectedPhone => 'jdck_selectedPhone_$_accountIndex';
+  String get _spPasswordHidden => 'jdck_passwordHidden_$_accountIndex';
+  String get _spSmsEnabled => 'jdck_smsEnabled_$_accountIndex';
+  String get _spQlAddress => 'jdck_ql_address_$_accountIndex';
+  String get _spQlClientId => 'jdck_ql_client_id_$_accountIndex';
+  String get _spQlClientSecret => 'jdck_ql_client_secret_$_accountIndex';
+  String get _spQlToken => 'jdck_ql_token_$_accountIndex';
 
   late WebViewController _webViewController;
   bool _webViewReady = false;
@@ -105,6 +108,8 @@ class _JdckPageState extends ConsumerState<JdckPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    // 获取当前账号索引，用于按账号隔离京东助手数据
+    _accountIndex = SingleAccountPageState.of(context)?.index ?? 0;
     if (_webViewReady || _routeListenerAdded) return;
     _routeListenerAdded = true;
     _routeAnimation = ModalRoute.of(context)?.animation;
