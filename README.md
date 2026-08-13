@@ -7,7 +7,7 @@
 > 本项目在原项目基础上进行了主题系统重构、多账号安全增强、仪表盘功能扩展、脚本搜索能力补全、京东助手独立模块化、全局可更换壁纸系统、统一毛玻璃组件体系等改进，并移除了部分不兼容的依赖与功能。
 ## 相关项目
 
-- [qinglong_app_glass](https://github.com/zhengsh2822/qinglong_app_glass) — 普通版本
+- [qinglong_app_glass](https://github.com/zhengsh2822/qinglong_app_glass) — 主题版本
 
 ## App 功能介绍
 
