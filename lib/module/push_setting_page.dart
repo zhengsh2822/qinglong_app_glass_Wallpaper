@@ -78,7 +78,7 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
                           style: TextStyle(
                             fontSize: 14,
                             color: isCyber ? CyberColors.titleWhite : null,
-                            fontFamily: isCyber ? CyberColors.monoFont : null,
+                            fontFamily: 'MiSans',
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -107,8 +107,7 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
                                                   .watch(themeProvider)
                                                   .themeColor
                                                   .title2Color(),
-                                      fontFamily:
-                                          isCyber ? CyberColors.monoFont : null,
+                                      fontFamily: 'MiSans',
                                     ),
                                   ),
                                 ),
@@ -147,10 +146,7 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
                                                 isCyber
                                                     ? CyberColors.titleWhite
                                                     : null,
-                                            fontFamily:
-                                                isCyber
-                                                    ? CyberColors.monoFont
-                                                    : null,
+                                            fontFamily: 'MiSans',
                                           ),
                                         ),
                                         const SizedBox(height: 10),
@@ -192,7 +188,7 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(18),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 16), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 16)),
+              filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 10), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 10)),
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.transparent,
@@ -241,7 +237,7 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
                                   isCyber
                                       ? CyberColors.cyan
                                       : AppleColors.textPrimary,
-                              fontFamily: isCyber ? CyberColors.monoFont : null,
+                              fontFamily: 'MiSans',
                             ),
                           ),
                           GestureDetector(
@@ -310,10 +306,7 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
                                             selected
                                                 ? FontWeight.w600
                                                 : FontWeight.w400,
-                                        fontFamily:
-                                            isCyber
-                                                ? CyberColors.monoFont
-                                                : null,
+                                        fontFamily: 'MiSans',
                                       ),
                                     ),
                                   ),

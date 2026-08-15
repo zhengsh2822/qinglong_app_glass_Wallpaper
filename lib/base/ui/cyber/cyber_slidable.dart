@@ -101,10 +101,30 @@ class CyberSlidable extends StatelessWidget {
                         },
                         borderRadius: BorderRadius.circular(buttonRadius),
                         child: Center(
-                          child: Icon(
-                            action.icon,
-                            color: Colors.white,
-                            size: 26,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                action.icon,
+                                color: Colors.white,
+                                size: 22,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                action.label,
+                                maxLines: 1,
+                                overflow: TextOverflow.clip,
+                                softWrap: false,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  height: 1.1,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),

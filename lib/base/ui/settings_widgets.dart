@@ -36,7 +36,7 @@ class SettingsCard extends ConsumerWidget {
       margin: margin ?? const EdgeInsets.symmetric(horizontal: 15),
       padding: padding,
       radius: 18,
-      sigma: 15,
+      sigma: 10,
       child: child,
     );
   }

@@ -56,7 +56,7 @@ class GlassTextField extends ConsumerWidget {
     const radius = 24.0;
 
     // 卡片模糊：SP 有设置时覆盖默认 sigma（用户在设置页调节）
-    final effectiveSigma = SpUtil.getDouble(spCardBlurSigma, defValue: 12);
+    final effectiveSigma = SpUtil.getDouble(spCardBlurSigma, defValue: 10);
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(radius),

@@ -90,7 +90,7 @@ class _AddDependencyPageState extends ConsumerState<AddDependencyPage> {
                   ],
                   style: TextStyle(
                     fontSize: 14,
-                    color: ref.watch(themeProvider).themeColor.title2Color(),
+                    color: ref.watch(themeProvider).themeColor.titleColor(),
                   ),
                   decoration: const InputDecoration(
                     isDense: true,

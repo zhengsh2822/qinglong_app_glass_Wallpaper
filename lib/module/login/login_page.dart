@@ -158,7 +158,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       SizedBox(height: MediaQuery.of(context).size.height / 18),
                       // 表单卡片（统一使用 GlassCard，模糊由 SP spCardBlurSigma 调节）
                       GlassCard(
-                        sigma: 12,
+                        sigma: 10,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 20,
                           vertical: 24,
@@ -262,7 +262,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       isCyber
                           ? CyberColors.titleWhite
                           : ref.watch(themeProvider).themeColor.title2Color(),
-                  fontFamily: isCyber ? CyberColors.monoFont : null,
+                  fontFamily: 'MiSans',
                 ),
               ),
             ),
@@ -312,7 +312,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           label: '别名',
           controller: _aliasController,
           hint: '请输入别名(选填),仅用于展示',
-          inputFormatters: [LengthLimitingTextInputFormatter(10)],
+          inputFormatters: [LengthLimitingTextInputFormatter(20)],
         ),
       ],
     );
@@ -332,7 +332,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             ? const TextStyle(
               fontSize: 14,
               color: CyberColors.cyan,
-              fontFamily: CyberColors.monoFont,
+              fontFamily: 'MiSans',
             )
             : TextStyle(
               fontSize: 14,
@@ -348,7 +348,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               ? TextStyle(
                 fontSize: 14,
                 color: CyberColors.titleWhite,
-                fontFamily: CyberColors.monoFont,
+                fontFamily: 'MiSans',
               )
               : TextStyle(
                 fontSize: 16,
@@ -430,7 +430,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             style: TextStyle(
               color: isCyber ? CyberColors.descColor : const Color(0xff555555),
               fontSize: 14,
-              fontFamily: isCyber ? CyberColors.monoFont : null,
+              fontFamily: 'MiSans',
             ),
           ),
           const SizedBox(width: 10),
@@ -484,7 +484,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             color: Colors.white,
                             fontWeight:
                                 isCyber ? FontWeight.bold : FontWeight.normal,
-                            fontFamily: isCyber ? CyberColors.monoFont : null,
+                            fontFamily: 'MiSans',
                           ),
                         ),
                 onPressed: () async {
@@ -545,7 +545,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             ? CyberColors.descColor
                             : const Color(0xff555555),
                     fontSize: 14,
-                    fontFamily: isCyber ? CyberColors.monoFont : null,
+                    fontFamily: 'MiSans',
                   ),
                 ),
               ],
@@ -573,7 +573,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         return ClipRRect(
           borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 16), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 16)),
+            filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 10), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 10)),
             child: Container(
               constraints: BoxConstraints(
                 maxHeight: MediaQuery.of(context).size.height * 0.7,
@@ -619,7 +619,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                         .read(themeProvider)
                                         .themeColor
                                         .titleColor(),
-                            fontFamily: isCyber ? CyberColors.monoFont : null,
+                            fontFamily: 'MiSans',
                           ),
                         ),
                       ),
@@ -673,8 +673,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontFamily:
-                                isCyber ? CyberColors.monoFont : null,
+                            fontFamily: 'MiSans',
                             color:
                                 isCyber
                                     ? CyberColors.titleWhite
@@ -754,6 +753,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       title: '修改名称',
       hintText: '请输入名称',
       initialValue: bean.alias ?? '',
+      inputFormatters: [LengthLimitingTextInputFormatter(20)],
     ).then((newAlias) {
       if (newAlias == null) return;
       final trimmed = newAlias.trim();

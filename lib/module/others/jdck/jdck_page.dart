@@ -687,7 +687,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
           builder: (context, _) {
             final t = curved.value;
             final maskBaseSigma = SpUtil.getDouble(spCardBlurSigma, defValue: 5.0);
-            final cardBaseSigma = SpUtil.getDouble(spCardBlurSigma, defValue: 15.0);
+            final cardBaseSigma = SpUtil.getDouble(spCardBlurSigma, defValue: 10.0);
             return Material(
               color: Colors.transparent,
               child: Stack(
@@ -1726,8 +1726,8 @@ class _JdckPageState extends ConsumerState<JdckPage> {
               ),
               child: BackdropFilter(
                 filter: ImageFilter.blur(
-                  sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 15),
-                  sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 15),
+                  sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 10),
+                  sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 10),
                 ),
                 child: Container(
                   decoration: BoxDecoration(
@@ -1906,7 +1906,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
     return GlassCard(
       margin: const EdgeInsets.all(AppleColors.spaceMd),
       padding: const EdgeInsets.all(AppleColors.spaceSm),
-      sigma: 12,
+      sigma: 10,
       child: Column(
         children: [
           Row(

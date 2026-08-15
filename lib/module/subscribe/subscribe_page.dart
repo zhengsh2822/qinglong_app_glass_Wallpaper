@@ -591,8 +591,7 @@ class TaskItemCell extends StatelessWidget {
                                                 .themeColor
                                                 .titleColor(),
                                     fontSize: 16,
-                                    fontFamily:
-                                        isCyber ? CyberColors.monoFont : null,
+                                    fontFamily: 'MiSans',
                                   ),
                                 ),
                               ),
@@ -629,7 +628,7 @@ class TaskItemCell extends StatelessWidget {
                                     .themeColor
                                     .descColor(),
                         fontSize: 12,
-                        fontFamily: isCyber ? CyberColors.monoFont : null,
+                        fontFamily: 'MiSans',
                       ),
                     ),
                   ),
@@ -650,7 +649,7 @@ class TaskItemCell extends StatelessWidget {
                                     .themeColor
                                     .descColor(),
                         fontSize: 12,
-                        fontFamily: isCyber ? CyberColors.monoFont : null,
+                        fontFamily: 'MiSans',
                       ),
                     ),
                   ),

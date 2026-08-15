@@ -29,7 +29,7 @@ class _BlurSettingsPageState extends ConsumerState<BlurSettingsPage> {
   void initState() {
     super.initState();
     _bgBlurSigma = SpUtil.getDouble(spBgBlurSigma, defValue: 8.0);
-    _cardBlurSigma = SpUtil.getDouble(spCardBlurSigma, defValue: 15.0);
+    _cardBlurSigma = SpUtil.getDouble(spCardBlurSigma, defValue: 10.0);
   }
 
   void _saveBgBlur(double value) {

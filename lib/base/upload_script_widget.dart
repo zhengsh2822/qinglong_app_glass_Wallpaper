@@ -158,6 +158,7 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
         Visibility(
           visible: !widget.onlyShowName,
           child: RichText(
+            textScaler: MediaQuery.textScalerOf(context),
             text: TextSpan(
               text: "上传脚本",
               style: TextStyle(
@@ -251,7 +252,7 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
           child: ClipRRect(
             borderRadius: BorderRadius.circular(18),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 16), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 16)),
+              filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 10), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 10)),
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.transparent,
@@ -297,7 +298,7 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
                               color: isCyber
                                   ? CyberColors.cyan
                                   : AppleColors.textPrimary,
-                              fontFamily: isCyber ? CyberColors.monoFont : null,
+                              fontFamily: 'MiSans',
                             ),
                           ),
                           GestureDetector(
@@ -361,7 +362,7 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
                                             : (isCyber
                                                 ? CyberColors.titleWhite
                                                 : AppleColors.textPrimary),
-                                        fontFamily: isCyber ? CyberColors.monoFont : null,
+                                        fontFamily: 'MiSans',
                                       ),
                                     ),
                                   ),

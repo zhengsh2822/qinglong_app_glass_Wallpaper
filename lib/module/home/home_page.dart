@@ -271,8 +271,8 @@ class HomePageState extends ConsumerState<HomePage> {
                           ),
                           child: BackdropFilter(
                             filter: ImageFilter.blur(
-                              sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 20.0),
-                              sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 20.0),
+                              sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 10.0),
+                              sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 10.0),
                             ),
                             child: Container(
                               decoration: BoxDecoration(
@@ -312,8 +312,8 @@ class HomePageState extends ConsumerState<HomePage> {
                             ),
                             child: BackdropFilter(
                               filter: ImageFilter.blur(
-                                sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 20.0),
-                                sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 20.0),
+                                sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 10.0),
+                                sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 10.0),
                               ),
                               child: Container(
                                 decoration: BoxDecoration(
@@ -529,7 +529,7 @@ class HomePageState extends ConsumerState<HomePage> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(cardRadius),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 12), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 12)),
+        filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 10), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 10)),
         child: Container(
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height - kToolbarHeight * 2,

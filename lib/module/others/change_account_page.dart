@@ -163,7 +163,7 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(18),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 12), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 12)),
+            filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 10), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 10)),
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.transparent,
@@ -185,7 +185,7 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(18),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 12), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 12)),
+            filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 10), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 10)),
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.transparent,
@@ -281,7 +281,7 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontFamily: isCyber ? CyberColors.monoFont : null,
+                    fontFamily: 'MiSans',
                     color:
                         isCyber
                             ? CyberColors.titleWhite
@@ -359,7 +359,7 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(18),
                   child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 12), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 12)),
+                    filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 10), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 10)),
                     child: Container(
                       decoration: BoxDecoration(
                         color: Colors.transparent,
@@ -383,7 +383,7 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(18),
                   child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 12), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 12)),
+                    filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 10), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 10)),
                     child: Container(
                       decoration: BoxDecoration(
                         color: Colors.transparent,

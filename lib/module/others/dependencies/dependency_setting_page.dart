@@ -207,7 +207,7 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
             child: SingleChildScrollView(
               child: SelectableText(
                 detail,
-                style: TextStyle(color: CyberColors.descColor, fontSize: 12, fontFamily: 'monospace'),
+                style: TextStyle(color: CyberColors.descColor, fontSize: 12, fontFamily: 'MiSans'),
               ),
             ),
           ),
@@ -339,7 +339,7 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
     required TextEditingController controller,
   }) {
     return GlassCard(
-      sigma: 15,
+      sigma: 10,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -379,7 +379,7 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
     return SizedBox(
       width: double.infinity,
       child: GlassCard(
-        sigma: 15,
+        sigma: 10,
         padding: const EdgeInsets.symmetric(vertical: 14),
         onTap: _saving ? null : _saveAll,
         child: Center(

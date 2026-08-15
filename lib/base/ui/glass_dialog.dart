@@ -25,7 +25,7 @@ class GlassAlertDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveSigma = SpUtil.getDouble(spCardBlurSigma, defValue: 16);
+    final effectiveSigma = SpUtil.getDouble(spCardBlurSigma, defValue: 10);
     final List<Widget> children = [];
     if (title != null) {
       children.add(

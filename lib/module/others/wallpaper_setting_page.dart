@@ -529,7 +529,7 @@ class _WallpaperSettingPageState extends ConsumerState<WallpaperSettingPage> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(15, 24, 15, 0),
       child: GlassCard(
-        sigma: 12,
+        sigma: 10,
         onTap: () async {
           await WallpaperService.instance.reset();
           _urlController.clear();

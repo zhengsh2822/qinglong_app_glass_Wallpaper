@@ -94,10 +94,15 @@ class AppSlideButton extends StatelessWidget {
                             const SizedBox(height: 2),
                             Text(
                               label!,
+                              maxLines: 1,
+                              overflow: TextOverflow.clip,
+                              softWrap: false,
+                              textAlign: TextAlign.center,
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500,
+                                height: 1.1,
                               ),
                             ),
                           ],

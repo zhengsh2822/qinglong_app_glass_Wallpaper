@@ -8,7 +8,7 @@ import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 
-const double _sheetBlurSigma = 25.0;
+const double _sheetBlurSigma = 10.0;
 const double _sheetBarrierDim = 0.65;
 
 class CupertinoSheer extends ConsumerWidget {
@@ -37,7 +37,7 @@ class CupertinoSheer extends ConsumerWidget {
                 style: TextStyle(
                   color: CyberColors.titleWhite,
                   fontSize: 16,
-                  fontFamily: CyberColors.monoFont,
+                  fontFamily: 'MiSans',
                 ),
               ),
             ),

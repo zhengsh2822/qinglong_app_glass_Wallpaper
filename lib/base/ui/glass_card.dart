@@ -1,10 +1,9 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 
 /// 通用透明毛玻璃卡片组件。
@@ -21,8 +20,9 @@ import 'package:qinglong_app/utils/sp_utils.dart';
 /// - 暗色主题（cyber/dark）：深色 50% 不透明 + 青色微光边框
 ///
 /// 性能要点：
-/// - 使用 [RepaintBoundary] 隔离模糊区域，避免整棵树重绘
-/// - sigma 默认 15，列表场景建议 ≤10 以保证滚动流畅
+/// - 使用 [OptimizedFrostedGlass]：ClipRect(hardEdge) 限制模糊区域 +
+///   RepaintBoundary 隔离重绘 + sigma ≤10 + 可选滚动缓存
+/// - sigma 默认 10，列表场景建议 ≤10 以保证滚动流畅
 class GlassCard extends ConsumerWidget {
   final Widget child;
   final EdgeInsets? margin;
@@ -36,19 +36,23 @@ class GlassCard extends ConsumerWidget {
   final VoidCallback? onTap;
   final BorderRadius? borderRadius;
 
+  /// 是否启用滚动缓存（用于列表中的卡片，滚动期间用静态缓存图替代实时模糊）
+  final bool enableScrollCache;
+
   const GlassCard({
     super.key,
     required this.child,
     this.margin,
     this.padding,
     this.radius = AppleColors.radiusCard,
-    this.sigma = 15,
+    this.sigma = 10,
     this.color,
     this.borderColor,
     this.borderWidth = 1,
     this.boxShadow,
     this.onTap,
     this.borderRadius,
+    this.enableScrollCache = false,
   });
 
   @override
@@ -68,45 +72,43 @@ class GlassCard extends ConsumerWidget {
     // 卡片模糊：SP 有设置时覆盖默认 sigma（用户在设置页调节）
     final effectiveSigma = SpUtil.getDouble(spCardBlurSigma, defValue: sigma);
 
-    return RepaintBoundary(
-      child: Container(
-        margin: margin,
-        child: ClipRRect(
-          borderRadius: br,
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: effectiveSigma, sigmaY: effectiveSigma),
-            child: Container(
-              decoration: BoxDecoration(
-                color: effectiveColor,
-                borderRadius: br,
-                border: Border.all(
-                  color: effectiveBorder,
-                  width: borderWidth,
-                ),
-                // 顶部高光：模拟光线照射玻璃边缘
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.white.withOpacity(isDark ? 0.06 : 0.18),
-                    Colors.white.withOpacity(0.0),
-                  ],
-                  stops: const [0.0, 0.15],
-                ),
-              ),
-              padding: padding,
-              child: onTap != null
-                  ? Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: onTap,
-                        borderRadius: br,
-                        child: child,
-                      ),
-                    )
-                  : child,
+    return Container(
+      margin: margin,
+      child: OptimizedFrostedGlass(
+        sigma: effectiveSigma,
+        tintColor: Colors.transparent,
+        borderRadius: br,
+        enableScrollCache: enableScrollCache,
+        child: Container(
+          decoration: BoxDecoration(
+            color: effectiveColor,
+            borderRadius: br,
+            border: Border.all(
+              color: effectiveBorder,
+              width: borderWidth,
+            ),
+            // 顶部高光：模拟光线照射玻璃边缘
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.white.withOpacity(isDark ? 0.06 : 0.18),
+                Colors.white.withOpacity(0.0),
+              ],
+              stops: const [0.0, 0.15],
             ),
           ),
+          padding: padding,
+          child: onTap != null
+              ? Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: onTap,
+                    borderRadius: br,
+                    child: child,
+                  ),
+                )
+              : child,
         ),
       ),
     );
@@ -122,6 +124,7 @@ class GlassCard extends ConsumerWidget {
 /// 特性：
 /// - 圆角 18，水平 margin 15（与原项目一致）
 /// - 默认 sigma 10（适合列表滚动）
+/// - 启用滚动缓存（列表滚动期间用静态缓存图替代实时模糊，提升帧率）
 /// - 支持 [onTap]（自动包 Material+InkWell）
 class GlassListItemCard extends ConsumerWidget {
   final Widget child;
@@ -154,41 +157,40 @@ class GlassListItemCard extends ConsumerWidget {
     // 卡片模糊：SP 有设置时覆盖默认 sigma（用户在设置页调节）
     final effectiveSigma = SpUtil.getDouble(spCardBlurSigma, defValue: sigma);
 
-    return RepaintBoundary(
-      child: Container(
-        margin: margin ?? const EdgeInsets.symmetric(horizontal: 15),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(radius),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: effectiveSigma, sigmaY: effectiveSigma),
-            child: Container(
-              decoration: BoxDecoration(
-                color: effectiveColor,
-                borderRadius: BorderRadius.circular(radius),
-                border: Border.all(color: effectiveBorder, width: 1),
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.white.withOpacity(isDark ? 0.05 : 0.15),
-                    Colors.white.withOpacity(0.0),
-                  ],
-                  stops: const [0.0, 0.15],
-                ),
-              ),
-              padding: padding,
-              child: onTap != null
-                  ? Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: onTap,
-                        borderRadius: BorderRadius.circular(radius),
-                        child: child,
-                      ),
-                    )
-                  : child,
+    return Container(
+      margin: margin ?? const EdgeInsets.symmetric(horizontal: 15),
+      child: OptimizedFrostedGlass(
+        sigma: effectiveSigma,
+        tintColor: Colors.transparent,
+        borderRadius: BorderRadius.circular(radius),
+        // 关闭滚动缓存：滚动/下拉刷新时保持实时毛玻璃，避免缓存图导致卡片样式变化
+        enableScrollCache: false,
+        child: Container(
+          decoration: BoxDecoration(
+            color: effectiveColor,
+            borderRadius: BorderRadius.circular(radius),
+            border: Border.all(color: effectiveBorder, width: 1),
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.white.withOpacity(isDark ? 0.05 : 0.15),
+                Colors.white.withOpacity(0.0),
+              ],
+              stops: const [0.0, 0.15],
             ),
           ),
+          padding: padding,
+          child: onTap != null
+              ? Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: onTap,
+                    borderRadius: BorderRadius.circular(radius),
+                    child: child,
+                  ),
+                )
+              : child,
         ),
       ),
     );
@@ -254,7 +256,7 @@ class GlassAppBarContainer extends ConsumerWidget {
   const GlassAppBarContainer({
     super.key,
     required this.child,
-    this.sigma = 20,
+    this.sigma = 10,
   });
 
   @override
@@ -270,27 +272,26 @@ class GlassAppBarContainer extends ConsumerWidget {
     // 卡片模糊：SP 有设置时覆盖默认 sigma（用户在设置页调节）
     final effectiveSigma = SpUtil.getDouble(spCardBlurSigma, defValue: sigma);
 
-    return ClipRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: effectiveSigma, sigmaY: effectiveSigma),
-        child: Container(
-          decoration: BoxDecoration(
-            color: effectiveColor,
-            border: Border(
-              bottom: BorderSide(color: effectiveBorder, width: 0.5),
-            ),
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.white.withOpacity(isDark ? 0.06 : 0.18),
-                Colors.white.withOpacity(0.0),
-              ],
-              stops: const [0.0, 0.5],
-            ),
+    return OptimizedFrostedGlass(
+      sigma: effectiveSigma,
+      tintColor: Colors.transparent,
+      child: Container(
+        decoration: BoxDecoration(
+          color: effectiveColor,
+          border: Border(
+            bottom: BorderSide(color: effectiveBorder, width: 0.5),
           ),
-          child: child,
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.white.withOpacity(isDark ? 0.06 : 0.18),
+              Colors.white.withOpacity(0.0),
+            ],
+            stops: const [0.0, 0.5],
+          ),
         ),
+        child: child,
       ),
     );
   }

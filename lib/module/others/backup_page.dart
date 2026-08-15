@@ -100,7 +100,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   /// 备份区域
   Widget _buildBackupSection() {
     return GlassCard(
-      sigma: 15,
+      sigma: 10,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,7 +189,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
           SizedBox(
             width: double.infinity,
             child: GlassCard(
-              sigma: 15,
+              sigma: 10,
               padding: const EdgeInsets.symmetric(vertical: 14),
               onTap: _processing ? null : _doBackup,
               child: Center(
@@ -212,7 +212,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   /// 恢复区域
   Widget _buildRestoreSection() {
     return GlassCard(
-      sigma: 15,
+      sigma: 10,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -234,7 +234,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
           SizedBox(
             width: double.infinity,
             child: GlassCard(
-              sigma: 15,
+              sigma: 10,
               padding: const EdgeInsets.symmetric(vertical: 14),
               onTap: _processing ? null : _doRestore,
               child: Center(
@@ -444,7 +444,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
           child: ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
               child: Container(
                 color: (isCyber ? CyberColors.bg : AppleColors.bgSecondary).withOpacity(0.85),
                 padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -544,7 +544,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
           child: ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
               child: Container(
                 color: (isCyber ? CyberColors.bg : AppleColors.bgSecondary).withOpacity(0.85),
                 padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -602,7 +602,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                         SizedBox(
                           width: double.infinity,
                           child: GlassCard(
-                            sigma: 15,
+                            sigma: 10,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             onTap: () async {
                               Navigator.pop(context);
@@ -670,7 +670,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
           child: ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
               child: Container(
                 color: (isCyber ? CyberColors.bg : AppleColors.bgSecondary).withOpacity(0.85),
                 child: Column(

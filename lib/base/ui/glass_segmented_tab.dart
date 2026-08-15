@@ -95,7 +95,7 @@ class _TabBarSlider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final int count = tabs.length;
-    final effectiveSigma = SpUtil.getDouble(spCardBlurSigma, defValue: 15);
+    final effectiveSigma = SpUtil.getDouble(spCardBlurSigma, defValue: 10);
 
     // LayoutBuilder 提到 AnimatedBuilder 外层，避免每帧动画都重新布局
     return LayoutBuilder(

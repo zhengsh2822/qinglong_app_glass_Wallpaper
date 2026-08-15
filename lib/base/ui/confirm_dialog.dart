@@ -9,7 +9,7 @@ import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 
-const double _dialogBlurSigma = 25.0;
+const double _dialogBlurSigma = 10.0;
 const double _dialogBorderRadius = 18.0;
 const double _dialogBarrierDim = 0.65;
 const Duration _dialogTransitionDuration = Duration(milliseconds: 400);

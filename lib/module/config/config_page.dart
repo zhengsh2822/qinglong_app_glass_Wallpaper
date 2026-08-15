@@ -215,7 +215,7 @@ class ConfigCell extends ConsumerWidget {
                     isCyber ? CyberColors.titleWhite : AppleColors.textPrimary,
                 fontSize: 17,
                 fontWeight: isCyber ? null : FontWeight.w600,
-                fontFamily: isCyber ? CyberColors.monoFont : null,
+                fontFamily: 'MiSans',
               ),
             ),
           ),

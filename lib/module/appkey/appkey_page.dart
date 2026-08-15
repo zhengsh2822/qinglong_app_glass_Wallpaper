@@ -1,15 +1,13 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/base_state_widget.dart';
+import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
-import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
@@ -17,9 +15,9 @@ import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/search_cell.dart';
+import 'package:qinglong_app/base/ui/tag_chip.dart';
 import 'package:qinglong_app/module/appkey/appkey_detail_page.dart';
 import 'package:qinglong_app/module/appkey/appkey_viewmodel.dart';
-import 'package:qinglong_app/utils/sp_utils.dart';
 import 'package:qinglong_app/utils/utils.dart';
 
 import 'add_appkey_page.dart';
@@ -102,6 +100,8 @@ class _AppKeyPageState extends ConsumerState<AppKeyPage> {
               Navigator.of(context)
                   .push(
                     WallpaperPageRoute(
+                      blurSigma: 8,
+                      blurTintColor: CyberColors.bg.withOpacity(0.50),
                       builder: (context) => const AddAppKeyPage(bean: {}),
                     ),
                   )
@@ -272,40 +272,7 @@ class AppKeyItemCell extends StatelessWidget {
                     AppKeyViewModel.getScopeNames(
                           (bean["scopes"] as List<dynamic>?),
                         )
-                        .map(
-                          (e) => ClipRRect(
-                            borderRadius: BorderRadius.circular(5),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(
-                                sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 8),
-                                sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 8),
-                              ),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 3,
-                                  horizontal: 5,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.transparent,
-                                  borderRadius: BorderRadius.circular(5),
-                                  border: Border.all(
-                                    color: CyberColors.borderGlow,
-                                    width: 0.5,
-                                  ),
-                                ),
-                                child: Text(
-                                  e,
-                                  maxLines: 1,
-                                  style: TextStyle(
-                                    overflow: TextOverflow.ellipsis,
-                                    color: CyberColors.titleWhite,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        )
+                        .map((e) => TagChip(label: e))
                         .toList(),
               ),
               const SizedBox(height: 5),
@@ -326,6 +293,8 @@ class AppKeyItemCell extends StatelessWidget {
               Navigator.of(context)
                   .push(
                     WallpaperPageRoute(
+                      blurSigma: 8,
+                      blurTintColor: CyberColors.bg.withOpacity(0.50),
                       builder: (context) => AddAppKeyPage(bean: bean),
                     ),
                   )

@@ -8,7 +8,7 @@ import 'package:qinglong_app/utils/sp_utils.dart';
 
 class CyberDialog {
   static const double borderRadius = 18.0;
-  static const double blurSigma = 25.0;
+  static const double blurSigma = 10.0;
   static const double dimOpacity = 0.3;
   static const double barrierDim = 0.65;
 
@@ -122,7 +122,7 @@ class CyberInputDecoration {
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     hintStyle: TextStyle(
       color: Colors.white.withValues(alpha: 0.3),
-      fontFamily: CyberColors.monoFont,
+      fontFamily: 'MiSans',
       fontSize: 14,
     ),
   );
@@ -176,7 +176,7 @@ class CyberGhostButton extends StatelessWidget {
             style: TextStyle(
               color: textColor,
               fontSize: 15,
-              fontFamily: CyberColors.monoFont,
+              fontFamily: 'MiSans',
               fontWeight: primary || danger ? FontWeight.w600 : FontWeight.w500,
             ),
           ),
@@ -243,7 +243,7 @@ Future<bool?> showEditTaskDialog(
                 style: TextStyle(
                   color: CyberColors.cyan,
                   fontSize: 17,
-                  fontFamily: CyberColors.monoFont,
+                  fontFamily: 'MiSans',
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -317,13 +317,13 @@ Future<bool?> showEditTaskDialog(
 const TextStyle _labelStyle = TextStyle(
   color: Colors.white70,
   fontSize: 12,
-  fontFamily: CyberColors.monoFont,
+  fontFamily: 'MiSans',
 );
 
 final TextStyle _inputStyle = TextStyle(
   color: CyberColors.titleWhite,
   fontSize: 14,
-  fontFamily: CyberColors.monoFont,
+  fontFamily: 'MiSans',
 );
 
 Future<bool?> showCyberConfirmDialog(
@@ -352,7 +352,7 @@ Future<bool?> showCyberConfirmDialog(
               style: TextStyle(
                 color: danger ? CyberColors.neonRed : CyberColors.cyan,
                 fontSize: 17,
-                fontFamily: CyberColors.monoFont,
+                fontFamily: 'MiSans',
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -407,7 +407,7 @@ Future<String?> showEditScriptDialog(
               style: TextStyle(
                 color: CyberColors.cyan,
                 fontSize: 17,
-                fontFamily: CyberColors.monoFont,
+                fontFamily: 'MiSans',
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -427,7 +427,7 @@ Future<String?> showEditScriptDialog(
                     style: TextStyle(
                       color: CyberColors.titleWhite,
                       fontSize: 13,
-                      fontFamily: CyberColors.monoFont,
+                      fontFamily: 'MiSans',
                       height: 1.5,
                     ),
                     decoration: const InputDecoration(
@@ -484,7 +484,7 @@ Future<String?> showCyberInputDialog(
               style: TextStyle(
                 color: CyberColors.cyan,
                 fontSize: 17,
-                fontFamily: CyberColors.monoFont,
+                fontFamily: 'MiSans',
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -498,7 +498,7 @@ Future<String?> showCyberInputDialog(
               style: TextStyle(
                 color: CyberColors.titleWhite,
                 fontSize: 14,
-                fontFamily: CyberColors.monoFont,
+                fontFamily: 'MiSans',
               ),
               decoration: CyberInputDecoration.standard.copyWith(
                 hintText: hintText,
@@ -547,7 +547,7 @@ Future<int?> showCyberFrequencyDialog(
               style: TextStyle(
                 color: CyberColors.cyan,
                 fontSize: 17,
-                fontFamily: CyberColors.monoFont,
+                fontFamily: 'MiSans',
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -560,7 +560,7 @@ Future<int?> showCyberFrequencyDialog(
                   style: TextStyle(
                     color: CyberColors.titleWhite,
                     fontSize: 15,
-                    fontFamily: CyberColors.monoFont,
+                    fontFamily: 'MiSans',
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -573,7 +573,7 @@ Future<int?> showCyberFrequencyDialog(
                     style: TextStyle(
                       color: CyberColors.titleWhite,
                       fontSize: 15,
-                      fontFamily: CyberColors.monoFont,
+                      fontFamily: 'MiSans',
                     ),
                     decoration: CyberInputDecoration.standard.copyWith(
                       hintText: '',
@@ -586,7 +586,7 @@ Future<int?> showCyberFrequencyDialog(
                   style: TextStyle(
                     color: CyberColors.titleWhite,
                     fontSize: 15,
-                    fontFamily: CyberColors.monoFont,
+                    fontFamily: 'MiSans',
                   ),
                 ),
               ],

@@ -145,7 +145,34 @@ class QlAppState extends ConsumerState<QlApp> with WidgetsBindingObserver {
         // ignore
       }
     }
+    _preheatFonts();
     setState(() {});
+  }
+
+  /// 预热字体字形缓存，避免滑动时首次遇到新字符导致微卡
+  /// MiSans 每个字重 8MB，包含大量 CJK 字形，首次光栅化会有延迟
+  void _preheatFonts() {
+    // 包含常用汉字、数字、字母、标点，覆盖大多数 UI 文本
+    const preloadText =
+        '青龙面板任务脚本订阅依赖环境变量配置系统设置登录账号密码通知推送备份恢复关于仪表盘京东助手悬浮时间扫描字体大小文件排序修改历史记录运行停止启用禁用删除编辑搜索确认取消返回保存0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      for (final weight in [FontWeight.w400, FontWeight.w500, FontWeight.w600]) {
+        final painter = TextPainter(
+          text: TextSpan(
+            text: preloadText,
+            style: TextStyle(
+              fontFamily: 'MiSans',
+              fontWeight: weight,
+              fontSize: 14,
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+          maxLines: 1,
+        );
+        painter.layout();
+        painter.dispose();
+      }
+    });
   }
 
   void updateTextScaleFactor(double target) {

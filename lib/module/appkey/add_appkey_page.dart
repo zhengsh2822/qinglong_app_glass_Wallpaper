@@ -18,6 +18,7 @@ import '../../base/single_account_page.dart';
 import '../../base/theme.dart';
 import '../../base/ui/glass_card.dart';
 import '../../base/ui/glass_text_field.dart';
+import '../../base/ui/tag_chip.dart';
 import '../subscribe/add_subscribe_page.dart';
 
 
@@ -180,39 +181,7 @@ class _AddAppKeyPageState extends ConsumerState<AddAppKeyPage> {
                               runSpacing: 5,
                               spacing: 5,
                               children: selectedPermissions
-                                  .map((e) => ClipRRect(
-                                        borderRadius: BorderRadius.circular(5),
-                                        child: BackdropFilter(
-                                          filter: ImageFilter.blur(
-                                            sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 8),
-                                            sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 8),
-                                          ),
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              vertical: 3,
-                                              horizontal: 5,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: Colors.transparent,
-                                              borderRadius:
-                                                  BorderRadius.circular(5),
-                                              border: Border.all(
-                                                color: CyberColors.borderGlow,
-                                                width: 0.5,
-                                              ),
-                                            ),
-                                            child: Text(
-                                              e,
-                                              maxLines: 1,
-                                              style: TextStyle(
-                                                overflow: TextOverflow.ellipsis,
-                                                color: CyberColors.titleWhite,
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ))
+                                  .map((e) => TagChip(label: e))
                                   .toList(),
                             ),
                           ),
@@ -253,8 +222,8 @@ class _AddAppKeyPageState extends ConsumerState<AddAppKeyPage> {
                 borderRadius: BorderRadius.circular(18),
                 child: BackdropFilter(
                   filter: ImageFilter.blur(
-                    sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 16),
-                    sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 16),
+                    sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 10),
+                    sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 10),
                   ),
                   child: Container(
                     decoration: BoxDecoration(
@@ -291,7 +260,7 @@ class _AddAppKeyPageState extends ConsumerState<AddAppKeyPage> {
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                   color: CyberColors.cyan,
-                                  fontFamily: CyberColors.monoFont,
+                                  fontFamily: 'MiSans',
                                 ),
                               ),
                               GestureDetector(
@@ -349,7 +318,7 @@ class _AddAppKeyPageState extends ConsumerState<AddAppKeyPage> {
                                             fontWeight: selected
                                                 ? FontWeight.w600
                                                 : FontWeight.w400,
-                                            fontFamily: CyberColors.monoFont,
+                                            fontFamily: 'MiSans',
                                           ),
                                         ),
                                       ),

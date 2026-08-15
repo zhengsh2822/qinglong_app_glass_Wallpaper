@@ -286,6 +286,7 @@ class _TreeNodeState extends ConsumerState<TreeNode> with SingleTickerProviderSt
               context: context,
               color: isCyber ? CyberColors.neonRed : const Color(0xffEA4D3E),
               icon: CupertinoIcons.delete,
+              label: '删除',
               cyberMode: isCyber,
               width: 60,
               onTap: () {
