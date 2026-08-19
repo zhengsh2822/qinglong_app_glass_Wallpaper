@@ -8,7 +8,7 @@ class ShareUtils {
 
   static Future<void> shareApp() async {
     const String shareText =
-        '分享一款好用的青龙客户端，快去点击下面的链接地址下载吧 https://github.com/ayoulx/qinglong-app';
+        '分享一款好用的青龙客户端，快去点击下面的链接地址下载吧 https://github.com/zhengsh2822/qinglong_app_glass_Wallpaper';
     await Share.share(shareText, subject: '青龙客户端');
   }
 }

@@ -9,6 +9,7 @@ import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
+import 'package:qinglong_app/base/ui/selectable_chip.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/file_picker_utils.dart';
@@ -31,14 +32,23 @@ class BackupPage extends ConsumerStatefulWidget {
 }
 
 class _BackupPageState extends ConsumerState<BackupPage> {
-  // 备份内容选项
+  // 备份内容选项（对齐青龙官方导出数据 API 的 type 枚举，共 10 项）
   final Map<String, String> _backupOptions = {
+    'base': '基础数据',
     'config': '配置文件',
-    'scripts': '脚本',
-    'deps': '依赖',
-    'log': '日志',
+    'scripts': '脚本文件',
+    'log': '日志文件',
+    'deps': '依赖文件',
+    'syslog': '系统日志',
+    'dep_cache': '依赖缓存',
+    'raw': '远程脚本缓存',
+    'repo': '远程仓库缓存',
+    'ssh.d': 'SSH 文件缓存',
   };
-  final Set<String> _selected = {'config', 'scripts'};
+  // 基础数据固定包含，不可取消（对齐网页版）
+  static const String _baseKey = 'base';
+
+  final Set<String> _selected = {'base', 'config', 'scripts'};
 
   bool _processing = false;
   String _statusText = '';
@@ -120,7 +130,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
           ),
           const SizedBox(height: 14),
           Text(
-            '备份内容（默认包含数据库和上传文件）',
+            '备份内容（基础数据固定包含，不可取消）',
             style: TextStyle(fontSize: 13, color: CyberColors.descColor),
           ),
           const SizedBox(height: 8),
@@ -128,60 +138,24 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             spacing: 8,
             runSpacing: 8,
             children: _backupOptions.entries.map((entry) {
-              final selected = _selected.contains(entry.key);
-              return GestureDetector(
-                onTap: _processing
+              final isBase = entry.key == _baseKey;
+              // 基础数据固定选中不可取消（对齐网页版），其余可勾选
+              final selected = isBase || _selected.contains(entry.key);
+              return SelectableChip(
+                label: entry.value,
+                selected: selected,
+                disabled: _processing,
+                onToggle: isBase
                     ? null
-                    : () {
+                    : (value) {
                         setState(() {
-                          if (selected) {
-                            _selected.remove(entry.key);
-                          } else {
+                          if (value) {
                             _selected.add(entry.key);
+                          } else {
+                            _selected.remove(entry.key);
                           }
                         });
                       },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? CyberColors.cyan.withOpacity(0.15)
-                        : Colors.white.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: selected
-                          ? CyberColors.cyan.withOpacity(0.6)
-                          : CyberColors.descColor.withOpacity(0.3),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        selected
-                            ? CupertinoIcons.checkmark_circle_fill
-                            : CupertinoIcons.circle,
-                        size: 16,
-                        color: selected
-                            ? CyberColors.cyan
-                            : CyberColors.descColor,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        entry.value,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: selected
-                              ? CyberColors.titleWhite
-                              : CyberColors.descColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               );
             }).toList(),
           ),

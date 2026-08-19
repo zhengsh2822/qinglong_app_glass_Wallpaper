@@ -207,6 +207,7 @@ class _AddAppKeyPageState extends ConsumerState<AddAppKeyPage> {
       "脚本管理",
       "任务日志",
       "依赖管理",
+      "订阅管理",
       "系统信息",
     ];
 

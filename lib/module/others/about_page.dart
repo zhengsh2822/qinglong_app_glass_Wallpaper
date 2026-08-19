@@ -283,7 +283,7 @@ class _AboutPageState extends ConsumerState<AboutPage>
                             try {
                               await launchUrl(
                                 Uri.tryParse(
-                                  "https://github.com/ayoulx/qinglong-app",
+                                  "https://github.com/zhengsh2822/qinglong_app_glass_Wallpaper",
                                 )!,
                               );
                             } catch (e) {

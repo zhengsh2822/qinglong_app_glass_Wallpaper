@@ -70,8 +70,8 @@ class AppKeyViewModel extends BaseViewModel {
   }
 
   static List<String> getScopeNames(List<dynamic>? scopeKeys) {
-    //"crons","envs","configs","scripts","logs","dependencies","system"
-    //配置文件脚本管理环境变量任务日志
+    //"crons","envs","configs","scripts","logs","dependencies","subscriptions","system"
+    //配置文件脚本管理环境变量任务日志订阅管理
     Map<String, String> keyMaps = {
       "crons": "定时任务",
       "envs": "环境变量",
@@ -79,20 +79,25 @@ class AppKeyViewModel extends BaseViewModel {
       "scripts": "脚本管理",
       "logs": "任务日志",
       "dependencies": "依赖管理",
+      "subscriptions": "订阅管理",
       "system": "系统信息",
     };
 
     List<String> result = [];
 
     if (scopeKeys == null) return [];
-    result.addAll(scopeKeys.map((e) => keyMaps[e.toString()] ?? "").toList());
+    // 未识别的自定义 scope key 原样返回（青龙新增权限时无需等 App 更新，
+    // 手动输入的自定义 key 也能正常展示）
+    result.addAll(
+      scopeKeys.map((e) => keyMaps[e.toString()] ?? e.toString()).toList(),
+    );
 
     return result;
   }
 
   static List<String> getScopeKeys(List<String> scopeNames) {
-    //"crons","envs","configs","scripts","logs","dependencies","system"
-    //配置文件脚本管理环境变量任务日志
+    //"crons","envs","configs","scripts","logs","dependencies","subscriptions","system"
+    //配置文件脚本管理环境变量任务日志订阅管理
     Map<String, String> keyMaps = {
       "定时任务": "crons",
       "环境变量": "envs",
@@ -100,6 +105,7 @@ class AppKeyViewModel extends BaseViewModel {
       "脚本管理": "scripts",
       "任务日志": "logs",
       "依赖管理": "dependencies",
+      "订阅管理": "subscriptions",
       "系统信息": "system",
     };
 
