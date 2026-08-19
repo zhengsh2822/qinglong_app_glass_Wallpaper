@@ -78,7 +78,7 @@ class _AppKeyPageState extends ConsumerState<AppKeyPage> {
     final _ = ref.watch(themeProvider);
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
     Widget scaffold = Scaffold(
-      // 赛博模式下设为透明，让 CyberBackground 的渐变背景透出
+      // 赛博模式下设为透明，让全局壁纸透出
       backgroundColor: Colors.transparent,
       floatingActionButton: Visibility(
         visible: buttonshow,
@@ -183,10 +183,8 @@ class _AppKeyPageState extends ConsumerState<AppKeyPage> {
                               searchText.text.toLowerCase(),
                             ) ??
                             false)) {
-                      return Container(
-                        color: Colors.transparent,
-                        child: const Divider(height: 1, indent: 15),
-                      );
+                      // 卡片间距12px，不用分割线（与定时任务/环境变量一致）
+                      return const SizedBox(height: 12);
                     } else {
                       return const SizedBox.shrink();
                     }
@@ -282,63 +280,71 @@ class AppKeyItemCell extends StatelessWidget {
       ),
     );
     if (isCyber) {
-      cardChild = CyberSlidable(
-        slidableKey: ValueKey(getAppKeyId(bean)),
-        endActions: [
-          CyberSlideAction(
-            label: '编辑',
-            icon: CupertinoIcons.pencil_outline,
-            color: const Color(0xFF00F0FF),
-            onTap: () {
-              Navigator.of(context)
-                  .push(
-                    WallpaperPageRoute(
-                      blurSigma: 8,
-                      blurTintColor: CyberColors.bg.withOpacity(0.50),
-                      builder: (context) => AddAppKeyPage(bean: bean),
-                    ),
-                  )
-                  .then((value) {
-                    if (value != null && value == true) {
-                      ref
-                          .read(
-                            SingleAccountPageState.ofAppKeyProvider(context)(
-                              getProviderName(context),
-                            ),
-                          )
-                          .loadData(context);
-                    }
-                  });
-            },
-          ),
-          CyberSlideAction(
-            label: '重置',
-            icon: CupertinoIcons.arrow_2_circlepath,
-            color: const Color(0xFFA356D6),
-            onTap: () {
-              WidgetsBinding.instance.endOfFrame.then((value) {
-                _reset(context);
-              });
-            },
-          ),
-          CyberSlideAction(
-            label: '删除',
-            icon: CupertinoIcons.delete,
-            color: const Color(0xFFFF3D5C),
-            onTap: () {
-              WidgetsBinding.instance.endOfFrame.then((value) {
-                _del(context, ref);
-              });
-            },
-          ),
-        ],
-        child: cardChild,
+      // 外层 Container margin 让滑出按钮在卡片外（与定时任务/环境变量一致）
+      cardChild = Container(
+        margin: const EdgeInsets.symmetric(horizontal: 12),
+        child: CyberSlidable(
+          slidableKey: ValueKey(getAppKeyId(bean)),
+          endActions: [
+            CyberSlideAction(
+              label: '编辑',
+              icon: CupertinoIcons.pencil_outline,
+              color: const Color(0xFF00F0FF),
+              onTap: () {
+                Navigator.of(context)
+                    .push(
+                      WallpaperPageRoute(
+                        blurSigma: 8,
+                        blurTintColor: CyberColors.bg.withOpacity(0.50),
+                        builder: (context) => AddAppKeyPage(bean: bean),
+                      ),
+                    )
+                    .then((value) {
+                      if (value != null && value == true) {
+                        ref
+                            .read(
+                              SingleAccountPageState.ofAppKeyProvider(context)(
+                                getProviderName(context),
+                              ),
+                            )
+                            .loadData(context);
+                      }
+                    });
+              },
+            ),
+            CyberSlideAction(
+              label: '重置',
+              icon: CupertinoIcons.arrow_2_circlepath,
+              color: const Color(0xFFA356D6),
+              onTap: () {
+                WidgetsBinding.instance.endOfFrame.then((value) {
+                  _reset(context);
+                });
+              },
+            ),
+            CyberSlideAction(
+              label: '删除',
+              icon: CupertinoIcons.delete,
+              color: const Color(0xFFFF3D5C),
+              onTap: () {
+                WidgetsBinding.instance.endOfFrame.then((value) {
+                  _del(context, ref);
+                });
+              },
+            ),
+          ],
+          child: cardChild,
+        ),
       );
     }
-    return GlassListItemCard(
-      sigma: 8,
-      padding: EdgeInsets.zero,
-      child: cardChild,
+    // 非 cyber 模式：GlassListItemCard 外层加 margin，保持与定时任务一致
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
+      child: GlassListItemCard(
+        sigma: 8,
+        padding: EdgeInsets.zero,
+        child: cardChild,
+      ),
     );
   }
 
