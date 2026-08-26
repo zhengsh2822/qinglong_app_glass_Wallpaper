@@ -37,6 +37,18 @@ class ConfigPageState extends ConsumerState<ConfigPage>
   BuildContext? childContext;
   String? configContent;
   bool gotoConfigDetailed = false;
+  final ScrollController _scrollController = ScrollController();
+
+  /// 双击底部导航"配置"tab / 双击状态栏区域时回到列表顶部
+  Future<void> move2Top() async {
+    if (!_scrollController.hasClients) return;
+    if (_scrollController.offset <= 0) return;
+    await _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.linear,
+    );
+  }
 
   @override
   void initState() {
@@ -168,7 +180,8 @@ class ConfigPageState extends ConsumerState<ConfigPage>
                       return model.loadData(context, false);
                     },
                     child: ListView(
-                      primary: true,
+                      controller: _scrollController,
+                      primary: false,
                       padding: const EdgeInsets.only(
                         bottom: kBottomNavigationBarHeight + 50,
                       ),
@@ -191,6 +204,7 @@ class ConfigPageState extends ConsumerState<ConfigPage>
 
   @override
   void dispose() {
+    _scrollController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }

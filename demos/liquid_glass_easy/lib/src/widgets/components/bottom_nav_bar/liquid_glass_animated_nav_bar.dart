@@ -577,7 +577,12 @@ class _LiquidGlassAnimatedNavBarState extends State<LiquidGlassAnimatedNavBar>
 
   // ── Selection / animation ────────────────────────────────────────
   void _animateTo(int next, {required bool notify}) {
-    if (next == _tabIndex) return;
+    if (next == _tabIndex) {
+      // 点击已选中的 tab：不发动画，但需要把事件上抛给宿主。
+      // 宿主据此实现"双击当前 tab 回到顶部"（单击切换 tab 由 else 分支处理）。
+      if (notify) widget.onChanged(next);
+      return;
+    }
     setState(() {
       _tabIndex = next;
       _travelActive = true;
