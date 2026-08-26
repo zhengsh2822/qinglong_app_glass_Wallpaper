@@ -500,9 +500,9 @@ class HomePageState extends ConsumerState<HomePage> {
           ),
         ),
       ),
-      // 长按 500ms：我的弹窗（onLongTapItem 返回 true 消费长按，不拖拽 pill）；
-      // 其他 tab 保留官方长按抓取拖拽（longPressDuration 同步为 500ms，与旧自研一致）
-      longPressDuration: const Duration(milliseconds: 500),
+      // 长按 100ms：跟随官方 demo 默认（最长按抓取响应）；"我的"弹窗
+      // 复用同时长，若日常滑动易误触可上调
+      longPressDuration: const Duration(milliseconds: 100),
       onLongTapItem: (i) {
         if (i == 3) {
           HapticFeedback.mediumImpact();
