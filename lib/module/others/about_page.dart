@@ -536,16 +536,33 @@ class _AboutPageState extends ConsumerState<AboutPage>
         return;
       }
       final data = resp.data as Map;
-      final publishedAt = DateTime.tryParse(
+      // 版本号固定不变，只能靠时间判断；
+      // 上传新安装包时常替换同一 release 的附件（asset），release 的 published_at 不会更新，
+      // 因此必须取 APK 附件的最新上传时间（updated_at）作为版本时间，否则永远检测不到新包。
+      DateTime? publishedAt;
+      final assets = data['assets'];
+      if (assets is List) {
+        for (final a in assets) {
+          if (a is Map) {
+            final t = DateTime.tryParse(a['updated_at']?.toString() ?? '');
+            if (t != null && (publishedAt == null || t.isAfter(publishedAt))) {
+              publishedAt = t;
+            }
+          }
+        }
+      }
+      publishedAt ??= DateTime.tryParse(
         data['published_at']?.toString() ?? '',
       );
       if (publishedAt == null) {
         "获取更新信息失败".toast();
         return;
       }
+      // 闭包内引用需要 final 局部变量（可空类型无法在闭包中窄化）
+      final DateTime releaseTime = publishedAt;
       // 与本地已确认的 release 时间对比：有更新的 release 才提示
       final last = SpUtil.getInt(spGithubLastReleaseTime, defValue: 0);
-      if (publishedAt.millisecondsSinceEpoch <= last) {
+      if (releaseTime.millisecondsSinceEpoch <= last) {
         "已是最新安装包".toast();
         return;
       }
@@ -553,7 +570,7 @@ class _AboutPageState extends ConsumerState<AboutPage>
           ? data['name'].toString()
           : (data['tag_name']?.toString() ?? '新版本');
       final body = (data['body']?.toString() ?? '').trim();
-      final local = publishedAt.toLocal();
+      final local = releaseTime.toLocal();
       final timeStr =
           '${local.year}-${local.month.toString().padLeft(2, '0')}-'
           '${local.day.toString().padLeft(2, '0')} '
@@ -565,7 +582,7 @@ class _AboutPageState extends ConsumerState<AboutPage>
       void markAndOpen() {
         SpUtil.putInt(
           spGithubLastReleaseTime,
-          publishedAt.millisecondsSinceEpoch,
+          releaseTime.millisecondsSinceEpoch,
         );
         launchUrl(Uri.parse(releaseUrl));
       }
