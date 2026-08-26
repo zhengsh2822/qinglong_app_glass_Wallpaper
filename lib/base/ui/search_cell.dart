@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../app_colors.dart';
 import '../sp_const.dart';
 import '../theme.dart';
+import 'optimized_frosted_glass.dart';
 import '../../utils/sp_utils.dart';
 
 class SearchCell extends ConsumerStatefulWidget {
@@ -40,6 +41,9 @@ class _SearchCellState extends ConsumerState<SearchCell> {
     final effectiveSigma = SpUtil.getDouble(spCardBlurSigma, defValue: 8);
     final theme = ref.watch(themeProvider);
     final bool isCyber = theme.themeMode == modeCyber;
+    // 卡片纯色模式：模糊关闭时搜索框退化为纯色，无 BackdropFilter
+    final bool solidMode = isCardSolidMode();
+    final bool isDark = theme.themeMode == modeDark || isCyber;
 
     final Color bgColor =
         isCyber ? const Color(0xFF12121A) : AppleColors.bgTertiary;
@@ -53,71 +57,79 @@ class _SearchCellState extends ConsumerState<SearchCell> {
         isCyber ? CyberColors.descColor : AppleColors.textHint;
     final Color iconColor = isCyber ? CyberColors.cyan : AppleColors.textHint;
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: effectiveSigma, sigmaY: effectiveSigma),
-        child: Container(
-          height: 44,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                bgColor.withOpacity(isCyber ? 0.5 : 0.85),
-                bgEndColor.withOpacity(isCyber ? 0.5 : 0.85),
-              ],
+    final Widget box = Container(
+      height: 44,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: solidMode ? cardSolidColor(isDark: isDark) : null,
+        gradient: solidMode
+            ? null
+            : LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  bgColor.withOpacity(isCyber ? 0.5 : 0.85),
+                  bgEndColor.withOpacity(isCyber ? 0.5 : 0.85),
+                ],
+              ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: borderColor, width: isCyber ? 0.5 : 1),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(CupertinoIcons.search, size: 16, color: iconColor),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              controller: widget.controller,
+              maxLines: 1,
+              textAlign: TextAlign.left,
+              textAlignVertical: TextAlignVertical.center,
+              style: TextStyle(fontSize: 14, color: textColor),
+              cursorColor: iconColor,
+              decoration: InputDecoration(
+                hintText: "搜索",
+                hintStyle: TextStyle(fontSize: 14, color: hintColor),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+              ),
+              onSubmitted: (_) {
+                FocusManager.instance.primaryFocus?.unfocus();
+              },
             ),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: borderColor, width: isCyber ? 0.5 : 1),
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Icon(CupertinoIcons.search, size: 16, color: iconColor),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextField(
-                  controller: widget.controller,
-                  maxLines: 1,
-                  textAlign: TextAlign.left,
-                  textAlignVertical: TextAlignVertical.center,
-                  style: TextStyle(fontSize: 14, color: textColor),
-                  cursorColor: iconColor,
-                  decoration: InputDecoration(
-                    hintText: "搜索",
-                    hintStyle: TextStyle(fontSize: 14, color: hintColor),
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                  onSubmitted: (_) {
-                    FocusManager.instance.primaryFocus?.unfocus();
-                  },
+          if (widget.controller.text.isNotEmpty)
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                widget.controller.text = "";
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: Icon(
+                  CupertinoIcons.clear_circled_solid,
+                  size: 16,
+                  color: iconColor,
                 ),
               ),
-              if (widget.controller.text.isNotEmpty)
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    widget.controller.text = "";
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 8),
-                    child: Icon(
-                      CupertinoIcons.clear_circled_solid,
-                      size: 16,
-                      color: iconColor,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
+            ),
+        ],
       ),
+    );
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: solidMode
+          ? box
+          : BackdropFilter(
+              filter:
+                  ImageFilter.blur(sigmaX: effectiveSigma, sigmaY: effectiveSigma),
+              child: box,
+            ),
     );
   }
 }

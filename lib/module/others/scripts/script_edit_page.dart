@@ -184,7 +184,7 @@ class _ScriptEditPageState extends ConsumerState<ScriptEditPage> {
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
 
     // 【CyberBackground套用位置】赛博模式下，CyberBackground作为根布局包裹Scaffold
-    // Scaffold的backgroundColor设为Colors.transparent，让底层光影渐变透出来
+    // Scaffold的backgroundColor设为Colors.transparent，让全局壁纸透出来
     final Widget scaffold = Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: Colors.transparent,
@@ -323,10 +323,8 @@ class _ScriptEditPageState extends ConsumerState<ScriptEditPage> {
       ),
     );
 
-    // 赛博模式：CyberBackground包裹透明Scaffold，光影渐变穿透整个页面
-    return isCyber
-        ? CyberBackground(showGradient: true, child: scaffold)
-        : scaffold;
+    // 赛博模式：CyberBackground包裹透明Scaffold，背景透明透出全局壁纸
+    return isCyber ? CyberBackground(child: scaffold) : scaffold;
   }
 
   /// 退出确认弹窗（赛博模式用高斯模糊弹窗，非赛博用CupertinoAlertDialog）

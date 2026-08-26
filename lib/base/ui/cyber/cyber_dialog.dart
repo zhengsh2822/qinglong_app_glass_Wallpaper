@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/sp_const.dart';
+import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 
@@ -10,7 +11,8 @@ class CyberDialog {
   static const double borderRadius = 18.0;
   static const double blurSigma = 10.0;
   static const double dimOpacity = 0.3;
-  static const double barrierDim = 0.65;
+  // 压暗层浓度：过深会在动画/加载期间呈现"黑色背景"观感，压淡以突出毛玻璃
+  static const double barrierDim = 0.35;
 
   static Future<T?> show<T>({
     required BuildContext context,
@@ -58,36 +60,33 @@ class CyberDialog {
                         scale: 0.92 + 0.08 * t,
                         child: Padding(
                           padding: padding,
-                          child: ClipRRect(
+                          // 统一毛玻璃封装：sigma<=0 时自动退化为纯色（无 BackdropFilter）
+                          child: OptimizedFrostedGlass(
+                            sigma: baseSigma,
                             borderRadius: BorderRadius.circular(
                               CyberDialog.borderRadius,
                             ),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(
-                                sigmaX: baseSigma * t,
-                                sigmaY: baseSigma * t,
+                            forceOpaqueSolid: true,
+                            child: Container(
+                              padding: const EdgeInsets.fromLTRB(
+                                28,
+                                28,
+                                28,
+                                24,
                               ),
-                              child: Container(
-                                padding: const EdgeInsets.fromLTRB(
-                                  28,
-                                  28,
-                                  28,
-                                  24,
+                              decoration: BoxDecoration(
+                                color: Colors.transparent,
+                                borderRadius: BorderRadius.circular(
+                                  CyberDialog.borderRadius,
                                 ),
-                                decoration: BoxDecoration(
-                                  color: Colors.transparent,
-                                  borderRadius: BorderRadius.circular(
-                                    CyberDialog.borderRadius,
+                                border: Border.all(
+                                  color: CyberColors.cyan.withValues(
+                                    alpha: 0.2,
                                   ),
-                                  border: Border.all(
-                                    color: CyberColors.cyan.withValues(
-                                      alpha: 0.2,
-                                    ),
-                                    width: 0.5,
-                                  ),
+                                  width: 0.5,
                                 ),
-                                child: child,
                               ),
+                              child: child,
                             ),
                           ),
                         ),

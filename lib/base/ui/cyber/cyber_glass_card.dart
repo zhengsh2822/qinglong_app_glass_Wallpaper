@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/sp_const.dart';
+import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 
 /// 毛玻璃卡片组件
@@ -44,33 +45,31 @@ class CyberGlassCard extends StatelessWidget {
     final effectiveSigma = SpUtil.getDouble(spCardBlurSigma, defValue: blurSigma);
     return Container(
       margin: margin,
-      child: ClipRRect(
+      // 统一毛玻璃封装：sigma<=0 时自动退化为纯色（无 BackdropFilter）
+      child: OptimizedFrostedGlass(
+        sigma: effectiveSigma,
         borderRadius: BorderRadius.circular(borderRadius),
-        // BackdropFilter必须在ClipRRect内，确保模糊范围被裁剪
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: effectiveSigma, sigmaY: effectiveSigma),
-          child: Container(
-            decoration: BoxDecoration(
-              // 半透明白色叠加，产生毛玻璃质感
-              color: backgroundColor ?? const Color(0x20FFFFFF),
-              borderRadius: BorderRadius.circular(borderRadius),
-              border:
-                  border ??
-                  Border.all(color: CyberColors.borderGlow, width: 0.5),
-            ),
-            padding: padding,
-            child:
-                onTap != null
-                    ? Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: onTap,
-                        borderRadius: BorderRadius.circular(borderRadius),
-                        child: child,
-                      ),
-                    )
-                    : child,
+        child: Container(
+          decoration: BoxDecoration(
+            // 半透明白色叠加，产生毛玻璃质感
+            color: backgroundColor ?? const Color(0x20FFFFFF),
+            borderRadius: BorderRadius.circular(borderRadius),
+            border:
+                border ??
+                Border.all(color: CyberColors.borderGlow, width: 0.5),
           ),
+          padding: padding,
+          child:
+              onTap != null
+                  ? Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: onTap,
+                      borderRadius: BorderRadius.circular(borderRadius),
+                      child: child,
+                    ),
+                  )
+                  : child,
         ),
       ),
     );

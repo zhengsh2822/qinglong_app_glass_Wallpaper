@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -16,6 +15,8 @@ import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
 import 'package:qinglong_app/base/ui/enable_widget.dart';
+import 'package:qinglong_app/base/ui/lazy_first_screen.dart';
+import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/base/ui/running_widget.dart';
 import 'package:qinglong_app/base/ui/search_cell.dart';
 import 'package:qinglong_app/base/ui/slidable_close_notifier.dart';
@@ -120,7 +121,7 @@ class _SubscribePageState extends ConsumerState<SubscribePage> {
                     WallpaperPageRoute(
                       builder:
                           (context) => const AddSubscribePage(taskBean: {}),
-                      blurSigma: 8,
+                      blurSigma: 6,
                       blurTintColor: CyberColors.bg.withOpacity(0.50),
                     ),
                   )
@@ -156,7 +157,12 @@ class _SubscribePageState extends ConsumerState<SubscribePage> {
         },
       ),
     );
-    return isCyber ? CyberBackground(child: scaffold) : scaffold;
+    return LazyFirstScreen(
+      placeholder: const FirstScreenSkeleton(title: "订阅管理"),
+      // 动画期间显示骨架（~400ms），动画结束后挂载真实内容（含实时毛玻璃）。
+      // 仅作用于本路由，下层路由不受影响。
+      child: isCyber ? CyberBackground(child: scaffold) : scaffold,
+    );
   }
 
   Widget body(
@@ -310,7 +316,7 @@ class TaskItemCell extends StatelessWidget {
                         WallpaperPageRoute(
                           builder:
                               (context) => AddSubscribePage(taskBean: bean),
-                          blurSigma: 8,
+                          blurSigma: 6,
                           blurTintColor: CyberColors.bg.withOpacity(0.50),
                         ),
                       )
@@ -412,11 +418,10 @@ class TaskItemCell extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppleColors.radiusCard),
         border: Border.all(color: AppleColors.cardBorder),
       ),
-      child: ClipRRect(
+      child: OptimizedFrostedGlass(
+        sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
         borderRadius: BorderRadius.circular(AppleColors.radiusCard),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 10), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 10)),
-          child: Slidable(
+        child: Slidable(
             key: ValueKey(bean["id"] as int),
           endActionPane: ActionPane(
             motion: const ScrollMotion(),
@@ -435,7 +440,7 @@ class TaskItemCell extends StatelessWidget {
                         WallpaperPageRoute(
                           builder:
                               (context) => AddSubscribePage(taskBean: bean),
-                          blurSigma: 8,
+                          blurSigma: 6,
                           blurTintColor: CyberColors.bg.withOpacity(0.50),
                         ),
                       )
@@ -522,7 +527,6 @@ class TaskItemCell extends StatelessWidget {
           ),
           child: _buildCardChild(context, isCyber: false),
         ),
-        ),
       ),
     );
   }
@@ -538,11 +542,10 @@ class TaskItemCell extends StatelessWidget {
             context,
           ).pushNamed(Routes.routeSubscribeDetail, arguments: bean);
         },
-        child: ClipRRect(
+        child: OptimizedFrostedGlass(
+          sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
           borderRadius: BorderRadius.circular(18),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 10), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 10)),
-            child: Container(
+          child: Container(
               width: MediaQuery.of(context).size.width,
               decoration:
                   isCyber
@@ -656,7 +659,6 @@ class TaskItemCell extends StatelessWidget {
                 ],
               ),
             ),
-          ),
         ),
       ),
     );
@@ -690,6 +692,8 @@ class TaskItemCell extends StatelessWidget {
   logCron(BuildContext context, WidgetRef ref) {
     Navigator.of(context).push(
       WallpaperPageRoute(
+        blurSigma: 6,
+        blurTintColor: CyberColors.bg.withOpacity(0.50),
         builder:
             (context) =>
                 InTimeSubscribeLogPage(bean["id"], true, bean["name"] ?? ""),

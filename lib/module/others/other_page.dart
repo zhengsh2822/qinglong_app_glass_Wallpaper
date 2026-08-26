@@ -48,12 +48,16 @@ class OtherPage extends ConsumerStatefulWidget {
 }
 
 class OtherPageState extends ConsumerState<OtherPage>
-    with LazyLoadState<OtherPage> {
+    with LazyLoadState<OtherPage>, AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
   var toggleValue = false;
   String? userIcon;
   String userName = "青龙客户端";
   var desc = "欢迎使用青龙客户端".obs;
   Map<String, dynamic> poetData = {};
+  /// 功能按钮字重（build 顶部 watch textWeightProvider，跟随全局四档调节）
+  FontWeight _featureFw = FontWeight.w400;
 
   @override
   void initState() {
@@ -142,7 +146,10 @@ class OtherPageState extends ConsumerState<OtherPage>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final _ = ref.watch(themeProvider);
+    // 功能按钮字重跟随全局设置（我的页各功能入口统一）
+    _featureFw = FontWeight(ref.watch(textWeightProvider));
     Widget body = RefreshIndicator(
       key: refreshKey,
       onRefresh: () async {
@@ -450,60 +457,56 @@ class OtherPageState extends ConsumerState<OtherPage>
           Text(
             "多帐号设置/第三方功能",
             style: TextStyle(
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight(ref.watch(textWeightProvider)),
               fontSize: 17,
               color: ref.watch(themeProvider).themeColor.titleColor(),
             ),
           ),
           const SizedBox(height: 10),
+          // 功能按钮按内容宽度居中分布（spaceEvenly），字号缩放时随内容自然居中缩放，
+          // 与「高级功能」卡片布局一致；避免固定宽度拉伸导致缩放右对齐不居中
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              Expanded(
-                child: _buildFeatureButton(
-                  title: "多账号数",
-                  icon: CupertinoIcons.infinite,
-                  onTap: () {
-                    if (SpUtil.getBool(
-                      spSingleInstance,
-                      defValue: false,
-                    )) {
-                      '请先进入 系统设置 关闭单实例模式'.toast();
-                      return;
-                    }
-                    Navigator.of(context).push(
-                      WallpaperPageRoute(
-                        builder:
-                            (context) => const UpdateMaxAccountPage(),
-                      ),
-                    );
-                  },
-                ),
+              _buildFeatureButton(
+                title: "多账号数",
+                icon: CupertinoIcons.infinite,
+                onTap: () {
+                  if (SpUtil.getBool(
+                    spSingleInstance,
+                    defValue: false,
+                  )) {
+                    '请先进入 系统设置 关闭单实例模式'.toast();
+                    return;
+                  }
+                  Navigator.of(context).push(
+                    WallpaperPageRoute(
+                      builder:
+                          (context) => const UpdateMaxAccountPage(),
+                    ),
+                  );
+                },
               ),
-              Expanded(
-                child: _buildFeatureButton(
-                  title: "京东助手",
-                  icon: CupertinoIcons.gift,
-                  onTap: () {
-                    Navigator.of(context).pushNamed(Routes.routeJdck);
-                  },
-                ),
+              _buildFeatureButton(
+                title: "京东助手",
+                icon: CupertinoIcons.gift,
+                onTap: () {
+                  Navigator.of(context).pushNamed(Routes.routeJdck);
+                },
               ),
-              Expanded(
-                child: _buildFeatureButton(
-                  title: "悬浮时间",
-                  icon: CupertinoIcons.clock,
-                  onTap: () async {
-                    final started =
-                        await FloatingClockService.toggleFloating();
-                    if (!started) {
-                      '请授予悬浮窗权限后再次点击'.toast();
-                    } else {
-                      '悬浮时钟已开启'.toast();
-                    }
-                  },
-                ),
+              _buildFeatureButton(
+                title: "悬浮时间",
+                icon: CupertinoIcons.clock,
+                onTap: () async {
+                  final started =
+                      await FloatingClockService.toggleFloating();
+                  if (!started) {
+                    '请授予悬浮窗权限后再次点击'.toast();
+                  } else {
+                    '悬浮时钟已开启'.toast();
+                  }
+                },
               ),
-              const Spacer(),
             ],
           ),
         ],
@@ -524,7 +527,7 @@ class OtherPageState extends ConsumerState<OtherPage>
           Text(
             "高级功能",
             style: TextStyle(
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight(ref.watch(textWeightProvider)),
               fontSize: 17,
               color: ref.watch(themeProvider).themeColor.titleColor(),
             ),
@@ -540,7 +543,7 @@ class OtherPageState extends ConsumerState<OtherPage>
                   Navigator.of(context).push(
                     WallpaperPageRoute(
                       builder: (context) => const ScanPage(),
-                      blurSigma: 8,
+                      blurSigma: 6,
                       blurTintColor: CyberColors.bg.withOpacity(0.50),
                     ),
                   );
@@ -589,7 +592,7 @@ class OtherPageState extends ConsumerState<OtherPage>
           Text(
             "基础功能",
             style: TextStyle(
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight(ref.watch(textWeightProvider)),
               fontSize: 17,
               color: ref.watch(themeProvider).themeColor.titleColor(),
             ),
@@ -773,8 +776,11 @@ class OtherPageState extends ConsumerState<OtherPage>
                 softWrap: false,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
+                  // 显式指定 MiSans：CupertinoButton 默认 DefaultTextStyle 为
+                  // CupertinoSystemText(inherit:false)，不指定会回退系统字体导致字重映射异常（粗一级）
+                  fontFamily: 'MiSans',
                   fontSize: fontSize,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: _featureFw,
                   color: theme.themeColor.titleColor(),
                 ),
               ),

@@ -17,6 +17,7 @@ import 'package:qinglong_app/base/ui/animated_edit_mode_overlay.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
+import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/base/ui/search_cell.dart';
 import 'package:qinglong_app/base/ui/slidable_close_notifier.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
@@ -38,7 +39,9 @@ class EnvPage extends ConsumerStatefulWidget {
 }
 
 class EnvPageState extends ConsumerState<EnvPage>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
   String currentState = EnvViewModel.allStr;
   TextEditingController searchText = TextEditingController();
   Timer? _searchDebounce;
@@ -151,6 +154,7 @@ class EnvPageState extends ConsumerState<EnvPage>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final _ = ref.watch(themeProvider);
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
     return GestureDetector(
@@ -605,6 +609,8 @@ class EnvItemCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
+    // 环境变量名称字重跟随全局粗细调节
+    final FontWeight globalFw = FontWeight(ref.watch(textWeightProvider));
     final Widget cardContent = InkWell(
       onTap: () {
         if (editMode) {
@@ -700,8 +706,7 @@ class EnvItemCell extends StatelessWidget {
                                             ? CyberColors.titleWhite
                                             : AppleColors.textPrimary,
                                     fontSize: isCyber ? 16 : 17,
-                                    fontWeight:
-                                        isCyber ? null : FontWeight.w600,
+                                    fontWeight: globalFw,
                                     fontFamily: 'MiSans',
                                   ),
                                   children: <TextSpan>[
@@ -869,11 +874,11 @@ class EnvItemCell extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppleColors.radiusCard),
         border: Border.all(color: AppleColors.cardBorder),
       ),
-      child: ClipRRect(
+      // 统一毛玻璃封装：sigma<=0 时自动退化为纯色（无 BackdropFilter）
+      child: OptimizedFrostedGlass(
+        sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
         borderRadius: BorderRadius.circular(AppleColors.radiusCard),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 10), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 10)),
-          child: Slidable(
+        child: Slidable(
             enabled: !editMode,
             key: ValueKey(bean.sId),
           endActionPane: ActionPane(
@@ -931,7 +936,6 @@ class EnvItemCell extends StatelessWidget {
           ),
           child: _buildCardChild(context, isCyber, cardContent),
         ),
-        ),
       ),
     );
   }
@@ -941,26 +945,24 @@ class EnvItemCell extends StatelessWidget {
     bool isCyber,
     Widget cardContent,
   ) {
-    return ClipRRect(
+    // 统一毛玻璃封装：sigma<=0 时自动退化为纯色（无 BackdropFilter）
+    return OptimizedFrostedGlass(
+      sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
       borderRadius: BorderRadius.circular(AppleColors.radiusCard),
-      child:
-          isCyber
-              ? BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 10), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 10)),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: CyberColors.borderGlow, width: 1),
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(18),
-                    child: cardContent,
-                  ),
-                ),
-              )
-              : Material(color: Colors.transparent, child: cardContent),
+      child: isCyber
+          ? Container(
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: CyberColors.borderGlow, width: 1),
+              ),
+              child: Material(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(18),
+                child: cardContent,
+              ),
+            )
+          : Material(color: Colors.transparent, child: cardContent),
     );
   }
 

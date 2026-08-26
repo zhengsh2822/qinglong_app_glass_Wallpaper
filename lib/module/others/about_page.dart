@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,6 +33,9 @@ class _AboutPageState extends ConsumerState<AboutPage>
   String desc = "";
   String versionCode = "";
 
+  /// 全局字重（build 顶部统一 watch，供标题/按钮使用）
+  FontWeight _globalFw = FontWeight.w400;
+
   @override
   void initState() {
     super.initState();
@@ -41,6 +45,8 @@ class _AboutPageState extends ConsumerState<AboutPage>
   @override
   Widget build(BuildContext context) {
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
+    // 标题字重跟随全局粗细调节
+    _globalFw = FontWeight(ref.watch(textWeightProvider));
     SystemBean? systemBean;
 
     try {
@@ -74,7 +80,7 @@ class _AboutPageState extends ConsumerState<AboutPage>
                 child: Text(
                   "青龙客户端",
                   style: TextStyle(
-                    fontWeight: FontWeight.w600,
+                    fontWeight: _globalFw,
                     color: ref.watch(themeProvider).themeColor.titleColor(),
                     fontSize: 16,
                   ),
@@ -94,39 +100,60 @@ class _AboutPageState extends ConsumerState<AboutPage>
               SettingsCard(
                 child: Column(
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        left: 15,
-                        right: 15,
-                        top: 10,
-                        bottom: 10,
-                      ),
-                      child: Row(
-                        children: [
-                          Text(
-                            "版本",
-                            style: TextStyle(
-                              color:
-                                  ref
-                                      .watch(themeProvider)
-                                      .themeColor
-                                      .titleColor(),
-                              fontSize: 16,
-                            ),
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(18),
+                          topRight: Radius.circular(18),
+                        ),
+                        onTap: _checkGithubUpdate,
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                            left: 15,
+                            right: 15,
+                            top: 10,
+                            bottom: 10,
                           ),
-                          const Spacer(),
-                          Text(
-                            "$desc ($versionCode)",
-                            style: TextStyle(
-                              color:
-                                  ref
-                                      .watch(themeProvider)
-                                      .themeColor
-                                      .descColor(),
-                              fontSize: 16,
-                            ),
+                          child: Row(
+                            children: [
+                              Text(
+                                "版本",
+                                style: TextStyle(
+                                  color:
+                                      ref
+                                          .watch(themeProvider)
+                                          .themeColor
+                                          .titleColor(),
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                "$desc ($versionCode)",
+                                style: TextStyle(
+                                  color:
+                                      ref
+                                          .watch(themeProvider)
+                                          .themeColor
+                                          .descColor(),
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              // 小刷新图标提示：点击检测 GitHub 新版安装包
+                              Icon(
+                                CupertinoIcons.refresh,
+                                size: 14,
+                                color:
+                                    ref
+                                        .watch(themeProvider)
+                                        .themeColor
+                                        .descColor(),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
                     const Divider(indent: 15, height: 1),
@@ -483,6 +510,102 @@ class _AboutPageState extends ConsumerState<AboutPage>
       } else {
         "已经是新版本".toast();
       }
+    }
+  }
+
+  /// 获取新版安装包信息：GitHub Releases latest 的发布时间与本地已确认时间对比。
+  /// 构建版本号固定不变（3.0.0+300），仅靠发布时间判断是否有新安装包；
+  /// 仅用户主动点击"版本"行时检测，不主动提醒。
+  Future<void> _checkGithubUpdate() async {
+    const String releaseUrl =
+        'https://github.com/zhengsh2822/qinglong_app_glass_Wallpaper/releases/latest';
+    try {
+      final resp = await Dio().get(
+        'https://api.github.com/repos/zhengsh2822/qinglong_app_glass_Wallpaper/releases/latest',
+        options: Options(
+          headers: {
+            'Accept': 'application/vnd.github+json',
+            'User-Agent': 'qinglong-app',
+          },
+          receiveTimeout: const Duration(seconds: 10),
+          sendTimeout: const Duration(seconds: 10),
+        ),
+      );
+      if (resp.statusCode != 200 || resp.data is! Map) {
+        "获取更新信息失败".toast();
+        return;
+      }
+      final data = resp.data as Map;
+      final publishedAt = DateTime.tryParse(
+        data['published_at']?.toString() ?? '',
+      );
+      if (publishedAt == null) {
+        "获取更新信息失败".toast();
+        return;
+      }
+      // 与本地已确认的 release 时间对比：有更新的 release 才提示
+      final last = SpUtil.getInt(spGithubLastReleaseTime, defValue: 0);
+      if (publishedAt.millisecondsSinceEpoch <= last) {
+        "已是最新安装包".toast();
+        return;
+      }
+      final name = (data['name']?.toString().isNotEmpty ?? false)
+          ? data['name'].toString()
+          : (data['tag_name']?.toString() ?? '新版本');
+      final body = (data['body']?.toString() ?? '').trim();
+      final local = publishedAt.toLocal();
+      final timeStr =
+          '${local.year}-${local.month.toString().padLeft(2, '0')}-'
+          '${local.day.toString().padLeft(2, '0')} '
+          '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
+      final content =
+          '名称：$name\n发布时间：$timeStr\n${body.length > 200 ? '${body.substring(0, 200)}...' : body}';
+
+      // 确认获取安装包后，记录该 release 时间，下次检测不到更新即不重复提示
+      void markAndOpen() {
+        SpUtil.putInt(
+          spGithubLastReleaseTime,
+          publishedAt.millisecondsSinceEpoch,
+        );
+        launchUrl(Uri.parse(releaseUrl));
+      }
+
+      final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
+      if (isCyber) {
+        showCyberConfirmDialog(
+          context,
+          title: "发现新版安装包",
+          content: content,
+          cancelLabel: "稍后",
+          confirmLabel: "获取安装包",
+        ).then((confirmed) {
+          if (confirmed == true) markAndOpen();
+        });
+        return;
+      }
+      showCupertinoDialog(
+        context: context,
+        useRootNavigator: false,
+        builder: (childContext) => CupertinoAlertDialog(
+          title: const Text("发现新版安装包"),
+          content: Text(content, textAlign: TextAlign.left),
+          actions: [
+            CupertinoDialogAction(
+              child: const Text("稍后"),
+              onPressed: () => Navigator.pop(childContext),
+            ),
+            CupertinoDialogAction(
+              child: const Text("获取安装包"),
+              onPressed: () {
+                Navigator.pop(childContext);
+                markAndOpen();
+              },
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      "网络异常，无法获取更新信息".toast();
     }
   }
 }

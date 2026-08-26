@@ -13,6 +13,7 @@ import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
+import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/module/home/system_bean.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 
@@ -26,6 +27,9 @@ class DashboardPage extends ConsumerStatefulWidget {
 }
 
 class DashboardPageState extends ConsumerState<DashboardPage> {
+  /// 全局字重（build 顶部统一 watch，供各 helper 方法使用）
+  FontWeight _globalFw = FontWeight.w400;
+
   bool _loading = true;
   String? _errorMsg;
 
@@ -150,6 +154,8 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
   Widget build(BuildContext context) {
     final _ = ref.watch(themeProvider);
     final bool isCyber = ref.watch(themeProvider).themeMode == modeCyber;
+    // 全局字重跟随调节（build 顶部统一 watch，供各 helper 方法使用）
+    _globalFw = FontWeight(ref.watch(textWeightProvider));
 
     Widget body =
         _loading
@@ -305,7 +311,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
                   _version,
                   style: TextStyle(
                     fontSize: isCyber ? 20 : 17,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: _globalFw,
                     fontFamily: 'MiSans',
                     color:
                         isCyber
@@ -871,7 +877,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
                 fontSize: isCyber ? 11 : 12,
                 color:
                     isCyber ? CyberColors.descColor : AppleColors.textSecondary,
-                fontWeight: FontWeight.w500,
+                fontWeight: _globalFw,
               ),
               textAlign: i == 0 ? TextAlign.start : TextAlign.center,
               overflow: TextOverflow.ellipsis,
@@ -905,7 +911,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
               style: TextStyle(
                 fontSize: isCyber ? 12 : 13,
                 fontFamily: 'MiSans',
-                fontWeight: highlight && i == 0 ? FontWeight.w600 : null,
+                fontWeight: highlight && i == 0 ? _globalFw : null,
                 color: textColor,
               ),
               textAlign: i == 0 ? TextAlign.start : TextAlign.center,
@@ -933,7 +939,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
           value,
           style: TextStyle(
             fontSize: isCyber ? 18 : 17,
-            fontWeight: FontWeight.w600,
+            fontWeight: _globalFw,
             fontFamily: 'MiSans',
             color: isCyber ? color : AppleColors.textPrimary,
           ),
@@ -1041,7 +1047,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
                 title,
                 style: TextStyle(
                   fontSize: isCyber ? 15 : 17,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: _globalFw,
                   color:
                       isCyber
                           ? CyberColors.titleWhite
@@ -1059,24 +1065,23 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
 
   // 基础卡片容器
   Widget _buildCard({required bool isCyber, required Widget child}) {
-    return ClipRRect(
+    // 统一毛玻璃封装：sigma<=0 时自动退化为纯色（无 BackdropFilter）
+    return OptimizedFrostedGlass(
+      sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
       borderRadius: BorderRadius.circular(AppleColors.radiusCard),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 10), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 10)),
-        child: Container(
-          width: double.infinity,
-          clipBehavior: isCyber ? Clip.antiAlias : Clip.none,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppleColors.radiusCard),
-            color: Colors.transparent,
-            border:
-                isCyber
-                    ? Border.all(color: CyberColors.borderGlow, width: 1)
-                    : Border.all(color: AppleColors.cardBorder),
-          ),
-          padding: const EdgeInsets.all(16),
-          child: child,
+      child: Container(
+        width: double.infinity,
+        clipBehavior: isCyber ? Clip.antiAlias : Clip.none,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppleColors.radiusCard),
+          color: Colors.transparent,
+          border:
+              isCyber
+                  ? Border.all(color: CyberColors.borderGlow, width: 1)
+                  : Border.all(color: AppleColors.cardBorder),
         ),
+        padding: const EdgeInsets.all(16),
+        child: child,
       ),
     );
   }

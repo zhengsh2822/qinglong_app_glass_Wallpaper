@@ -6,10 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 
-const double _dialogBlurSigma = 10.0;
+const double _dialogBlurSigma = 4.0;
 const double _dialogBorderRadius = 18.0;
 const double _dialogBarrierDim = 0.65;
 const Duration _dialogTransitionDuration = Duration(milliseconds: 400);
@@ -208,26 +209,23 @@ Widget _buildDialogPage({
                     padding: const EdgeInsets.symmetric(horizontal: 32),
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 380),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(_dialogBorderRadius),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(
-                            sigmaX: baseSigma * t,
-                            sigmaY: baseSigma * t,
-                          ),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: theme.cardBg,
-                              borderRadius: BorderRadius.circular(
-                                _dialogBorderRadius,
-                              ),
-                              border: Border.all(
-                                color: theme.borderColor,
-                                width: theme.borderWidth,
-                              ),
+                      child: OptimizedFrostedGlass(
+                        sigma: baseSigma * t,
+                        borderRadius:
+                            BorderRadius.circular(_dialogBorderRadius),
+                        forceOpaqueSolid: true,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: theme.cardBg,
+                            borderRadius: BorderRadius.circular(
+                              _dialogBorderRadius,
                             ),
-                            child: child,
+                            border: Border.all(
+                              color: theme.borderColor,
+                              width: theme.borderWidth,
+                            ),
                           ),
+                          child: child,
                         ),
                       ),
                     ),
@@ -295,6 +293,10 @@ Future<bool?> showConfirmDialog(
     barrierColor: Colors.transparent,
     transitionDuration: _dialogTransitionDuration,
     pageBuilder: (context, animation, secondaryAnimation) {
+      // 弹窗标题字重跟随全局粗细调节（弹窗为瞬时场景，打开时读取一次）
+      final FontWeight fw = FontWeight(
+        ProviderScope.containerOf(context).read(textWeightProvider),
+      );
       return _buildDialogPage(
         context: context,
         animation: animation,
@@ -312,7 +314,7 @@ Future<bool?> showConfirmDialog(
                 style: TextStyle(
                   color: theme.titleColor,
                   fontSize: 17,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: fw,
                   letterSpacing: 0.3,
                 ),
               ),
@@ -373,6 +375,10 @@ Future<String?> showInputDialog(
     barrierColor: Colors.transparent,
     transitionDuration: _dialogTransitionDuration,
     pageBuilder: (context, animation, secondaryAnimation) {
+      // 弹窗标题字重跟随全局粗细调节（弹窗为瞬时场景，打开时读取一次）
+      final FontWeight fw = FontWeight(
+        ProviderScope.containerOf(context).read(textWeightProvider),
+      );
       return _buildDialogPage(
         context: context,
         animation: animation,
@@ -390,7 +396,7 @@ Future<String?> showInputDialog(
                 style: TextStyle(
                   color: theme.titleColor,
                   fontSize: 17,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: fw,
                   letterSpacing: 0.3,
                 ),
               ),
@@ -585,6 +591,10 @@ class _FrequencyDialogContentState extends State<_FrequencyDialogContent> {
 
   @override
   Widget build(BuildContext context) {
+    // 弹窗标题字重跟随全局粗细调节（弹窗为瞬时场景，build 时读取一次）
+    final FontWeight fw = FontWeight(
+      ProviderScope.containerOf(context).read(textWeightProvider),
+    );
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
       child: Column(
@@ -597,7 +607,7 @@ class _FrequencyDialogContentState extends State<_FrequencyDialogContent> {
             style: TextStyle(
               color: widget.theme.titleColor,
               fontSize: 17,
-              fontWeight: FontWeight.w600,
+              fontWeight: fw,
               letterSpacing: 0.3,
             ),
           ),

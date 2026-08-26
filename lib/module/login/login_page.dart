@@ -15,6 +15,7 @@ import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
+import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/base/userinfo_viewmodel.dart';
 import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/module/in_app_purchase_page.dart';
@@ -570,11 +571,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 : (ref.read(themeProvider).themeMode == modeDark
                     ? const Color(0xE61C1C1E)
                     : AppleColors.bgPrimary.withOpacity(0.78));
-        return ClipRRect(
+        return OptimizedFrostedGlass(
+          sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 10), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 10)),
-            child: Container(
+          forceOpaqueSolid: true,
+          child: Container(
               constraints: BoxConstraints(
                 maxHeight: MediaQuery.of(context).size.height * 0.7,
               ),
@@ -638,7 +639,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 ),
               ),
             ),
-          ),
         );
       },
     );

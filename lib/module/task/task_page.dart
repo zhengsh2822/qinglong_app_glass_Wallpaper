@@ -19,6 +19,7 @@ import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
+import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/base/ui/search_cell.dart';
 import 'package:qinglong_app/base/ui/slidable_close_notifier.dart';
 import 'package:qinglong_app/module/task/add_task_page.dart';
@@ -50,7 +51,9 @@ class TaskPage extends ConsumerStatefulWidget {
 }
 
 class TaskPageState extends ConsumerState<TaskPage>
-    with TickerProviderStateMixin, WidgetsBindingObserver {
+    with TickerProviderStateMixin, WidgetsBindingObserver, AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
   TextEditingController searchText = TextEditingController();
   Timer? _searchDebounce;
 
@@ -188,6 +191,7 @@ class TaskPageState extends ConsumerState<TaskPage>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final _ = ref.watch(themeProvider);
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
     if (widget.onlyShowPullRepo) {
@@ -853,7 +857,7 @@ class TaskPageState extends ConsumerState<TaskPage>
 
         Navigator.of(context).push(
           WallpaperPageRoute(
-            blurSigma: 8,
+            blurSigma: 6,
             blurTintColor: CyberColors.bg.withOpacity(0.50),
             builder:
                 (context) =>
@@ -1113,11 +1117,11 @@ class TaskItemCell extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppleColors.radiusCard),
         border: Border.all(color: AppleColors.cardBorder),
       ),
-      child: ClipRRect(
+      // 统一毛玻璃封装：sigma<=0 时自动退化为纯色（无 BackdropFilter）
+      child: OptimizedFrostedGlass(
+        sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
         borderRadius: BorderRadius.circular(AppleColors.radiusCard),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 10), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 10)),
-          child: Slidable(
+        child: Slidable(
             enabled: !editMode,
             key: ValueKey(bean.sId),
           endActionPane: ActionPane(
@@ -1229,22 +1233,20 @@ class TaskItemCell extends StatelessWidget {
           ),
           child: _buildCardChild(context),
         ),
-        ),
       ),
     );
   }
 
   /// 构建卡片主体内容（不含外层 margin/decoration，由调用方提供）
   Widget _buildCardChild(BuildContext context) {
-    return ClipRRect(
+    // 统一毛玻璃封装：sigma<=0 时自动退化为纯色（无 BackdropFilter）
+    return OptimizedFrostedGlass(
+      sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
       borderRadius: BorderRadius.circular(18),
-      child:
-          isCyber
-              ? BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 10), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 10)),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.transparent,
+      child: isCyber
+          ? Container(
+              decoration: BoxDecoration(
+                color: Colors.transparent,
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
                       color:
@@ -1271,8 +1273,7 @@ class TaskItemCell extends StatelessWidget {
                       child: _buildCardContent(context),
                     ),
                   ),
-                ),
-              )
+                )
               : Material(
                 color: Colors.transparent,
                 child: InkWell(
@@ -1473,7 +1474,7 @@ class TaskItemCell extends StatelessWidget {
     Navigator.of(context)
         .push(
           WallpaperPageRoute(
-            blurSigma: 8,
+            blurSigma: 6,
             blurTintColor: CyberColors.bg.withOpacity(0.50),
             builder:
                 (context) => InTimeLogPage(

@@ -25,6 +25,9 @@ class WallpaperSettingPage extends ConsumerStatefulWidget {
 class _WallpaperSettingPageState extends ConsumerState<WallpaperSettingPage> {
   final TextEditingController _urlController = TextEditingController();
 
+  /// 全局字重（build 顶部统一 watch，供各 section 标题使用）
+  FontWeight _globalFw = FontWeight.w400;
+
   @override
   void dispose() {
     _urlController.dispose();
@@ -33,6 +36,7 @@ class _WallpaperSettingPageState extends ConsumerState<WallpaperSettingPage> {
 
   @override
   Widget build(BuildContext context) {
+    _globalFw = FontWeight(ref.watch(textWeightProvider));
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: const QlAppBar(title: '壁纸设置'),
@@ -86,7 +90,7 @@ class _WallpaperSettingPageState extends ConsumerState<WallpaperSettingPage> {
             child: Text(
               '壁纸类型',
               style: TextStyle(
-                fontWeight: FontWeight.w600,
+                fontWeight: _globalFw,
                 fontSize: 16,
                 color: ref.watch(themeProvider).themeColor.titleColor(),
               ),
@@ -123,7 +127,7 @@ class _WallpaperSettingPageState extends ConsumerState<WallpaperSettingPage> {
             Text(
               '预设渐变',
               style: TextStyle(
-                fontWeight: FontWeight.w600,
+                fontWeight: _globalFw,
                 fontSize: 16,
                 color: ref.watch(themeProvider).themeColor.titleColor(),
               ),
@@ -184,7 +188,7 @@ class _WallpaperSettingPageState extends ConsumerState<WallpaperSettingPage> {
             Text(
               '预设纯色',
               style: TextStyle(
-                fontWeight: FontWeight.w600,
+                fontWeight: _globalFw,
                 fontSize: 16,
                 color: ref.watch(themeProvider).themeColor.titleColor(),
               ),
@@ -291,7 +295,7 @@ class _WallpaperSettingPageState extends ConsumerState<WallpaperSettingPage> {
             Text(
               '网络图片 URL',
               style: TextStyle(
-                fontWeight: FontWeight.w600,
+                fontWeight: _globalFw,
                 fontSize: 16,
                 color: ref.watch(themeProvider).themeColor.titleColor(),
               ),
@@ -347,7 +351,7 @@ class _WallpaperSettingPageState extends ConsumerState<WallpaperSettingPage> {
             Text(
               '预设网络壁纸源',
               style: TextStyle(
-                fontWeight: FontWeight.w600,
+                fontWeight: _globalFw,
                 fontSize: 16,
                 color: ref.watch(themeProvider).themeColor.titleColor(),
               ),
@@ -544,7 +548,7 @@ class _WallpaperSettingPageState extends ConsumerState<WallpaperSettingPage> {
             style: TextStyle(
               fontSize: 16,
               color: ref.watch(themeProvider).primaryColor,
-              fontWeight: FontWeight.w600,
+              fontWeight: _globalFw,
             ),
           ),
         ),

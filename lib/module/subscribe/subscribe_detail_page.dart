@@ -92,7 +92,7 @@ class _TaskDetailPageState extends ConsumerState<SubscribeDetailPage>
                             builder:
                                 (context) =>
                                     AddSubscribePage(taskBean: widget.taskBean),
-                            blurSigma: 8,
+                            blurSigma: 6,
                             blurTintColor: CyberColors.bg.withOpacity(0.50),
                           ),
                         )

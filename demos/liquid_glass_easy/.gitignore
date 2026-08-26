@@ -1,0 +1,14 @@
+# 本地构建产物 / 缓存，不纳入版本库
+**/build/
+**/.gradle/
+**/.dart_tool/
+**/ephemeral/
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+**/macos/Flutter/GeneratedPluginRegistrant.swift
+**/macos/Flutter/flutter_export_environment.sh
+**/linux/flutter/generated_*
+**/windows/flutter/generated_*
+**/android/local.properties
+showcases/*.gif
+*.apk

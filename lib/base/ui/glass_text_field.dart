@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 
 /// 胶囊形毛玻璃输入框
@@ -56,40 +57,39 @@ class GlassTextField extends ConsumerWidget {
     const radius = 24.0;
 
     // 卡片模糊：SP 有设置时覆盖默认 sigma（用户在设置页调节）
-    final effectiveSigma = SpUtil.getDouble(spCardBlurSigma, defValue: 10);
+    final effectiveSigma = SpUtil.getDouble(spCardBlurSigma, defValue: 4);
 
-    return ClipRRect(
+    // 统一毛玻璃封装：sigma<=0 时自动退化为纯色（无 BackdropFilter）
+    return OptimizedFrostedGlass(
+      sigma: effectiveSigma,
       borderRadius: BorderRadius.circular(radius),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: effectiveSigma, sigmaY: effectiveSigma),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(radius),
-            border: Border.all(color: borderColor, width: 0.5),
-          ),
-          padding: padding,
-          child: TextField(
-            controller: controller,
-            focusNode: focusNode,
-            maxLines: maxLines,
-            minLines: minLines,
-            autofocus: autofocus,
-            obscureText: obscureText,
-            keyboardType: keyboardType,
-            textAlignVertical: textAlignVertical,
-            onChanged: onChanged,
-            onEditingComplete: onEditingComplete,
-            textInputAction: textInputAction,
-            style: style,
-            inputFormatters: inputFormatters,
-            decoration: InputDecoration(
-              hintText: hintText,
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              contentPadding: EdgeInsets.zero,
-              isDense: true,
-            ),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(radius),
+          border: Border.all(color: borderColor, width: 0.5),
+        ),
+        padding: padding,
+        child: TextField(
+          controller: controller,
+          focusNode: focusNode,
+          maxLines: maxLines,
+          minLines: minLines,
+          autofocus: autofocus,
+          obscureText: obscureText,
+          keyboardType: keyboardType,
+          textAlignVertical: textAlignVertical,
+          onChanged: onChanged,
+          onEditingComplete: onEditingComplete,
+          textInputAction: textInputAction,
+          style: style,
+          inputFormatters: inputFormatters,
+          decoration: InputDecoration(
+            hintText: hintText,
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            contentPadding: EdgeInsets.zero,
+            isDense: true,
           ),
         ),
       ),

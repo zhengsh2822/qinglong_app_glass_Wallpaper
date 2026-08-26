@@ -50,7 +50,7 @@ class _FileDirectoryPageState extends ConsumerState<FileDirectoryPage> {
                     builder: (context) => FileDirectoryPage(
                       path: paths[index],
                     ),
-                    blurSigma: 8,
+                    blurSigma: 6,
                     blurTintColor: CyberColors.bg.withOpacity(0.50),
                   ),
                 );
@@ -65,7 +65,7 @@ class _FileDirectoryPageState extends ConsumerState<FileDirectoryPage> {
                         absPath: paths[index],
                         canRestore: true,
                       ),
-                      blurSigma: 8,
+                      blurSigma: 6,
                       blurTintColor: CyberColors.bg.withOpacity(0.50),
                     ),
                   );

@@ -15,6 +15,7 @@ import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
+import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -686,8 +687,8 @@ class _JdckPageState extends ConsumerState<JdckPage> {
           animation: curved,
           builder: (context, _) {
             final t = curved.value;
-            final maskBaseSigma = SpUtil.getDouble(spCardBlurSigma, defValue: 5.0);
-            final cardBaseSigma = SpUtil.getDouble(spCardBlurSigma, defValue: 10.0);
+            final maskBaseSigma = SpUtil.getDouble(spCardBlurSigma, defValue: 4);
+            final cardBaseSigma = SpUtil.getDouble(spCardBlurSigma, defValue: 4);
             return Material(
               color: Colors.transparent,
               child: Stack(
@@ -697,11 +698,8 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                     child: GestureDetector(
                       onTap: () => Navigator.of(context).pop(),
                       behavior: HitTestBehavior.opaque,
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(
-                          sigmaX: maskBaseSigma * t,
-                          sigmaY: maskBaseSigma * t,
-                        ),
+                      child: OptimizedFrostedGlass(
+                        sigma: maskBaseSigma * t,
                         child: Container(
                           color: Colors.black.withValues(alpha: 0.5 * t),
                         ),
@@ -718,27 +716,23 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                           padding: const EdgeInsets.symmetric(horizontal: 20),
                           child: ConstrainedBox(
                             constraints: const BoxConstraints(maxWidth: 420),
-                            child: ClipRRect(
+                            child: OptimizedFrostedGlass(
+                              sigma: cardBaseSigma * t,
                               borderRadius: BorderRadius.circular(18),
-                              child: BackdropFilter(
-                                filter: ImageFilter.blur(
-                                  sigmaX: cardBaseSigma * t,
-                                  sigmaY: cardBaseSigma * t,
+                              forceOpaqueSolid: true,
+                              child: Container(
+                                padding: const EdgeInsets.fromLTRB(
+                                  28,
+                                  28,
+                                  28,
+                                  24,
                                 ),
-                                child: Container(
-                                  padding: const EdgeInsets.fromLTRB(
-                                    28,
-                                    28,
-                                    28,
-                                    24,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: cardBg,
-                                    borderRadius: BorderRadius.circular(18),
-                                    border: Border.all(color: borderColor),
-                                  ),
-                                  child: SingleChildScrollView(child: content),
+                                decoration: BoxDecoration(
+                                  color: cardBg,
+                                  borderRadius: BorderRadius.circular(18),
+                                  border: Border.all(color: borderColor),
                                 ),
+                                child: SingleChildScrollView(child: content),
                               ),
                             ),
                           ),
@@ -1720,113 +1714,108 @@ class _JdckPageState extends ConsumerState<JdckPage> {
           width: size.width,
           child: Material(
             color: Colors.transparent,
-            child: ClipRRect(
+            child: OptimizedFrostedGlass(
+              sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
               borderRadius: BorderRadius.circular(
                 isCyber ? 12 : AppleColors.radiusSmall,
               ),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(
-                  sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 10),
-                  sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 10),
-                ),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color:
-                        isCyber
-                            ? Colors.black.withValues(alpha: 0.5)
-                            : const Color(0x80FFFFFF),
-                    borderRadius: BorderRadius.circular(
-                      isCyber ? 12 : AppleColors.radiusSmall,
-                    ),
-                    border:
-                        isCyber
-                            ? Border.all(
-                              color: CyberColors.cyan.withValues(alpha: 0.5),
-                              width: 1,
-                            )
-                            : Border.all(
-                              color: const Color(0x1A000000),
-                              width: 1,
-                            ),
+              forceOpaqueSolid: true,
+              child: Container(
+                decoration: BoxDecoration(
+                  color:
+                      isCyber
+                          ? Colors.black.withValues(alpha: 0.5)
+                          : const Color(0x80FFFFFF),
+                  borderRadius: BorderRadius.circular(
+                    isCyber ? 12 : AppleColors.radiusSmall,
                   ),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxHeight: 240),
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      padding: EdgeInsets.zero,
-                      itemCount: _phoneSet.length,
-                      itemBuilder: (context, index) {
-                        final phone = _phoneSet.elementAt(index);
-                        final isSelected = phone == _selectedPhone;
-                        final parts = phone.split(' ');
-                        return GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () {
-                            setState(() {
-                              _selectedPhone = phone;
-                              _showPhoneList = false;
-                            });
-                            _savePhones();
-                          },
-                          onLongPress: () {
-                            setState(() => _showPhoneList = false);
-                            _showEditPhoneDialog(phone);
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 10,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        parts[0],
-                                        style: TextStyle(
-                                          color:
-                                              isSelected
-                                                  ? (isCyber
-                                                      ? CyberColors.cyan
-                                                      : primaryColor)
-                                                  : (isCyber
-                                                      ? CyberColors.titleWhite
-                                                      : AppleColors
-                                                          .textPrimary),
-                                          fontSize: 15,
-                                        ),
-                                      ),
-                                    ),
-                                    if (isSelected)
-                                      Icon(
-                                        Icons.check,
+                  border:
+                      isCyber
+                          ? Border.all(
+                            color: CyberColors.cyan.withValues(alpha: 0.5),
+                            width: 1,
+                          )
+                          : Border.all(
+                            color: const Color(0x1A000000),
+                            width: 1,
+                          ),
+                ),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 240),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    padding: EdgeInsets.zero,
+                    itemCount: _phoneSet.length,
+                    itemBuilder: (context, index) {
+                      final phone = _phoneSet.elementAt(index);
+                      final isSelected = phone == _selectedPhone;
+                      final parts = phone.split(' ');
+                      return GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          setState(() {
+                            _selectedPhone = phone;
+                            _showPhoneList = false;
+                          });
+                          _savePhones();
+                        },
+                        onLongPress: () {
+                          setState(() => _showPhoneList = false);
+                          _showEditPhoneDialog(phone);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      parts[0],
+                                      style: TextStyle(
                                         color:
-                                            isCyber
-                                                ? CyberColors.cyan
-                                                : primaryColor,
-                                        size: 18,
+                                            isSelected
+                                                ? (isCyber
+                                                    ? CyberColors.cyan
+                                                    : primaryColor)
+                                                : (isCyber
+                                                    ? CyberColors.titleWhite
+                                                    : AppleColors.textPrimary),
+                                        fontSize: 15,
                                       ),
-                                  ],
-                                ),
-                                if (parts.length > 1)
-                                  Text(
-                                    _passwordHidden ? '••••••' : parts[1],
-                                    style: TextStyle(
-                                      color:
-                                          isCyber
-                                              ? CyberColors.descColor
-                                              : const Color(0xFF666666),
-                                      fontSize: 13,
                                     ),
                                   ),
-                              ],
-                            ),
+                                  if (isSelected)
+                                    Icon(
+                                      Icons.check,
+                                      color:
+                                          isCyber
+                                              ? CyberColors.cyan
+                                              : primaryColor,
+                                      size: 18,
+                                    ),
+                                ],
+                              ),
+                              if (parts.length > 1)
+                                Text(
+                                  _passwordHidden ? '••••••' : parts[1],
+                                  style: TextStyle(
+                                    color:
+                                        isCyber
+                                            ? CyberColors.descColor
+                                            : const Color(0xFF666666),
+                                    fontSize: 13,
+                                  ),
+                                ),
+                            ],
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
@@ -1916,64 +1905,59 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                 child: GestureDetector(
                   key: _selectorKey,
                   onTap: _showPhonePicker,
-                  child: ClipRRect(
+                  child: OptimizedFrostedGlass(
+                    sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
                     borderRadius: BorderRadius.circular(
                       AppleColors.radiusSmall,
                     ),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(
-                        sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 6),
-                        sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 6),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
                       ),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 12,
+                      decoration: BoxDecoration(
+                        color:
+                            isCyber
+                                ? Colors.white.withOpacity(0.08)
+                                : Colors.white.withOpacity(0.55),
+                        borderRadius: BorderRadius.circular(
+                          AppleColors.radiusSmall,
                         ),
-                        decoration: BoxDecoration(
+                        border: Border.all(
                           color:
                               isCyber
-                                  ? Colors.white.withOpacity(0.08)
-                                  : Colors.white.withOpacity(0.55),
-                          borderRadius: BorderRadius.circular(
-                            AppleColors.radiusSmall,
+                                  ? CyberColors.borderGlow
+                                  : AppleColors.cardBorder,
+                          width: 0.5,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _selectedPhone?.split(' ')[0] ?? '选择账号',
+                              style: TextStyle(
+                                color:
+                                    _selectedPhone != null
+                                        ? (isCyber
+                                            ? CyberColors.titleWhite
+                                            : AppleColors.textPrimary)
+                                        : (isCyber
+                                            ? CyberColors.descColor
+                                            : AppleColors.textSecondary),
+                                fontSize: 15,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                          border: Border.all(
+                          Icon(
+                            Icons.arrow_drop_down,
                             color:
                                 isCyber
-                                    ? CyberColors.borderGlow
-                                    : AppleColors.cardBorder,
-                            width: 0.5,
+                                    ? CyberColors.descColor
+                                    : AppleColors.textSecondary,
                           ),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                _selectedPhone?.split(' ')[0] ?? '选择账号',
-                                style: TextStyle(
-                                  color:
-                                      _selectedPhone != null
-                                          ? (isCyber
-                                              ? CyberColors.titleWhite
-                                              : AppleColors.textPrimary)
-                                          : (isCyber
-                                              ? CyberColors.descColor
-                                              : AppleColors.textSecondary),
-                                  fontSize: 15,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            Icon(
-                              Icons.arrow_drop_down,
-                              color:
-                                  isCyber
-                                      ? CyberColors.descColor
-                                      : AppleColors.textSecondary,
-                            ),
-                          ],
-                        ),
+                        ],
                       ),
                     ),
                   ),

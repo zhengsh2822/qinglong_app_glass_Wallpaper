@@ -14,6 +14,13 @@ import 'package:qinglong_app/utils/sp_utils.dart';
 
 var themeProvider = ChangeNotifierProvider((ref) => ThemeViewModel());
 
+/// 全局字体粗细运行时状态（400/500/600/700，四档）
+/// 持久化（spTextFontWeight）由 main.dart 统一读写，本 provider 仅承载运行时状态，
+/// 业务页面 watch 它即可让主文字字重跟随全局调节。
+final StateProvider<int> textWeightProvider = StateProvider<int>((ref) {
+  return SpUtil.getInt(spTextFontWeight, defValue: 400);
+});
+
 Color whiteColor = const Color(0xfff1f1f1);
 
 int modeLight = 0;
@@ -237,7 +244,7 @@ class ThemeViewModel extends ChangeNotifier {
         ),
       ),
       progressIndicatorTheme: ProgressIndicatorThemeData(color: _primaryColor),
-      tabBarTheme: TabBarTheme(
+      tabBarTheme: TabBarThemeData(
         labelStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
         unselectedLabelStyle: const TextStyle(fontSize: 15),
         labelColor: _primaryColor,
@@ -392,7 +399,7 @@ class ThemeViewModel extends ChangeNotifier {
         ),
       ),
       progressIndicatorTheme: ProgressIndicatorThemeData(color: _primaryColor),
-      tabBarTheme: TabBarTheme(
+      tabBarTheme: TabBarThemeData(
         labelStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
         unselectedLabelStyle: const TextStyle(fontSize: 15),
         labelColor: _primaryColor,
@@ -487,7 +494,7 @@ class ThemeViewModel extends ChangeNotifier {
           borderRadius: BorderRadius.circular(4),
         ),
       ),
-      tabBarTheme: const TabBarTheme(
+      tabBarTheme: const TabBarThemeData(
         labelStyle: TextStyle(fontSize: 14),
         unselectedLabelStyle: TextStyle(fontSize: 14),
         labelColor: Color(0xffffffff),
@@ -582,7 +589,7 @@ class ThemeViewModel extends ChangeNotifier {
           borderRadius: BorderRadius.circular(24),
         ),
       ),
-      tabBarTheme: const TabBarTheme(
+      tabBarTheme: const TabBarThemeData(
         labelStyle: TextStyle(fontSize: 14),
         unselectedLabelStyle: TextStyle(fontSize: 14),
         labelColor: CyberColors.cyan,

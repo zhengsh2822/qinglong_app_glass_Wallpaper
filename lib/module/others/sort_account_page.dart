@@ -139,6 +139,7 @@ class _ChangeAccountPageState extends ConsumerState<SortAccountPage> {
             // GlassListItemCard 内部 OptimizedFrostedGlass 在 enableScrollCache:false
             // 时不会创建 GlobalKey（不会与 ReorderableListView 拖动复制子树冲突），
             // 拖动浮层由 proxyDecorator 提供不透明底色兜底，故可安全恢复模糊。
+            // 路由动画期间的整页快照由 PageSnapshot（路由级）统一处理，无需卡片级处理。
             child: buildCell(e),
           );
         },

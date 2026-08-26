@@ -55,8 +55,10 @@ class CyberSlidable extends StatelessWidget {
 
     final extentRatio = (actions.length * 0.18).clamp(0.2, 0.9);
     const buttonRadius = 12.0;
-    const buttonSpacing = 4.0;
-    const verticalPadding = 4.0;
+    // 按钮间距/上下留白 ≥ 外发光半径（blurRadius 5），
+    // 避免发光超出 Slidable 裁剪区域被硬切（ClipRect(_SlidableClipper)）
+    const buttonSpacing = 6.0;
+    const verticalPadding = 6.0;
 
     return ActionPane(
       motion: const ScrollMotion(),
@@ -86,9 +88,9 @@ class CyberSlidable extends StatelessWidget {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: action.color.withValues(alpha: 0.5),
-                          blurRadius: 8,
-                          spreadRadius: 0.5,
+                          color: action.color.withValues(alpha: 0.45),
+                          blurRadius: 5,
+                          spreadRadius: 0,
                         ),
                       ],
                     ),

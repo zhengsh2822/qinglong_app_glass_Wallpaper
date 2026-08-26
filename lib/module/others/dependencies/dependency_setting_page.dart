@@ -50,6 +50,9 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
   bool _saving = false;
   String? _errorMsg;
 
+  /// 全局字重（build 顶部统一 watch，供卡片标题/保存按钮使用）
+  FontWeight _globalFw = FontWeight.w400;
+
   @override
   void initState() {
     super.initState();
@@ -225,6 +228,8 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
   @override
   Widget build(BuildContext context) {
     final _ = ref.watch(themeProvider);
+    // 卡片标题/按钮字重跟随全局粗细调节
+    _globalFw = FontWeight(ref.watch(textWeightProvider));
 
     Widget body;
     if (_loading) {
@@ -348,7 +353,7 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
             title,
             style: TextStyle(
               fontSize: 16,
-              fontWeight: FontWeight.w600,
+              fontWeight: _globalFw,
               color: CyberColors.titleWhite,
             ),
           ),
@@ -387,7 +392,7 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
             '保存',
             style: TextStyle(
               fontSize: 16,
-              fontWeight: FontWeight.w600,
+              fontWeight: _globalFw,
               color: CyberColors.cyan,
             ),
           ),

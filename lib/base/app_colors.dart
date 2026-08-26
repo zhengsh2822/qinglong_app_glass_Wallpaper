@@ -37,6 +37,9 @@ class CyberColors {
   /// 待机灰
   static const Color idleGray = Color(0xFF4A4A5E);
 
+  /// 提示灰（底部导航未选中文案/图标颜色）
+  static const Color hintGray = Color(0xFF808080);
+
   /// 网格线颜色
   static const Color gridLine = Color(0x14FFFFFF);
 

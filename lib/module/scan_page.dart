@@ -9,6 +9,7 @@ import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
+import 'package:qinglong_app/base/ui/radar_scan_view.dart';
 import 'package:qinglong_app/module/others/dependencies/dependency_bean.dart';
 import 'package:qinglong_app/module/task/task_bean.dart';
 import 'package:qinglong_app/utils/extension.dart';
@@ -26,6 +27,13 @@ class ScanPage extends ConsumerStatefulWidget {
 
 class ScanPageState extends ConsumerState<ScanPage> {
   bool scaning = false;
+  int _totalCount = 0;
+  int _currentIndex = 0;
+
+  /// 扫描轮次令牌：每启动新一轮扫描自增。
+  /// 旧轮次循环发现令牌不匹配时立即退出，且不再触碰任何状态，
+  /// 防止旧循环结束时把新一轮的状态覆盖回"扫描完成"。
+  int _scanGeneration = 0;
 
   var textProvider = StateProvider<String>((ref) => "");
 
@@ -94,6 +102,8 @@ class ScanPageState extends ConsumerState<ScanPage> {
   }
 
   void _startScan() async {
+    // 本轮令牌：启动新一轮时自增，旧轮次据此退出
+    final int generation = ++_scanGeneration;
     try {
       List<String> jsInstalled = [];
       List<String> pyInstalled = [];
@@ -110,16 +120,36 @@ class ScanPageState extends ConsumerState<ScanPage> {
       List<DependencyBean> pyList = [];
       var jsDep = await api.dependencies("nodejs");
 
+      // 网络请求期间可能已启动新一轮扫描，旧轮次立即废弃
+      if (generation != _scanGeneration) return;
+
       if (jsDep.success) {
         jsList.addAll(jsDep.bean ?? []);
       }
       var pyDep = await api.dependencies("python3");
+      if (generation != _scanGeneration) return;
       if (pyDep.success) {
         pyList.addAll(pyDep.bean ?? []);
       }
 
+      // 在网络请求之后才计算需要扫描的有效任务数，确保进度条数字和"实际扫描"严格对齐
+      int totalCount = 0;
       for (TaskBean bean in list) {
-        if (scaning == false) break;
+        if (bean.command == null || bean.command!.isEmpty) continue;
+        String command = bean.command!.trim().split(" ").last;
+        if (!command.endsWith(".js") &&
+            !command.endsWith(".ts") &&
+            !command.endsWith(".py"))
+          continue;
+        totalCount++;
+      }
+      _totalCount = totalCount;
+      _currentIndex = 0;
+      if (mounted) setState(() {});
+
+      for (TaskBean bean in list) {
+        // 旧轮次（被新一轮取代 / 被停止）直接退出，不再触碰状态
+        if (scaning == false || generation != _scanGeneration) return;
         if (bean.command == null || bean.command!.isEmpty) continue;
         String command = bean.command!.trim().split(" ").last;
         if (!command.endsWith(".js") &&
@@ -127,6 +157,8 @@ class ScanPageState extends ConsumerState<ScanPage> {
             !command.endsWith(".py"))
           continue;
 
+        _currentIndex++;
+        if (mounted) setState(() {});
         _updateDescText("正在扫描: $command");
         HttpResponse<String> response = await SingleAccountPageState.ofApi(
           context,
@@ -151,6 +183,13 @@ class ScanPageState extends ConsumerState<ScanPage> {
           }
         }
       }
+
+      // 收尾前再次确认本 轮次仍是最新（防止 await 期间被新一轮取代）
+      if (generation != _scanGeneration) return;
+
+      // 扫描完成：进度条收尾到 100%
+      _currentIndex = _totalCount;
+      if (mounted) setState(() {});
 
       scaning = false;
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
@@ -196,13 +235,44 @@ class ScanPageState extends ConsumerState<ScanPage> {
       });
       setState(() {});
     } catch (e) {
+      // 异常也只由最新轮次处理
+      if (generation != _scanGeneration) return;
       scaning = false;
+      _totalCount = 0;
+      _currentIndex = 0;
       setState(() {});
       "扫描失败: $e".toast();
     }
   }
 
   Widget scanWidget() {
+    final theme = ref.watch(themeProvider);
+    final primaryColor = theme.primaryColor;
+    final descColor = theme.themeColor.descColor();
+    final progress = _totalCount == 0 ? 0.0 : _currentIndex / _totalCount;
+    final radarSize = MediaQuery.of(context).size.width * 0.62;
+
+    // 计算 percentText / bottomText
+    // 严格区分：未扫描 / 准备中（已点开始但还在等网络）/ 扫描中 / 扫描完成
+    String percentText;
+    String bottomText;
+    if (scaning) {
+      if (_totalCount == 0) {
+        // 已点击开始扫描，但 _startScan 还在 await 网络请求，进度条数字还没确定
+        percentText = '';
+        bottomText = '准备中...';
+      } else {
+        percentText = '${(progress * 100).toStringAsFixed(0)}%';
+        bottomText = '$_currentIndex / $_totalCount';
+      }
+    } else if (_totalCount > 0) {
+      percentText = '100%';
+      bottomText = '扫描完成';
+    } else {
+      percentText = '0%';
+      bottomText = '准备就绪';
+    }
+
     return SingleChildScrollView(
       child: ConstrainedBox(
         constraints: BoxConstraints(
@@ -219,10 +289,13 @@ class ScanPageState extends ConsumerState<ScanPage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 20),
-              Icon(
-                CupertinoIcons.doc_text_search,
-                size: MediaQuery.of(context).size.width * 0.5,
-                color: ref.watch(themeProvider).primaryColor,
+              RadarScanView(
+                size: radarSize,
+                progress: progress,
+                primaryColor: primaryColor,
+                descColor: descColor,
+                percentText: percentText,
+                bottomText: bottomText,
               ),
               const SizedBox(height: 20),
               SizedBox(
@@ -236,7 +309,7 @@ class ScanPageState extends ConsumerState<ScanPage> {
                       overflow: TextOverflow.fade,
                       style: TextStyle(
                         fontSize: 12,
-                        color: ref.watch(themeProvider).themeColor.descColor(),
+                        color: descColor,
                       ),
                     );
                   },
@@ -245,20 +318,7 @@ class ScanPageState extends ConsumerState<ScanPage> {
               const SizedBox(height: 20),
               SizedBox(
                 width: MediaQuery.of(context).size.width / 2,
-                child: ButtonWidget(
-                  title: !scaning ? "开始扫描" : "停止扫描",
-                  onTap: () {
-                    if (scaning == true) {
-                      scaning = false;
-                      setState(() {});
-                      ref.read(textProvider.notifier).state = "";
-                    } else {
-                      scaning = true;
-                      setState(() {});
-                      _startScan();
-                    }
-                  },
-                ),
+                child: _buildScanButton(primaryColor),
               ),
             ],
           ),
@@ -269,6 +329,36 @@ class ScanPageState extends ConsumerState<ScanPage> {
 
   void _updateDescText(String s) {
     ref.read(textProvider.notifier).state = s;
+  }
+
+  /// 根据扫描状态构造按钮
+  Widget _buildScanButton(Color primaryColor) {
+    final String title;
+    final VoidCallback? onTap;
+    if (scaning) {
+      title = "停止扫描";
+      onTap = () {
+        scaning = false;
+        // 令牌失效，让仍在 await 的旧轮次循环彻底退出
+        _scanGeneration++;
+        setState(() {});
+        ref.read(textProvider.notifier).state = "";
+      };
+    } else {
+      // 未扫描 / 已完成：都可点击启动新一轮扫描
+      title = _totalCount > 0 ? "再次扫描" : "开始扫描";
+      onTap = () {
+        scaning = true;
+        _totalCount = 0;
+        _currentIndex = 0;
+        setState(() {});
+        _startScan();
+      };
+    }
+    return Opacity(
+      opacity: 1.0,
+      child: ButtonWidget(title: title, onTap: onTap ?? () {}),
+    );
   }
 
   static Future<bool> autoInstallFounded(

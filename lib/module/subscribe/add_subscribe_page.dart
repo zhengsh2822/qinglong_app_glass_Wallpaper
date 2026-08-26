@@ -1062,6 +1062,8 @@ class TitleWidget extends ConsumerWidget {
             text: title,
             style: TextStyle(
               fontSize: 14,
+              // 标题字重跟随全局粗细调节
+              fontWeight: FontWeight(ref.watch(textWeightProvider)),
               color: ref.watch(themeProvider).themeColor.titleColor(),
             ),
           ),

@@ -41,9 +41,11 @@ class AppSlideButton extends StatelessWidget {
     this.iconSize = 22,
     this.cornerRadius = 10,
     this.width = 60,
-    this.outerGap = 3,
-    this.innerGap = 4,
-    this.glowBlur = 8,
+    // 外间距/内间距 ≥ 外发光半径（glowBlur 默认 5），
+    // 避免发光超出 Slidable 裁剪区域（ClipRect(_SlidableClipper)）被硬切
+    this.outerGap = 5,
+    this.innerGap = 5,
+    this.glowBlur = 5,
     this.glowOpacity = 0.5,
     this.cyberMode = true,
   }) : super(key: key);
@@ -68,7 +70,7 @@ class AppSlideButton extends StatelessWidget {
                     BoxShadow(
                       color: color.withOpacity(glowOpacity),
                       blurRadius: glowBlur,
-                      spreadRadius: 0.5,
+                      spreadRadius: 0,
                     ),
                   ]
                   : null,
@@ -133,9 +135,9 @@ class CyberSlideButton extends AppSlideButton {
     double iconSize = 22,
     double cornerRadius = 10,
     double width = 60,
-    double outerGap = 3,
-    double innerGap = 4,
-    double glowBlur = 8,
+    double outerGap = 5,
+    double innerGap = 5,
+    double glowBlur = 5,
     double glowOpacity = 0.5,
   }) : super(
          key: key,
@@ -198,12 +200,12 @@ class EditModeButton extends ConsumerWidget {
                   color: accent.withValues(alpha: 0.6),
                   width: 0.5,
                 ),
-                // 折射光：与同色外发光
+                // 折射光：与同色外发光（blur 5 ≤ 外边距 6，避免被裁剪硬切）
                 boxShadow: [
                   BoxShadow(
-                    color: accent.withValues(alpha: 0.5),
-                    blurRadius: 8,
-                    spreadRadius: 0.5,
+                    color: accent.withValues(alpha: 0.45),
+                    blurRadius: 5,
+                    spreadRadius: 0,
                   ),
                 ],
               ),

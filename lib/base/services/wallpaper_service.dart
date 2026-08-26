@@ -55,7 +55,7 @@ class WallpaperConfig {
     this.localPath,
     this.networkUrl,
     this.blurSigma = 0,
-    this.dimOpacity = 0.35,
+    this.dimOpacity = 0.3,
     this.autoSwitchEnabled = false,
     this.autoSwitchMinutes = 30,
     this.autoSwitchPool = const [],
@@ -117,7 +117,7 @@ class WallpaperConfig {
         localPath: j['localPath'] as String?,
         networkUrl: j['networkUrl'] as String?,
         blurSigma: (j['blurSigma'] as num?)?.toDouble() ?? 0,
-        dimOpacity: (j['dimOpacity'] as num?)?.toDouble() ?? 0.35,
+        dimOpacity: (j['dimOpacity'] as num?)?.toDouble() ?? 0.3,
         autoSwitchEnabled: j['autoSwitchEnabled'] as bool? ?? false,
         autoSwitchMinutes: j['autoSwitchMinutes'] as int? ?? 30,
         autoSwitchPool:

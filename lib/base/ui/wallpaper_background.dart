@@ -13,9 +13,14 @@ import 'package:qinglong_app/utils/sp_utils.dart';
 /// 3. 黑色蒙层（dimOpacity > 0 时启用，增强文字可读性）
 ///
 /// 性能要点：
-/// - 不用 RepaintBoundary：背景在 Stack 底层不在 ListView 里，滚动不会
-///   触发 rebuild；若包 RepaintBoundary 会隔离成独立图层，导致上层
-///   GlassCard 的 BackdropFilter 在滚动时无法实时采样背景 → 滑动透明
+/// - 主页壁纸（[cacheBlur] 默认 false）不包 RepaintBoundary：背景在
+///   Stack 底层不在 ListView 里，滚动不会触发 rebuild；若包 RepaintBoundary
+///   会隔离成独立图层，导致上层 GlassCard 的 BackdropFilter 在滚动时无法
+///   实时采样背景 → 滑动透明
+/// - 路由级壁纸（[cacheBlur] true，见 WallpaperPageRoute）：模糊层用
+///   RepaintBoundary 隔离缓存为独立图层，模糊结果只在首次渲染/壁纸变化时
+///   计算一次；push 动画、页面重绘期间直接复用缓存，避免每帧重算全屏
+///   高斯模糊 → 解决二级页面进入时掉帧（非实时模糊，视觉完全不变）
 /// - 模糊层用 [ImageFilter.blur] + ImageFiltered，对子 widget 自身渲染
 ///   结果做模糊，不采样 layer——避免跨路由模糊到下层路由的 page 内容
 /// - 网络图片先 Image.network 预览，后台下载到本地后切 Image.file
@@ -26,10 +31,22 @@ class WallpaperBackground extends StatelessWidget {
   /// 路由级覆盖底色，传入后在模糊层之上叠加此颜色。
   final Color? overrideBlurTint;
 
+  /// 是否缓存模糊结果为独立图层（非实时模糊）。
+  ///
+  /// - true：模糊层被 RepaintBoundary 隔离缓存，只在首次渲染/壁纸变化时
+  ///   计算一次高斯模糊；路由动画/页面重绘期间直接复用缓存图层，
+  ///   避免每帧重新计算全屏模糊（GPU 开销显著下降）。适合二级静态页面。
+  /// - false：每次 repaint 都重新计算模糊（实时），适合需要滚动实时采样
+  ///   的场景（主页壁纸）。
+  /// - null（默认）：自动判断——路由级壁纸（[overrideBlurSigma] != null）
+  ///   默认 true，否则 false。
+  final bool? cacheBlur;
+
   const WallpaperBackground({
     super.key,
     this.overrideBlurSigma,
     this.overrideBlurTint,
+    this.cacheBlur,
   });
 
   @override
@@ -68,11 +85,18 @@ class WallpaperBackground extends StatelessWidget {
             child: base,
           )
         : base;
+    // 非实时模糊：路由级壁纸默认用 RepaintBoundary 隔离缓存模糊层。
+    // 模糊结果只算一次，动画/重绘期间复用缓存，避免每帧重算全屏模糊；
+    // 壁纸内容静态（路由内不变），缓存结果恒正确，不影响上层毛玻璃采样。
+    final useCache = cacheBlur ?? (overrideBlurSigma != null);
+    final bgLayer = useCache
+        ? RepaintBoundary(child: blurredBase)
+        : blurredBase;
     return Stack(
       fit: StackFit.expand,
       children: [
         // 1. 底层背景（已按需模糊）
-        Positioned.fill(child: blurredBase),
+        Positioned.fill(child: bgLayer),
         // 2. 路由级底色（可选）
         if (overrideBlurTint != null)
           Positioned.fill(child: ColoredBox(color: overrideBlurTint!)),

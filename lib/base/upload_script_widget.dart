@@ -14,6 +14,7 @@ import 'package:qinglong_app/utils/sp_utils.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
+import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/base/ui/tree/models/script_data.dart';
 import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/module/others/scripts/script_code_detail_page.dart';
@@ -249,140 +250,139 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
       builder: (ctx) {
         return Padding(
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-          child: ClipRRect(
+          child: OptimizedFrostedGlass(
+            sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
             borderRadius: BorderRadius.circular(18),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 10), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 10)),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(18),
-                  border: isCyber
-                      ? Border.all(
-                          color: CyberColors.cyan.withValues(alpha: 0.3),
-                          width: 1,
-                        )
-                      : Border.all(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          width: 0.5,
-                          style: BorderStyle.solid,
-                        ),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 4,
-                      margin: const EdgeInsets.only(top: 8, bottom: 4),
-                      decoration: BoxDecoration(
-                        color: isCyber
-                            ? CyberColors.cyan.withValues(alpha: 0.4)
-                            : Colors.black.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(2),
+            forceOpaqueSolid: true,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(18),
+                border: isCyber
+                    ? Border.all(
+                        color: CyberColors.cyan.withValues(alpha: 0.3),
+                        width: 1,
+                      )
+                    : Border.all(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        width: 0.5,
+                        style: BorderStyle.solid,
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 12,
-                        horizontal: 16,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            widget.onlyShowName ? "选择父目录" : "选择脚本目录",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: isCyber
-                                  ? CyberColors.cyan
-                                  : AppleColors.textPrimary,
-                              fontFamily: 'MiSans',
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () => Navigator.of(ctx).pop(),
-                            child: Icon(
-                              CupertinoIcons.xmark_circle_fill,
-                              size: 22,
-                              color: isCyber
-                                  ? CyberColors.titleWhite.withValues(alpha: 0.5)
-                                  : Colors.black.withValues(alpha: 0.3),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Divider(
-                      height: 0.5,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(top: 8, bottom: 4),
+                    decoration: BoxDecoration(
                       color: isCyber
-                          ? CyberColors.cyan.withValues(alpha: 0.2)
-                          : Colors.black.withValues(alpha: 0.1),
+                          ? CyberColors.cyan.withValues(alpha: 0.4)
+                          : Colors.black.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(2),
                     ),
-                    ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxHeight: MediaQuery.of(context).size.height * 0.55,
-                      ),
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        itemCount: paths.length + 1,
-                        itemBuilder: (context, index) {
-                          final bool isRoot = index == 0;
-                          final String value = isRoot ? "" : paths[index - 1] ?? "";
-                          final String label = isRoot ? "根目录" : value;
-                          final bool selected = scriptPath == value;
-                          return GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: () {
-                              scriptPath = value;
-                              widget.nameCallBack(fileName);
-                              setState(() {});
-                              Navigator.of(ctx).pop();
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 14,
-                                horizontal: 16,
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      label,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        color: selected
-                                            ? (isCyber
-                                                ? CyberColors.cyan
-                                                : ref.read(themeProvider).primaryColor)
-                                            : (isCyber
-                                                ? CyberColors.titleWhite
-                                                : AppleColors.textPrimary),
-                                        fontFamily: 'MiSans',
-                                      ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 16,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          widget.onlyShowName ? "选择父目录" : "选择脚本目录",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: isCyber
+                                ? CyberColors.cyan
+                                : AppleColors.textPrimary,
+                            fontFamily: 'MiSans',
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => Navigator.of(ctx).pop(),
+                          child: Icon(
+                            CupertinoIcons.xmark_circle_fill,
+                            size: 22,
+                            color: isCyber
+                                ? CyberColors.titleWhite.withValues(alpha: 0.5)
+                                : Colors.black.withValues(alpha: 0.3),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Divider(
+                    height: 0.5,
+                    color: isCyber
+                        ? CyberColors.cyan.withValues(alpha: 0.2)
+                        : Colors.black.withValues(alpha: 0.1),
+                  ),
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight: MediaQuery.of(context).size.height * 0.55,
+                    ),
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      itemCount: paths.length + 1,
+                      itemBuilder: (context, index) {
+                        final bool isRoot = index == 0;
+                        final String value = isRoot ? "" : paths[index - 1] ?? "";
+                        final String label = isRoot ? "根目录" : value;
+                        final bool selected = scriptPath == value;
+                        return GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () {
+                            scriptPath = value;
+                            widget.nameCallBack(fileName);
+                            setState(() {});
+                            Navigator.of(ctx).pop();
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 14,
+                              horizontal: 16,
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    label,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      color: selected
+                                          ? (isCyber
+                                              ? CyberColors.cyan
+                                              : ref.read(themeProvider).primaryColor)
+                                          : (isCyber
+                                              ? CyberColors.titleWhite
+                                              : AppleColors.textPrimary),
+                                      fontFamily: 'MiSans',
                                     ),
                                   ),
-                                  if (selected)
-                                    Icon(
-                                      CupertinoIcons.checkmark,
-                                      size: 18,
-                                      color: isCyber
-                                          ? CyberColors.cyan
-                                          : ref.read(themeProvider).primaryColor,
-                                    ),
-                                ],
-                              ),
+                                ),
+                                if (selected)
+                                  Icon(
+                                    CupertinoIcons.checkmark,
+                                    size: 18,
+                                    color: isCyber
+                                        ? CyberColors.cyan
+                                        : ref.read(themeProvider).primaryColor,
+                                  ),
+                              ],
                             ),
-                          );
-                        },
-                      ),
+                          ),
+                        );
+                      },
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),

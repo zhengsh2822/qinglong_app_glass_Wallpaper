@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/sp_const.dart';
+import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/module/appkey/appkey_page.dart';
 import 'package:qinglong_app/module/appkey/appkey_viewmodel.dart';
 import 'package:qinglong_app/utils/extension.dart';
@@ -211,166 +212,168 @@ class _AddAppKeyPageState extends ConsumerState<AddAppKeyPage> {
       "系统信息",
     ];
 
-    showCupertinoModalPopup<void>(
+    showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
+      isDismissible: true,
+      enableDrag: true,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
       barrierColor: Colors.black.withValues(alpha: 0.5),
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setModalState) {
             return Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-              child: ClipRRect(
+              child: OptimizedFrostedGlass(
+                sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
                 borderRadius: BorderRadius.circular(18),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(
-                    sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 10),
-                    sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 10),
-                  ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.transparent,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: CyberColors.cyan.withValues(alpha: 0.3),
-                        width: 1,
-                      ),
+                forceOpaqueSolid: true,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: CyberColors.cyan.withValues(alpha: 0.3),
+                      width: 1,
                     ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 4,
-                          margin: const EdgeInsets.only(top: 8, bottom: 4),
-                          decoration: BoxDecoration(
-                            color: CyberColors.cyan.withValues(alpha: 0.4),
-                            borderRadius: BorderRadius.circular(2),
-                          ),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // 顶部拖拽指示器（grabber）— 配合 showModalBottomSheet 的 enableDrag 使用
+                      Container(
+                        width: 40,
+                        height: 4,
+                        margin: const EdgeInsets.only(top: 8, bottom: 4),
+                        decoration: BoxDecoration(
+                          color: CyberColors.cyan.withValues(alpha: 0.4),
+                          borderRadius: BorderRadius.circular(2),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 12,
-                            horizontal: 16,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                "请选择你需要的权限",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: CyberColors.cyan,
-                                  fontFamily: 'MiSans',
-                                ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 16,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "请选择你需要的权限",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: CyberColors.cyan,
+                                fontFamily: 'MiSans',
                               ),
-                              GestureDetector(
-                                onTap: () => Navigator.of(ctx).pop(),
-                                child: Icon(
-                                  CupertinoIcons.xmark_circle_fill,
-                                  size: 22,
-                                  color: CyberColors.titleWhite.withValues(alpha: 0.5),
-                                ),
+                            ),
+                            GestureDetector(
+                              onTap: () => Navigator.of(ctx).pop(),
+                              child: Icon(
+                                CupertinoIcons.xmark_circle_fill,
+                                size: 22,
+                                color: CyberColors.titleWhite.withValues(alpha: 0.5),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                        Divider(
-                          height: 0.5,
-                          color: CyberColors.cyan.withValues(alpha: 0.2),
+                      ),
+                      Divider(
+                        height: 0.5,
+                        color: CyberColors.cyan.withValues(alpha: 0.2),
+                      ),
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxHeight: MediaQuery.of(context).size.height * 0.5,
                         ),
-                        ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxHeight: MediaQuery.of(context).size.height * 0.5,
-                          ),
-                          child: ListView.builder(
-                            shrinkWrap: true,
-                            padding: const EdgeInsets.symmetric(vertical: 4),
-                            itemCount: allPermissions.length,
-                            itemBuilder: (context, index) {
-                              final name = allPermissions[index];
-                              final selected = tmpSelected.contains(name);
-                              return GestureDetector(
-                                behavior: HitTestBehavior.opaque,
-                                onTap: () {
-                                  setModalState(() {
-                                    if (selected) {
-                                      tmpSelected.remove(name);
-                                    } else {
-                                      tmpSelected.add(name);
-                                    }
-                                  });
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                    horizontal: 16,
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          name,
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            color: selected
-                                                ? CyberColors.cyan
-                                                : CyberColors.titleWhite,
-                                            fontWeight: selected
-                                                ? FontWeight.w600
-                                                : FontWeight.w400,
-                                            fontFamily: 'MiSans',
-                                          ),
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          itemCount: allPermissions.length,
+                          itemBuilder: (context, index) {
+                            final name = allPermissions[index];
+                            final selected = tmpSelected.contains(name);
+                            return GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () {
+                                setModalState(() {
+                                  if (selected) {
+                                    tmpSelected.remove(name);
+                                  } else {
+                                    tmpSelected.add(name);
+                                  }
+                                });
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                  horizontal: 16,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        name,
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          color: selected
+                                              ? CyberColors.cyan
+                                              : CyberColors.titleWhite,
+                                          fontWeight: selected
+                                              ? FontWeight.w600
+                                              : FontWeight.w400,
+                                          fontFamily: 'MiSans',
                                         ),
                                       ),
-                                      if (selected)
-                                        Icon(
-                                          CupertinoIcons.checkmark_alt,
-                                          size: 18,
-                                          color: CyberColors.cyan,
-                                        ),
-                                    ],
-                                  ),
+                                    ),
+                                    if (selected)
+                                      Icon(
+                                        CupertinoIcons.checkmark_alt,
+                                        size: 18,
+                                        color: CyberColors.cyan,
+                                      ),
+                                  ],
                                 ),
-                              );
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      Divider(
+                        height: 0.5,
+                        color: CyberColors.cyan.withValues(alpha: 0.2),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 16,
+                        ),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: CupertinoButton(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            color: ref.watch(themeProvider).primaryColor,
+                            borderRadius: BorderRadius.circular(12),
+                            child: const Text(
+                              "确定",
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            onPressed: () {
+                              selectedPermissions
+                                ..clear()
+                                ..addAll(tmpSelected);
+                              setState(() {});
+                              Navigator.of(ctx).pop();
                             },
                           ),
                         ),
-                        Divider(
-                          height: 0.5,
-                          color: CyberColors.cyan.withValues(alpha: 0.2),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 12,
-                            horizontal: 16,
-                          ),
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: CupertinoButton(
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              color: ref.watch(themeProvider).primaryColor,
-                              borderRadius: BorderRadius.circular(12),
-                              child: const Text(
-                                "确定",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              onPressed: () {
-                                selectedPermissions
-                                  ..clear()
-                                  ..addAll(tmpSelected);
-                                setState(() {});
-                                Navigator.of(ctx).pop();
-                              },
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),

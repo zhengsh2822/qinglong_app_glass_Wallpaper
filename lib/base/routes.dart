@@ -87,7 +87,7 @@ class Routes {
       case routeAddDependency:
         return WallpaperPageRoute(
           builder: (context) => const AddDependencyPage(),
-          blurSigma: 8,
+          blurSigma: 6,
           blurTintColor: CyberColors.bg.withOpacity(0.50),
         );
       case routeAddEnv:
@@ -106,7 +106,7 @@ class Routes {
                 (settings.arguments as Map)["title"],
                 (settings.arguments as Map)["content"],
               ),
-          blurSigma: 8,
+          blurSigma: 6,
           blurTintColor: CyberColors.bg.withOpacity(0.50),
         );
       case routeConfigDetail:
@@ -116,13 +116,13 @@ class Routes {
                 bean: (settings.arguments as Map)["bean"],
                 content: (settings.arguments as Map)["content"],
               ),
-          blurSigma: 8,
+          blurSigma: 6,
           blurTintColor: CyberColors.bg.withOpacity(0.50),
         );
       case routeLoginLog:
         return WallpaperPageRoute(
           builder: (context) => const LoginLogPage(),
-          blurSigma: 8,
+          blurSigma: 6,
           blurTintColor: CyberColors.bg.withOpacity(0.50),
         );
       case routeTaskLog:
@@ -132,20 +132,20 @@ class Routes {
                 (context) => TaskLogPage(
                   searchText: (settings.arguments as Map)["search"],
                 ),
-            blurSigma: 8,
+            blurSigma: 6,
             blurTintColor: CyberColors.bg.withOpacity(0.50),
           );
         } else {
           return WallpaperPageRoute(
             builder: (context) => TaskLogPage(),
-            blurSigma: 8,
+            blurSigma: 6,
             blurTintColor: CyberColors.bg.withOpacity(0.50),
           );
         }
       case routeScript:
         return WallpaperPageRoute(
           builder: (context) => const ScriptPage(),
-          blurSigma: 8,
+          blurSigma: 6,
           blurTintColor: CyberColors.bg.withOpacity(0.50),
         );
       case routeDependency:
@@ -157,13 +157,13 @@ class Routes {
                 title: (settings.arguments as Map)["title"],
                 path: (settings.arguments as Map)["path"],
               ),
-          blurSigma: 8,
+          blurSigma: 6,
           blurTintColor: CyberColors.bg.withOpacity(0.50),
         );
       case routeTaskDetail:
         return WallpaperPageRoute(
           builder: (context) => TaskDetailPage(settings.arguments as TaskBean),
-          blurSigma: 8,
+          blurSigma: 6,
           blurTintColor: CyberColors.bg.withOpacity(0.50),
         );
       case routeSubscribeDetail:
@@ -172,13 +172,13 @@ class Routes {
               (context) => SubscribeDetailPage(
                 settings.arguments as Map<String, dynamic>,
               ),
-          blurSigma: 8,
+          blurSigma: 6,
           blurTintColor: CyberColors.bg.withOpacity(0.50),
         );
       case routeEnvDetail:
         return WallpaperPageRoute(
           builder: (context) => EnvDetailPage(settings.arguments as EnvBean),
-          blurSigma: 8,
+          blurSigma: 6,
           blurTintColor: CyberColors.bg.withOpacity(0.50),
         );
       case routeUpdatePassword:
@@ -197,7 +197,7 @@ class Routes {
                 (settings.arguments as Map)["path"],
                 (settings.arguments as Map)["content"],
               ),
-          blurSigma: 8,
+          blurSigma: 6,
           blurTintColor: CyberColors.bg.withOpacity(0.50),
         );
       case routeScriptAdd:
@@ -207,7 +207,7 @@ class Routes {
                 (settings.arguments as Map)["title"],
                 (settings.arguments as Map)["path"],
               ),
-          blurSigma: 8,
+          blurSigma: 6,
           blurTintColor: CyberColors.bg.withOpacity(0.50),
         );
       case routeJdck:

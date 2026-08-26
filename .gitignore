@@ -67,3 +67,7 @@ app.*.map.json
 /对话记忆.md
 /.trae/
 /build_apk.ps1
+
+# demos 目录仅需提交本地上线依赖 liquid_glass_easy
+/demos/liquid-glass-react/
+/demos/liquid_glass_card_demo/

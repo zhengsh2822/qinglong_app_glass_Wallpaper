@@ -7,7 +7,7 @@ import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 
 /// 赛博终端风脚本查看/编辑演示页
 ///
-/// 背景层级：CyberBackground(纯黑+光影) → Scaffold(transparent) → 代码区(black 0.3 + 青色边框)
+/// 背景层级：CyberBackground(透明壁纸层) → Scaffold(transparent) → 代码区(black 0.3 + 青色边框)
 /// 字体颜色：普通代码 #E0E0E0 / 注释 #607D8B / 关键字 #00F0FF / 字符串 #00FF94
 class ScriptEditorPage extends ConsumerWidget {
   final String title;
@@ -63,9 +63,8 @@ module.exports = main;
   @override
   Widget build(BuildContext context, ref) {
     return CyberBackground(
-      showGradient: true,
       child: Scaffold(
-        // 【背景透明】强制transparent，让CyberBackground的光影透出
+        // 【背景透明】强制transparent，让全局壁纸透过
         backgroundColor: Colors.transparent,
         appBar: AppBar(
           // 【AppBar透明】背景透明，融入暗黑主题

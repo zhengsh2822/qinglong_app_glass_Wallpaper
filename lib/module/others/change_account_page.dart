@@ -12,6 +12,7 @@ import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
+import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/base/userinfo_viewmodel.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
@@ -160,21 +161,19 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
     if (isCyber) {
       card = Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        child: ClipRRect(
+        child: OptimizedFrostedGlass(
+          sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
           borderRadius: BorderRadius.circular(18),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 10), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 10)),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: CyberColors.borderGlow, width: 1),
-              ),
-              child: Material(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(18),
-                child: child,
-              ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: CyberColors.borderGlow, width: 1),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(18),
+              child: child,
             ),
           ),
         ),
@@ -182,21 +181,19 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
     } else {
       card = Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        child: ClipRRect(
+        child: OptimizedFrostedGlass(
+          sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
           borderRadius: BorderRadius.circular(18),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 10), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 10)),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: AppleColors.cardBorder, width: 0.5),
-              ),
-              child: Material(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(18),
-                child: child,
-              ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: AppleColors.cardBorder, width: 0.5),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(18),
+              child: child,
             ),
           ),
         ),
@@ -234,7 +231,7 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
             width: double.infinity,
             cornerRadius: 12,
             iconSize: 22,
-            outerGap: 4,
+            outerGap: 5,
             innerGap: 6,
           ),
         ],
@@ -356,45 +353,41 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
           isCyber
               ? Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                child: ClipRRect(
+                child: OptimizedFrostedGlass(
+                  sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
                   borderRadius: BorderRadius.circular(18),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 10), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 10)),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: CyberColors.borderGlow,
-                          width: 1,
-                        ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: CyberColors.borderGlow,
+                        width: 1,
                       ),
-                      child: Material(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(18),
-                        child: _buildAddAccountContent(accentColor),
-                      ),
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(18),
+                      child: _buildAddAccountContent(accentColor),
                     ),
                   ),
                 ),
               )
               : Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                child: ClipRRect(
+                child: OptimizedFrostedGlass(
+                  sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
                   borderRadius: BorderRadius.circular(18),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 10), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 10)),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: AppleColors.cardBorder,
-                          width: 0.5,
-                        ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: AppleColors.cardBorder,
+                        width: 0.5,
                       ),
-                      child: _buildAddAccountContent(accentColor),
                     ),
+                    child: _buildAddAccountContent(accentColor),
                   ),
                 ),
               ),

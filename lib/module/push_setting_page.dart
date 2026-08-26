@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +13,7 @@ import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/glass_text_field.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
+import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/base/ui/settings_widgets.dart';
 import 'package:qinglong_app/module/subscribe/add_subscribe_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
@@ -179,17 +179,24 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
 
   void _showPushSelector(BuildContext context) {
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
-    showCupertinoModalPopup<void>(
+    // 弹窗字重跟随全局粗细调节（弹窗为瞬时场景，打开时读取一次）
+    final FontWeight fw = FontWeight(ref.read(textWeightProvider));
+    showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
+      isDismissible: true,
+      enableDrag: true,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
       barrierColor: Colors.black.withValues(alpha: 0.5),
       builder: (ctx) {
         return Padding(
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-          child: ClipRRect(
+          child: OptimizedFrostedGlass(
+            sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
             borderRadius: BorderRadius.circular(18),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 10), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 10)),
-              child: Container(
+            forceOpaqueSolid: true,
+            child: Container(
                 decoration: BoxDecoration(
                   color: Colors.transparent,
                   borderRadius: BorderRadius.circular(18),
@@ -232,7 +239,7 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
                             "选择通知方式",
                             style: TextStyle(
                               fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: fw,
                               color:
                                   isCyber
                                       ? CyberColors.cyan
@@ -302,10 +309,7 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
                                                 : (selected
                                                     ? AppleColors.accent
                                                     : AppleColors.textPrimary),
-                                        fontWeight:
-                                            selected
-                                                ? FontWeight.w600
-                                                : FontWeight.w400,
+                                        fontWeight: fw,
                                         fontFamily: 'MiSans',
                                       ),
                                     ),
@@ -329,7 +333,6 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
                   ],
                 ),
               ),
-            ),
           ),
         );
       },

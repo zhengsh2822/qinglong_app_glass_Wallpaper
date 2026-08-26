@@ -39,13 +39,16 @@ class GlassCard extends ConsumerWidget {
   /// 是否启用滚动缓存（用于列表中的卡片，滚动期间用静态缓存图替代实时模糊）
   final bool enableScrollCache;
 
+  /// 强制 100% 不透明固定纯色（供弹窗使用，透传给 OptimizedFrostedGlass）
+  final bool forceOpaqueSolid;
+
   const GlassCard({
     super.key,
     required this.child,
     this.margin,
     this.padding,
     this.radius = AppleColors.radiusCard,
-    this.sigma = 10,
+    this.sigma = 4,
     this.color,
     this.borderColor,
     this.borderWidth = 1,
@@ -53,6 +56,7 @@ class GlassCard extends ConsumerWidget {
     this.onTap,
     this.borderRadius,
     this.enableScrollCache = false,
+    this.forceOpaqueSolid = false,
   });
 
   @override
@@ -79,6 +83,7 @@ class GlassCard extends ConsumerWidget {
         tintColor: Colors.transparent,
         borderRadius: br,
         enableScrollCache: enableScrollCache,
+        forceOpaqueSolid: forceOpaqueSolid,
         child: Container(
           decoration: BoxDecoration(
             color: effectiveColor,
@@ -140,7 +145,7 @@ class GlassListItemCard extends ConsumerWidget {
     this.margin,
     this.padding,
     this.radius = AppleColors.radiusCard,
-    this.sigma = 10,
+    this.sigma = 4,
     this.onTap,
   });
 
@@ -222,7 +227,7 @@ class GlassPageBackground extends StatelessWidget {
   const GlassPageBackground({
     super.key,
     required this.child,
-    this.sigma = 8,
+    this.sigma = 4,
     this.color,
   });
 
@@ -256,7 +261,7 @@ class GlassAppBarContainer extends ConsumerWidget {
   const GlassAppBarContainer({
     super.key,
     required this.child,
-    this.sigma = 10,
+    this.sigma = 4,
   });
 
   @override

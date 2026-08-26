@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 
 /// 只读标签 chip 组件（Wallpaper 版毛玻璃风格）
@@ -44,25 +45,24 @@ class TagChip extends ConsumerWidget {
         isCyber ? CyberColors.titleWhite : AppleColors.textPrimary;
     final double sigma = SpUtil.getDouble(spCardBlurSigma, defValue: 8);
 
-    return ClipRRect(
+    // 统一毛玻璃封装：sigma<=0 时自动退化为纯色（无 BackdropFilter）
+    return OptimizedFrostedGlass(
+      sigma: sigma,
       borderRadius: BorderRadius.circular(5),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 5),
-          decoration: BoxDecoration(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(5),
-            border: Border.all(color: borderColor, width: 0.5),
-          ),
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 12,
-              color: textColor,
-            ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 5),
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(5),
+          border: Border.all(color: borderColor, width: 0.5),
+        ),
+        child: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 12,
+            color: textColor,
           ),
         ),
       ),

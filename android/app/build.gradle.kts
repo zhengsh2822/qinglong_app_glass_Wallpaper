@@ -20,10 +20,13 @@ android {
 
     defaultConfig {
         applicationId = "com.qlapp.qinglong_app"
-        minSdk = 23
+        minSdk = flutter.minSdkVersion
         targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        // ABI 由 Flutter 插件根据 --target-platform 自动配置，
+        // 构建命令统一传 android-arm64（见根目录构建脚本/说明）。
+        // 不要手动设置 splits/ndk.abiFilters，避免与 Flutter 插件冲突。
     }
 
     buildTypes {
@@ -36,17 +39,6 @@ android {
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("debug")
-        }
-    }
-
-    splits {
-        abi {
-            // Debug 模式禁用 split，确保 flutter run 能正常工作
-            // Release 模式启用 split，生成精简的 arm64 APK
-            isEnable = !gradle.startParameter.taskNames.any { it.contains("Debug") }
-            reset()
-            include("arm64-v8a")
-            isUniversalApk = false
         }
     }
 
@@ -65,19 +57,4 @@ dependencies {
 
 flutter {
     source = "../.."
-}
-
-// 构建完成后复制 arm64-v8a APK 为 app-release.apk，让 Flutter 工具能识别
-tasks.matching { it.name == "assembleRelease" }.configureEach {
-    doLast {
-        val src = layout.buildDirectory.file("outputs/apk/release/app-arm64-v8a-release.apk").get().asFile
-        val dst1 = layout.buildDirectory.file("outputs/apk/release/app-release.apk").get().asFile
-        val dst2 = layout.buildDirectory.file("outputs/flutter-apk/app-release.apk").get().asFile
-        if (src.exists()) {
-            src.copyTo(dst1, overwrite = true)
-            dst2.parentFile.mkdirs()
-            src.copyTo(dst2, overwrite = true)
-            println("Copied ${src.name} to ${dst1.name} and ${dst2.name} for Flutter tool compatibility")
-        }
-    }
 }

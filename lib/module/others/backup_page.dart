@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +8,7 @@ import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
+import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/base/ui/selectable_chip.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/utils/extension.dart';
@@ -53,9 +53,13 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   bool _processing = false;
   String _statusText = '';
 
+  /// 全局字重（build 顶部统一 watch，供卡片标题/按钮/sheet 标题使用）
+  FontWeight _globalFw = FontWeight.w400;
+
   @override
   Widget build(BuildContext context) {
     final _ = ref.watch(themeProvider);
+    _globalFw = FontWeight(ref.watch(textWeightProvider));
 
     return Stack(
       children: [
@@ -119,7 +123,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             '数据备份',
             style: TextStyle(
               fontSize: 16,
-              fontWeight: FontWeight.w600,
+              fontWeight: _globalFw,
               color: CyberColors.titleWhite,
             ),
           ),
@@ -171,7 +175,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                   '开始备份',
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: _globalFw,
                     color: CyberColors.cyan,
                   ),
                 ),
@@ -195,7 +199,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             '数据恢复',
             style: TextStyle(
               fontSize: 16,
-              fontWeight: FontWeight.w600,
+              fontWeight: _globalFw,
               color: CyberColors.titleWhite,
             ),
           ),
@@ -216,7 +220,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                   '选择文件恢复',
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: _globalFw,
                     color: CyberColors.cyan,
                   ),
                 ),
@@ -415,11 +419,11 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             color: Colors.transparent,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
-          child: ClipRRect(
+          child: OptimizedFrostedGlass(
+            sigma: 10,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(
+            forceOpaqueSolid: true,
+            child: Container(
                 color: (isCyber ? CyberColors.bg : AppleColors.bgSecondary).withOpacity(0.85),
                 padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                 child: SafeArea(
@@ -444,7 +448,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                             '选择恢复来源',
                             style: TextStyle(
                               fontSize: 17,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: _globalFw,
                               color: isCyber ? CyberColors.titleWhite : AppleColors.textPrimary,
                             ),
                           ),
@@ -495,7 +499,6 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                   ),
                 ),
               ),
-            ),
           ),
         );
       },
@@ -515,11 +518,11 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             color: Colors.transparent,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
-          child: ClipRRect(
+          child: OptimizedFrostedGlass(
+            sigma: 10,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(
+            forceOpaqueSolid: true,
+            child: Container(
                 color: (isCyber ? CyberColors.bg : AppleColors.bgSecondary).withOpacity(0.85),
                 padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                 child: SafeArea(
@@ -548,7 +551,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                             isSuccess ? '备份成功' : '备份失败',
                             style: TextStyle(
                               fontSize: 17,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: _globalFw,
                               color: isCyber ? CyberColors.titleWhite : AppleColors.textPrimary,
                             ),
                           ),
@@ -593,7 +596,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                                     '分享/保存到文件管理器',
                                     style: TextStyle(
                                       fontSize: 15,
-                                      fontWeight: FontWeight.w600,
+                                      fontWeight: _globalFw,
                                       color: CyberColors.cyan,
                                     ),
                                   ),
@@ -620,7 +623,6 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                   ),
                 ),
               ),
-            ),
           ),
         );
       },
@@ -641,11 +643,11 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             color: Colors.transparent,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
-          child: ClipRRect(
+          child: OptimizedFrostedGlass(
+            sigma: 10,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(
+            forceOpaqueSolid: true,
+            child: Container(
                 color: (isCyber ? CyberColors.bg : AppleColors.bgSecondary).withOpacity(0.85),
                 child: Column(
                   children: [
@@ -667,7 +669,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                             '选择备份文件',
                             style: TextStyle(
                               fontSize: 17,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: _globalFw,
                               color: isCyber ? CyberColors.titleWhite : AppleColors.textPrimary,
                             ),
                           ),
@@ -721,7 +723,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                                           overflow: TextOverflow.ellipsis,
                                           style: TextStyle(
                                             fontSize: 15,
-                                            fontWeight: FontWeight.w500,
+                                            fontWeight: _globalFw,
                                             color: isCyber ? CyberColors.titleWhite : AppleColors.textPrimary,
                                           ),
                                         ),
@@ -751,7 +753,6 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                   ],
                 ),
               ),
-            ),
           ),
         );
       },

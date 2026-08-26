@@ -288,7 +288,7 @@ class _ScriptDetailPageState extends ConsumerState<ScriptDetailPage>
 
     // 赛博模式：CyberBackground包裹透明Scaffold，光影渐变穿透整个页面
     return isCyber
-        ? CyberBackground(showGradient: false, child: scaffold)
+        ? CyberBackground(child: scaffold)
         : scaffold;
   }
 

@@ -433,7 +433,7 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
     Navigator.of(context).push(
       WallpaperPageRoute(
         builder: (context) => FileDirectoryPage(path: path),
-        blurSigma: 8,
+        blurSigma: 6,
         blurTintColor: CyberColors.bg.withOpacity(0.50),
       ),
     );

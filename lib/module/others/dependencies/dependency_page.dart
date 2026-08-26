@@ -17,6 +17,7 @@ import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
+import 'package:qinglong_app/base/ui/lazy_first_screen.dart';
 import 'package:qinglong_app/base/ui/slidable_close_notifier.dart';
 import 'package:qinglong_app/base/ui/enable_widget.dart';
 import 'package:qinglong_app/base/ui/running_widget.dart';
@@ -395,7 +396,12 @@ class DependcyPageState extends ConsumerState<DependencyPage>
         ),
       ),
     );
-    return isCyber ? CyberBackground(child: scaffold) : scaffold;
+    return LazyFirstScreen(
+      placeholder: const FirstScreenSkeleton(title: "依赖管理"),
+      // 动画期间显示骨架（~400ms），动画结束后挂载真实内容（含实时毛玻璃）。
+      // 仅作用于本路由，下层路由不受影响。
+      child: isCyber ? CyberBackground(child: scaffold) : scaffold,
+    );
   }
 
   void showLog(
@@ -414,6 +420,8 @@ class DependcyPageState extends ConsumerState<DependencyPage>
     Navigator.of(context)
         .push(
           WallpaperPageRoute(
+            blurSigma: 6,
+            blurTintColor: CyberColors.bg.withOpacity(0.50),
             builder: (context) => InTimeDepLogPage(v, true, title),
           ),
         )
@@ -980,6 +988,8 @@ class DependencyCell extends ConsumerWidget {
     Navigator.of(context)
         .push(
           WallpaperPageRoute(
+            blurSigma: 6,
+            blurTintColor: CyberColors.bg.withOpacity(0.50),
             builder: (context) => InTimeDepLogPage(v, true, title),
           ),
         )

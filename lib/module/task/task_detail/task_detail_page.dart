@@ -415,7 +415,7 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> with LazyLoadSt
   void showLog() {
     Navigator.of(context).push(
       WallpaperPageRoute(
-        blurSigma: 8,
+        blurSigma: 6,
         blurTintColor: CyberColors.bg.withOpacity(0.50),
         builder: (context) => InTimeLogPage(
           widget.taskBean.sId!,

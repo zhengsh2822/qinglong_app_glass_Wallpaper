@@ -12,6 +12,7 @@ import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/empty_widget.dart';
+import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/module/config/add_config_page.dart';
 import 'package:qinglong_app/module/config/config_bean.dart';
@@ -30,7 +31,9 @@ class ConfigPage extends ConsumerStatefulWidget {
 }
 
 class ConfigPageState extends ConsumerState<ConfigPage>
-    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver, AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
   BuildContext? childContext;
   String? configContent;
   bool gotoConfigDetailed = false;
@@ -79,6 +82,7 @@ class ConfigPageState extends ConsumerState<ConfigPage>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final _ = ref.watch(themeProvider);
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
     return Scaffold(
@@ -255,11 +259,10 @@ class ConfigCell extends ConsumerWidget {
                         ),
                         border: Border.all(color: AppleColors.cardBorder),
                       ),
-              child: ClipRRect(
+              child: OptimizedFrostedGlass(
+                sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
                 borderRadius: BorderRadius.circular(AppleColors.radiusCard),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: SpUtil.getDouble(spCardBlurSigma, defValue: 10), sigmaY: SpUtil.getDouble(spCardBlurSigma, defValue: 10)),
-                  child:
+                child:
                       isCyber
                           ? Container(
                             decoration: BoxDecoration(
@@ -280,7 +283,6 @@ class ConfigCell extends ConsumerWidget {
                             color: Colors.transparent,
                             child: configContent,
                           ),
-                ),
               ),
             ),
             isCyber ? const SizedBox.shrink() : const SizedBox.shrink(),

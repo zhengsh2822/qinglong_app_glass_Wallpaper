@@ -9,6 +9,7 @@ import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
+import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
@@ -16,10 +17,12 @@ import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
+import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/base/ui/search_cell.dart';
 import 'package:qinglong_app/module/others/task_log/task_log_bean.dart';
 import 'package:qinglong_app/module/task/intime_log/intime_history_log_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
+import 'package:qinglong_app/utils/sp_utils.dart';
 
 import '../../../main.dart';
 import '../../home/system_bean.dart';
@@ -152,7 +155,11 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
 
                             if ((item.isDir ?? false)) {
                               if (isCyber) {
-                                return CyberSlidable(
+                                return Container(
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                  ),
+                                  child: CyberSlidable(
                                   slidableKey: ValueKey(item.name ?? ""),
                                   endActions: [
                                     CyberSlideAction(
@@ -210,7 +217,24 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                       },
                                     ),
                                   ],
-                                  child: ExpansionTile(
+                                  child: OptimizedFrostedGlass(
+                                    sigma: SpUtil.getDouble(
+                                      spCardBlurSigma,
+                                      defValue: 4,
+                                    ),
+                                    borderRadius: BorderRadius.circular(18),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.transparent,
+                                        borderRadius: BorderRadius.circular(
+                                          18,
+                                        ),
+                                        border: Border.all(
+                                          color: CyberColors.borderGlow,
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: ExpansionTile(
                                     title: Text(
                                       item.name ?? "",
                                       style: TextStyle(
@@ -232,7 +256,7 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                                         context,
                                                       ).push(
                                                         WallpaperPageRoute(
-                                                          blurSigma: 8,
+                                                          blurSigma: 6,
                                                           blurTintColor: CyberColors.bg.withOpacity(0.50),
                                                           builder:
                                                               (
@@ -269,7 +293,7 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                                       Navigator.of(context)
                                                           .push(
                                                             WallpaperPageRoute(
-                                                              blurSigma: 8,
+                                                              blurSigma: 6,
                                                               blurTintColor: CyberColors.bg.withOpacity(0.50),
                                                               builder:
                                                                   (
@@ -306,13 +330,31 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                                     ),
                                                   ),
                                                 )
-                                                .toList(),
+                                              .toList(),
                                   ),
-                                );
+                                ),
+                              ),
+                            ),
+                          );
                               }
-                              return ClipRRect(
-                                borderRadius: BorderRadius.circular(18),
-                                child: Slidable(
+                              return Container(
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.transparent,
+                                  borderRadius: BorderRadius.circular(18),
+                                  border: Border.all(
+                                    color: AppleColors.cardBorder,
+                                  ),
+                                ),
+                                child: OptimizedFrostedGlass(
+                                  sigma: SpUtil.getDouble(
+                                    spCardBlurSigma,
+                                    defValue: 4,
+                                  ),
+                                  borderRadius: BorderRadius.circular(18),
+                                  child: Slidable(
                                   key: ValueKey(item.name ?? ""),
                                   endActionPane: ActionPane(
                                     motion: const ScrollMotion(),
@@ -375,7 +417,7 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                         width: double.infinity,
                                         cornerRadius: 12,
                                         iconSize: 22,
-                                        outerGap: 4,
+                                        outerGap: 5,
                                         innerGap: 6,
                                       ),
                                     ],
@@ -400,7 +442,7 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                                   onTap: () {
                                                     Navigator.of(context).push(
                                                       WallpaperPageRoute(
-                                                        blurSigma: 8,
+                                                        blurSigma: 6,
                                                         blurTintColor: CyberColors.bg.withOpacity(0.50),
                                                         builder:
                                                             (
@@ -437,7 +479,7 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                                     Navigator.of(context)
                                                         .push(
                                                           WallpaperPageRoute(
-                                                            blurSigma: 8,
+                                                            blurSigma: 6,
                                                             blurTintColor: CyberColors.bg.withOpacity(0.50),
                                                             builder:
                                                                 (
@@ -477,10 +519,15 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                               .toList(),
                                 ),
                                 ),
+                              ),
                               );
                             } else {
                               if (isCyber) {
-                                return CyberSlidable(
+                                return Container(
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                  ),
+                                  child: CyberSlidable(
                                   slidableKey: ValueKey(item.name ?? ""),
                                   endActions: [
                                     CyberSlideAction(
@@ -538,7 +585,24 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                       },
                                     ),
                                   ],
-                                  child: ListTile(
+                                  child: OptimizedFrostedGlass(
+                                    sigma: SpUtil.getDouble(
+                                      spCardBlurSigma,
+                                      defValue: 4,
+                                    ),
+                                    borderRadius: BorderRadius.circular(18),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.transparent,
+                                        borderRadius: BorderRadius.circular(
+                                          18,
+                                        ),
+                                        border: Border.all(
+                                          color: CyberColors.borderGlow,
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: ListTile(
                                     onTap: () {
                                       if (item.isDir ?? false) {
                                         "该文件夹为空".toast();
@@ -547,7 +611,7 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
 
                                       Navigator.of(context).push(
                                         WallpaperPageRoute(
-                                          blurSigma: 8,
+                                          blurSigma: 6,
                                           blurTintColor: CyberColors.bg.withOpacity(0.50),
                                           builder:
                                               (context) => InTimeHistoryLogPage(
@@ -569,11 +633,29 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                       ),
                                     ),
                                   ),
-                                );
+                                ),
+                              ),
+                            ),
+                          );
                               }
-                              return ClipRRect(
-                                borderRadius: BorderRadius.circular(18),
-                                child: Slidable(
+                              return Container(
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.transparent,
+                                  borderRadius: BorderRadius.circular(18),
+                                  border: Border.all(
+                                    color: AppleColors.cardBorder,
+                                  ),
+                                ),
+                                child: OptimizedFrostedGlass(
+                                  sigma: SpUtil.getDouble(
+                                    spCardBlurSigma,
+                                    defValue: 4,
+                                  ),
+                                  borderRadius: BorderRadius.circular(18),
+                                  child: Slidable(
                                   key: ValueKey(item.name ?? ""),
                                   endActionPane: ActionPane(
                                     motion: const ScrollMotion(),
@@ -636,7 +718,7 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                         width: double.infinity,
                                         cornerRadius: 12,
                                         iconSize: 22,
-                                        outerGap: 4,
+                                        outerGap: 5,
                                         innerGap: 6,
                                       ),
                                     ],
@@ -650,7 +732,7 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
 
                                     Navigator.of(context).push(
                                       WallpaperPageRoute(
-                                        blurSigma: 8,
+                                        blurSigma: 6,
                                         blurTintColor: CyberColors.bg.withOpacity(0.50),
                                         builder:
                                             (context) => InTimeHistoryLogPage(
@@ -673,6 +755,7 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                   ),
                                 ),
                                 ),
+                              ),
                               );
                             }
                           },

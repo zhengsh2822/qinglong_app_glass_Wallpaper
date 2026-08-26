@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/sp_const.dart';
+import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 
 /// 毛玻璃风格弹窗，替代 [CupertinoAlertDialog]。
@@ -25,7 +26,7 @@ class GlassAlertDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveSigma = SpUtil.getDouble(spCardBlurSigma, defValue: 10);
+    final effectiveSigma = SpUtil.getDouble(spCardBlurSigma, defValue: 4);
     final List<Widget> children = [];
     if (title != null) {
       children.add(
@@ -73,11 +74,11 @@ class GlassAlertDialog extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 40),
         constraints: const BoxConstraints(maxWidth: 270),
-        child: ClipRRect(
+        child: OptimizedFrostedGlass(
+          sigma: effectiveSigma,
           borderRadius: BorderRadius.circular(14),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: effectiveSigma, sigmaY: effectiveSigma),
-            child: Container(
+          forceOpaqueSolid: true,
+          child: Container(
               decoration: BoxDecoration(
                 color: Colors.transparent,
                 borderRadius: BorderRadius.circular(14),
@@ -91,7 +92,6 @@ class GlassAlertDialog extends StatelessWidget {
                 ),
               ),
             ),
-          ),
         ),
       ),
     );
