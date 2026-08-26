@@ -514,8 +514,13 @@ class _AboutPageState extends ConsumerState<AboutPage>
   }
 
   /// 获取新版安装包信息：GitHub Releases latest 的发布时间与本地已确认时间对比。
-  /// 构建版本号固定不变（3.0.0+300），仅靠发布时间判断是否有新安装包；
+  /// 构建版本号固定不变（3.0.0+300），仅靠时间判断是否有新安装包；
   /// 仅用户主动点击"版本"行时检测，不主动提醒。
+  ///
+  /// 比较基准（取其中最晚者）：
+  /// 1. 本地确认过的 release 时间 [spGithubLastReleaseTime]（点过"获取安装包"后写入）
+  /// 2. 本地构建时间戳 LOCAL_BUILD_TIME（构建时通过 --dart-define 注入，epoch 毫秒）。
+  ///    本地包比 GitHub 附件还新（如刚构建完上传前）时不会重复提示。
   Future<void> _checkGithubUpdate() async {
     const String releaseUrl =
         'https://github.com/zhengsh2822/qinglong_app_glass_Wallpaper/releases/latest';
@@ -560,9 +565,15 @@ class _AboutPageState extends ConsumerState<AboutPage>
       }
       // 闭包内引用需要 final 局部变量（可空类型无法在闭包中窄化）
       final DateTime releaseTime = publishedAt;
+      final int latestEpoch = releaseTime.millisecondsSinceEpoch;
       // 与本地已确认的 release 时间对比：有更新的 release 才提示
       final last = SpUtil.getInt(spGithubLastReleaseTime, defValue: 0);
-      if (releaseTime.millisecondsSinceEpoch <= last) {
+      // 构建时注入的本地构建时间戳（epoch 毫秒，0 表示未注入不参与比较）
+      final localBuildAt = int.tryParse(
+            const String.fromEnvironment('LOCAL_BUILD_TIME'),
+          ) ??
+          0;
+      if (latestEpoch <= last || (localBuildAt > 0 && latestEpoch <= localBuildAt)) {
         "已是最新安装包".toast();
         return;
       }
