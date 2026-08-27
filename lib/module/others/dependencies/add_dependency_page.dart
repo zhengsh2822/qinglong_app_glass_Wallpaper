@@ -10,6 +10,7 @@ import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
+import 'package:qinglong_app/base/ui/selector_sheet.dart';
 import 'package:qinglong_app/module/others/dependencies/dependency_viewmodel.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
@@ -73,39 +74,33 @@ class _AddDependencyPageState extends ConsumerState<AddDependencyPage> {
                 const SizedBox(
                   height: 10,
                 ),
-                DropdownButtonFormField<DepedencyEnum>(
-                  items: [
-                    DropdownMenuItem(
-                      value: DepedencyEnum.NodeJS,
-                      child: Text(DepedencyEnum.NodeJS.name),
-                    ),
-                    DropdownMenuItem(
-                      value: DepedencyEnum.Python3,
-                      child: Text(DepedencyEnum.Python3.name),
-                    ),
-                    DropdownMenuItem(
-                      value: DepedencyEnum.Linux,
-                      child: Text(DepedencyEnum.Linux.name),
-                    ),
-                  ],
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: ref.watch(themeProvider).themeColor.titleColor(),
-                  ),
-                  decoration: const InputDecoration(
-                    isDense: true,
-                    contentPadding: EdgeInsets.symmetric(
-                      vertical: 10,
-                      horizontal: 10,
-                    ),
-                  ),
-                  icon: const Icon(
-                    CupertinoIcons.chevron_up_chevron_down,
-                    size: 16,
-                  ),
-                  value: DepedencyEnum.NodeJS,
-                  onChanged: (value) {
-                    depedencyType = value!;
+                // 依赖类型选择：底部弹窗选择器（替代原生顶部下拉，与选择通知方式弹窗一致）
+                SelectorFieldCard(
+                  hintText: "请选择依赖类型",
+                  currentValue: depedencyType.name,
+                  emptyHint: "请选择",
+                  onTap: () async {
+                    final options = DepedencyEnum.values
+                        .map(
+                          (e) => SelectorOption<DepedencyEnum>(
+                            value: e,
+                            label: e.name,
+                          ),
+                        )
+                        .toList();
+                    await showSelectorSheet<DepedencyEnum>(
+                      context: context,
+                      title: "选择依赖类型",
+                      options: options,
+                      selectedValue: depedencyType,
+                      onSelected: (value) {
+                        if (mounted) {
+                          setState(() {
+                            depedencyType = value;
+                          });
+                        }
+                      },
+                    );
                   },
                 ),
               ],

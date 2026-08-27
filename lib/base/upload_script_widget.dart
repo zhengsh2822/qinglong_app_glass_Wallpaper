@@ -244,8 +244,13 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
   /// 脚本目录选择弹窗（卡片样式 + 毛玻璃模糊）
   void _showPathSelector(BuildContext context) {
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
-    showCupertinoModalPopup<void>(
+    showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
+      isDismissible: true,
+      enableDrag: true,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
       barrierColor: Colors.black.withValues(alpha: 0.5),
       builder: (ctx) {
         return Padding(
