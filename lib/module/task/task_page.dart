@@ -1292,19 +1292,19 @@ class TaskItemCell extends StatelessWidget {
     final FontWeight fw = FontWeight(ref.watch(textWeightProvider));
     final ThemeViewModel themeModel = ref.watch(themeProvider);
 
-    // 禁用卡片：整体灰显
+    // 禁用卡片：整体灰显（纯灰色系，无紫调）
     final Color nameColor = isDisabled
-        ? (dark ? const Color(0xFF5A5A6E) : const Color(0xFFB0B0B8))
+        ? (dark ? const Color(0xFF6E6E74) : const Color(0xFFB0B0B8))
         : themeModel.themeColor.titleColor();
     final Color timeColor = isDisabled
-        ? (dark ? const Color(0xFF4A4A5E) : const Color(0xFF9A9AA0))
+        ? (dark ? const Color(0xFF55555B) : const Color(0xFF9A9AA0))
         : themeModel.themeColor.descColor();
     // 定时规则：始终保留青色强调
     final Color cronColor = isDisabled
-        ? (dark ? const Color(0xFF4A4A5E) : const Color(0xFFB0B0B8))
+        ? (dark ? const Color(0xFF55555B) : const Color(0xFFB0B0B8))
         : CyberColors.cyan.withValues(alpha: 0.9);
     final Color commandColor = isDisabled
-        ? (dark ? const Color(0xFF4A4A5E) : const Color(0xFFC4C4CC))
+        ? (dark ? const Color(0xFF55555C) : const Color(0xFFC4C4CC))
         : themeModel.themeColor.descColor();
 
     final String timeText =
@@ -1485,16 +1485,16 @@ class TaskItemCell extends StatelessWidget {
     );
   }
 
-  /// 状态色：运行中主色 / 待机灰 / 禁用红
+  /// 状态色：运行中主色 / 待机灰 / 禁用灰（纯灰色系，无紫调）
   Color _stateColor(bool isRunning, bool isDisabled) {
     final Color accent = isCyber
         ? CyberColors.cyan
         : ref.watch(themeProvider).primaryColor;
     if (isDisabled) {
-      return isCyber ? CyberColors.neonRed : const Color(0xFFFF3B30);
+      return isCyber ? const Color(0xFF6E6E74) : const Color(0xFF9A9AA0);
     }
     if (isRunning) return accent;
-    return isCyber ? CyberColors.idleGray : const Color(0xFFB0B0B8);
+    return isCyber ? const Color(0xFF57575D) : const Color(0xFFB0B0B8);
   }
 
   /// 状态文案：运行中 / 待机 / 已禁用
@@ -1518,7 +1518,7 @@ class TaskItemCell extends StatelessWidget {
     final bool dark = isCyber;
     final bool inactive = isDisabled || editMode;
     final Color c = inactive
-        ? (dark ? const Color(0xFF4A4A5E) : const Color(0xFFB0B0B8))
+        ? (dark ? const Color(0xFF55555B) : const Color(0xFFB0B0B8))
         : (isRunning ? const Color(0xFFFF3D00) : accent);
     final IconData icon = isRunning ? Icons.stop : Icons.play_arrow;
     final String label = isRunning ? '停止' : '运行';
