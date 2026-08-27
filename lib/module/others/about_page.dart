@@ -568,11 +568,16 @@ class _AboutPageState extends ConsumerState<AboutPage>
       final int latestEpoch = releaseTime.millisecondsSinceEpoch;
       // 与本地已确认的 release 时间对比：有更新的 release 才提示
       final last = SpUtil.getInt(spGithubLastReleaseTime, defValue: 0);
-      // 构建时注入的本地构建时间戳（epoch 毫秒，0 表示未注入不参与比较）
-      final localBuildAt = int.tryParse(
+      // 构建时注入的本地构建时间戳 LOCAL_BUILD_TIME（epoch，0 表示未注入不参与比较）
+      // 兼容秒/毫秒两种单位：毫秒时间戳为 13 位（≥1e11），秒为 10 位（<1e11），
+      // 若传入的是秒则自动放大 1000 倍，避免与 GitHub updated_at 毫秒对比失效
+      final localBuildRaw = int.tryParse(
             const String.fromEnvironment('LOCAL_BUILD_TIME'),
           ) ??
           0;
+      final int localBuildAt = localBuildRaw > 0 && localBuildRaw < 100000000000
+          ? localBuildRaw * 1000
+          : localBuildRaw;
       if (latestEpoch <= last || (localBuildAt > 0 && latestEpoch <= localBuildAt)) {
         "已是最新安装包".toast();
         return;
