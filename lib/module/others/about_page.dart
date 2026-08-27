@@ -609,12 +609,19 @@ class _AboutPageState extends ConsumerState<AboutPage>
             const String.fromEnvironment('LOCAL_BUILD_NO'),
           ) ??
           0;
-      // 时间基准：GitHub 附件时间 > 已确认时间 且 > 本地构建时间
-      final bool newByTime =
-          latestEpoch > last && (localBuildAt == 0 || latestEpoch > localBuildAt);
+      // 序号可比（GitHub 与本地均带序号）时以序号为准：
+      // GitHub 序号必须严格大于本地构建序号才算新版，等于/小于都视为同一或更旧包。
+      // 解决"先本地构建安装、再上传 GitHub"场景：上传时间必然晚于本地构建时间，
+      // 仅靠时间对比会把刚上传的同一安装包误判为新版。
+      final bool canCompareNo = githubNo > 0 && localBuildNo > 0;
       // 序号基准：GitHub 序号 > 已确认序号 且 > 本地构建序号
       final bool newByNo =
-          githubNo > lastNo && (localBuildNo == 0 || githubNo > localBuildNo);
+          githubNo > 0 && githubNo > lastNo && githubNo > localBuildNo;
+      // 时间基准：仅在序号无法比较（GitHub 或本地无序号）时兜底
+      final bool newByTime =
+          !canCompareNo &&
+          latestEpoch > last &&
+          (localBuildAt == 0 || latestEpoch > localBuildAt);
       if (!newByTime && !newByNo) {
         // 主动提醒模式下静默（不 toast），避免每次启动打扰
         if (!autoRemind) "已是最新安装包".toast();
