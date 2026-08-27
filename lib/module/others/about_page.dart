@@ -26,6 +26,15 @@ class AboutPage extends ConsumerStatefulWidget {
 
   @override
   ConsumerState createState() => _AboutPageState();
+
+  /// 检查新版安装包（顶层入口，供 app 启动主动提醒复用）。
+  /// [autoRemind] = true 时同一 release 只提醒一次，不重复打扰。
+  static Future<void> checkGithubUpdate(
+    BuildContext context, {
+    bool autoRemind = false,
+  }) {
+    return _AboutPageState.checkGithubUpdate(context, autoRemind: autoRemind);
+  }
 }
 
 class _AboutPageState extends ConsumerState<AboutPage>
@@ -107,7 +116,7 @@ class _AboutPageState extends ConsumerState<AboutPage>
                           topLeft: Radius.circular(18),
                           topRight: Radius.circular(18),
                         ),
-                        onTap: _checkGithubUpdate,
+                        onTap: () => checkGithubUpdate(context),
                         child: Padding(
                           padding: const EdgeInsets.only(
                             left: 15,
@@ -515,13 +524,22 @@ class _AboutPageState extends ConsumerState<AboutPage>
 
   /// 获取新版安装包信息：GitHub Releases latest 的发布时间与本地已确认时间对比。
   /// 构建版本号固定不变（3.0.0+300），仅靠时间判断是否有新安装包；
-  /// 仅用户主动点击"版本"行时检测，不主动提醒。
+  /// 用户主动点击"版本"行时检测；[autoRemind] 为 true 时供 app 启动主动提醒。
   ///
   /// 比较基准（取其中最晚者）：
-  /// 1. 本地确认过的 release 时间 [spGithubLastReleaseTime]（点过"获取安装包"后写入）
+  /// 1. 本地确认过的 release 时间 [spGithubLastReleaseTime]（点过"获取安装包"后写入；
+  ///    主动提醒模式下检测到新包即写入，保证同一版本只提醒一次）
   /// 2. 本地构建时间戳 LOCAL_BUILD_TIME（构建时通过 --dart-define 注入，epoch 毫秒）。
   ///    本地包比 GitHub 附件还新（如刚构建完上传前）时不会重复提示。
-  Future<void> _checkGithubUpdate() async {
+  ///
+  /// [autoRemind] = true（主动提醒）：
+  /// - 检测到新包即写入 [spGithubLastReleaseTime]，下次启动不再重复提醒该版本
+  ///   （用户选"稍后"或"获取安装包"都只提醒一次）
+  /// - "已是最新"/网络异常时静默，不 toast
+  static Future<void> checkGithubUpdate(
+    BuildContext context, {
+    bool autoRemind = false,
+  }) async {
     const String releaseUrl =
         'https://github.com/zhengsh2822/qinglong_app_glass_Wallpaper/releases/latest';
     try {
@@ -579,7 +597,8 @@ class _AboutPageState extends ConsumerState<AboutPage>
           ? localBuildRaw * 1000
           : localBuildRaw;
       if (latestEpoch <= last || (localBuildAt > 0 && latestEpoch <= localBuildAt)) {
-        "已是最新安装包".toast();
+        // 主动提醒模式下静默（不 toast），避免每次启动打扰
+        if (!autoRemind) "已是最新安装包".toast();
         return;
       }
       final name = (data['name']?.toString().isNotEmpty ?? false)
@@ -603,7 +622,18 @@ class _AboutPageState extends ConsumerState<AboutPage>
         launchUrl(Uri.parse(releaseUrl));
       }
 
-      final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
+      // 主动提醒：同一 release 只提醒一次——检测到新包即写入时间，
+      // 下次启动不再重复提醒（用户选"稍后"或"获取安装包"都一样）
+      if (autoRemind) {
+        SpUtil.putInt(
+          spGithubLastReleaseTime,
+          releaseTime.millisecondsSinceEpoch,
+        );
+      }
+
+      final bool isCyber =
+          ProviderScope.containerOf(context).read(themeProvider).themeMode ==
+          modeCyber;
       if (isCyber) {
         showCyberConfirmDialog(
           context,
@@ -638,7 +668,8 @@ class _AboutPageState extends ConsumerState<AboutPage>
         ),
       );
     } catch (e) {
-      "网络异常，无法获取更新信息".toast();
+      // 主动提醒模式下网络异常静默，不 toast
+      if (!autoRemind) "网络异常，无法获取更新信息".toast();
     }
   }
 }

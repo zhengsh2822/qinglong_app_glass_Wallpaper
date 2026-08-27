@@ -19,6 +19,7 @@ import 'package:qinglong_app/module/config/config_page.dart';
 import 'package:qinglong_app/module/env/env_page.dart';
 import 'package:qinglong_app/module/home/version_history_bean.dart';
 import 'package:qinglong_app/module/others/other_page.dart';
+import 'package:qinglong_app/module/others/about_page.dart';
 import 'package:qinglong_app/module/task/task_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/login_helper.dart';
@@ -51,6 +52,13 @@ class HomePageState extends ConsumerState<HomePage> {
     )?.registerHttp(SingleAccountPageState.ofUserInfo(context).host!);
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       getSystemBean(context);
+    });
+    // 主动提醒新版安装包：启动后延迟 5 秒检查一次 GitHub，
+    // 同一 release 只提醒一次（检测到新包即写入 SP，下次启动不再重复）
+    Future.delayed(const Duration(seconds: 5), () {
+      if (mounted) {
+        AboutPage.checkGithubUpdate(context, autoRemind: true);
+      }
     });
   }
 
