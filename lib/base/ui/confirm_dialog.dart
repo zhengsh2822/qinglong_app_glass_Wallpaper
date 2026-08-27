@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/glow_sheet.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
@@ -182,6 +183,9 @@ Widget _buildDialogPage({
     curve: Curves.easeOutCubic,
     reverseCurve: Curves.easeInCubic,
   );
+  final bool isCyber =
+      ProviderScope.containerOf(context).read(themeProvider).themeMode ==
+      modeCyber;
   return AnimatedBuilder(
     animation: curved,
     builder: (context, _) {
@@ -209,23 +213,23 @@ Widget _buildDialogPage({
                     padding: const EdgeInsets.symmetric(horizontal: 32),
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 380),
-                      child: OptimizedFrostedGlass(
-                        sigma: baseSigma * t,
-                        borderRadius:
-                            BorderRadius.circular(_dialogBorderRadius),
-                        forceOpaqueSolid: true,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: theme.cardBg,
-                            borderRadius: BorderRadius.circular(
-                              _dialogBorderRadius,
+                      child: GlowSheetContainer(
+                        isCyber: isCyber,
+                        radius: _dialogBorderRadius,
+                        child: OptimizedFrostedGlass(
+                          sigma: baseSigma * t,
+                          borderRadius:
+                              BorderRadius.circular(_dialogBorderRadius),
+                          forceOpaqueSolid: true,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: theme.cardBg,
+                              borderRadius: BorderRadius.circular(
+                                _dialogBorderRadius,
+                              ),
                             ),
-                            border: Border.all(
-                              color: theme.borderColor,
-                              width: theme.borderWidth,
-                            ),
+                            child: child,
                           ),
-                          child: child,
                         ),
                       ),
                     ),

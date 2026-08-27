@@ -5,6 +5,7 @@ import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
+import 'package:qinglong_app/base/ui/glow_sheet.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 
@@ -67,39 +68,31 @@ Future<void> showSelectorSheet<T>({
     builder: (ctx) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-        child: OptimizedFrostedGlass(
-          sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
-          borderRadius: BorderRadius.circular(18),
-          forceOpaqueSolid: true,
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.circular(18),
-              border: isCyber
-                  ? Border.all(
-                      color: CyberColors.cyan.withValues(alpha: 0.3),
-                      width: 1,
-                    )
-                  : Border.all(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      width: 0.5,
-                      style: BorderStyle.solid,
+        child: GlowSheetContainer(
+          isCyber: isCyber,
+          child: OptimizedFrostedGlass(
+            sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
+            borderRadius: BorderRadius.circular(18),
+            forceOpaqueSolid: true,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(top: 8, bottom: 4),
+                    decoration: BoxDecoration(
+                      color: isCyber
+                          ? CyberColors.cyan.withValues(alpha: 0.4)
+                          : Colors.black.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(2),
                     ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(top: 8, bottom: 4),
-                  decoration: BoxDecoration(
-                    color: isCyber
-                        ? CyberColors.cyan.withValues(alpha: 0.4)
-                        : Colors.black.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(2),
                   ),
-                ),
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     vertical: 12,
@@ -216,6 +209,7 @@ Future<void> showSelectorSheet<T>({
               ],
             ),
           ),
+        ),
         ),
       );
     },

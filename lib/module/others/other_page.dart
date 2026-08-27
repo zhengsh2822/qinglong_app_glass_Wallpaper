@@ -17,6 +17,7 @@ import 'package:qinglong_app/base/userinfo_viewmodel.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
+import 'package:qinglong_app/base/ui/other_page_card.dart';
 import 'package:qinglong_app/base/ui/wallpaper_page_route.dart';
 import 'package:qinglong_app/module/in_app_purchase_page.dart';
 import 'package:qinglong_app/module/others/backup_page.dart';
@@ -203,9 +204,8 @@ class OtherPageState extends ConsumerState<OtherPage>
   /// 顶部用户信息区：透明毛玻璃卡片
   Widget _buildUserHeader() {
     final bool isCyber = ref.watch(themeProvider).themeMode == modeCyber;
-    return GlassCard(
+    return OtherPageCard(
       margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
-      sigma: 10,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(15, 20, 15, 15),
         child: Column(
@@ -409,9 +409,8 @@ class OtherPageState extends ConsumerState<OtherPage>
 
   /// APP功能介绍卡片
   Widget _buildAppIntroCard() {
-    return GlassCard(
+    return OtherPageCard(
       margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
-      sigma: 10,
       onTap: () {
         Navigator.of(context)
             .push(
@@ -446,9 +445,8 @@ class OtherPageState extends ConsumerState<OtherPage>
 
   /// 多帐号设置/第三方功能卡片
   Widget _buildMultiAccountCard() {
-    return GlassCard(
+    return OtherPageCard(
       margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
-      sigma: 10,
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -516,9 +514,8 @@ class OtherPageState extends ConsumerState<OtherPage>
 
   /// 高级功能卡片
   Widget _buildAdvancedCard() {
-    return GlassCard(
+    return OtherPageCard(
       margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
-      sigma: 10,
       padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -581,9 +578,8 @@ class OtherPageState extends ConsumerState<OtherPage>
 
   /// 基础功能卡片
   Widget _buildBasicCard() {
-    return GlassCard(
+    return OtherPageCard(
       margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
-      sigma: 10,
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

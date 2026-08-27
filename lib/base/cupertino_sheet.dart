@@ -7,6 +7,7 @@ import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
+import 'package:qinglong_app/base/ui/glow_sheet.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 
 const double _sheetBlurSigma = 4.0;
@@ -123,10 +124,8 @@ class _AppleActionSheet extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
       child: SafeArea(
         top: false,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-          ),
+        child: GlowSheetContainer(
+          isCyber: false,
           child: OptimizedFrostedGlass(
             sigma: effectiveSigma,
             borderRadius: BorderRadius.circular(18),
@@ -135,10 +134,6 @@ class _AppleActionSheet extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.transparent,
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  width: 0.5,
-                ),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -186,33 +181,32 @@ class _CyberActionSheet extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
       child: SafeArea(
         top: false,
-        child: OptimizedFrostedGlass(
-          sigma: effectiveSigma,
-          borderRadius: BorderRadius.circular(18),
-          forceOpaqueSolid: true,
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: CyberColors.cyan.withValues(alpha: 0.2),
-                width: 0.5,
+        child: GlowSheetContainer(
+          isCyber: true,
+          child: OptimizedFrostedGlass(
+            sigma: effectiveSigma,
+            borderRadius: BorderRadius.circular(18),
+            forceOpaqueSolid: true,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(18),
               ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 8),
-                ...list,
-                Container(
-                  width: double.infinity,
-                  height: 0.5,
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  color: CyberColors.borderGlow.withValues(alpha: 0.25),
-                ),
-                CupertinoSheer(title: "取消", onTap: () {}),
-                const SizedBox(height: 4),
-              ],
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 8),
+                  ...list,
+                  Container(
+                    width: double.infinity,
+                    height: 0.5,
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    color: CyberColors.borderGlow.withValues(alpha: 0.25),
+                  ),
+                  CupertinoSheer(title: "取消", onTap: () {}),
+                  const SizedBox(height: 4),
+                ],
+              ),
             ),
           ),
         ),
