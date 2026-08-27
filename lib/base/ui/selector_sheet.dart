@@ -5,7 +5,6 @@ import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
-import 'package:qinglong_app/base/ui/glow_sheet.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 
@@ -68,18 +67,26 @@ Future<void> showSelectorSheet<T>({
     builder: (ctx) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-        child: GlowSheetContainer(
-          isCyber: isCyber,
-          child: OptimizedFrostedGlass(
-            sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
-            borderRadius: BorderRadius.circular(18),
-            forceOpaqueSolid: true,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: Column(
+        child: OptimizedFrostedGlass(
+          sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
+          borderRadius: BorderRadius.circular(18),
+          forceOpaqueSolid: true,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(18),
+              border: isCyber
+                  ? Border.all(
+                      color: CyberColors.cyan.withValues(alpha: 0.3),
+                      width: 1,
+                    )
+                  : Border.all(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      width: 0.5,
+                      style: BorderStyle.solid,
+                    ),
+            ),
+            child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
@@ -209,7 +216,6 @@ Future<void> showSelectorSheet<T>({
               ],
             ),
           ),
-        ),
         ),
       );
     },

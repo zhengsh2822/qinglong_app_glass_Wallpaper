@@ -13,7 +13,6 @@ import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/glass_segmented_tab.dart';
-import 'package:qinglong_app/base/ui/glow_card.dart';
 import 'package:qinglong_app/base/ui/animated_edit_mode_overlay.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
@@ -1018,9 +1017,7 @@ class TaskItemCell extends StatelessWidget {
       // 复用 CyberSlidable 组件（与 appkey_page/change_account_page 一致），
       // 它的 CustomSlidableAction 用 Material elevation 渲染赛博按钮光晕，
       // 配合主卡片 BackdropFilter 形成"光折射到主卡片"效果
-      return CapsuleGlowCard(
-        frost: false,
-        isPinned: bean.isPinned == 1,
+      return Container(
         margin: const EdgeInsets.symmetric(horizontal: 12),
         child: CyberSlidable(
           slidableKey: ValueKey(bean.sId),
@@ -1111,11 +1108,18 @@ class TaskItemCell extends StatelessWidget {
       );
     }
 
-    return CapsuleGlowCard(
-      frost: false,
-      isPinned: bean.isPinned == 1,
+    return Container(
       margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
-      child: Slidable(
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(AppleColors.radiusCard),
+        border: Border.all(color: AppleColors.cardBorder),
+      ),
+      // 统一毛玻璃封装：sigma<=0 时自动退化为纯色（无 BackdropFilter）
+      child: OptimizedFrostedGlass(
+        sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
+        borderRadius: BorderRadius.circular(AppleColors.radiusCard),
+        child: Slidable(
             enabled: !editMode,
             key: ValueKey(bean.sId),
           endActionPane: ActionPane(
@@ -1227,6 +1231,7 @@ class TaskItemCell extends StatelessWidget {
           ),
           child: _buildCardChild(context),
         ),
+      ),
     );
   }
 
@@ -1247,7 +1252,7 @@ class TaskItemCell extends StatelessWidget {
                     : (isCyber
                           ? CyberColors.borderGlow
                           : AppleColors.cardBorder),
-            width: bean.isPinned == 1 && isCyber ? 1.5 : 1,
+            width: 1,
           ),
         ),
         child: Material(

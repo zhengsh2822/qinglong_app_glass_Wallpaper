@@ -2,21 +2,21 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/theme.dart';
-import 'package:qinglong_app/base/ui/glow_card.dart';
+import 'package:qinglong_app/base/ui/glass_card.dart';
 
 /// 设置页通用可复用组件集合
 ///
 /// 统一项目中重复出现的设置页 UI 模式：
-/// - [SettingsCard] 设置分组卡片容器（高光内发光毛玻璃）
+/// - [SettingsCard] 设置分组卡片容器（透明毛玻璃）
 /// - [SettingsSwitchRow] 带开关的设置行
 /// - [SettingsTapRow] 带尾部内容的可点击设置行
 /// - [SectionHeader] 分区标题
 /// - [settingsDivider] 设置行间分隔线
 
-/// 设置分组卡片容器（高光内发光毛玻璃）
+/// 设置分组卡片容器（透明毛玻璃）
 ///
-/// 使用 [CapsuleGlowCard] 实现毛玻璃模糊（壁纸透出）+ 高光内发光效果
-/// （对齐主题版新高光卡片设计）。默认 margin 为 `EdgeInsets.symmetric(horizontal: 15)`，
+/// 使用 [GlassCard] 实现高斯模糊 + 半透明背景，
+/// 能透过卡片看到壁纸。默认 margin 为 `EdgeInsets.symmetric(horizontal: 15)`，
 /// 圆角 18 与全项目卡片统一。
 class SettingsCard extends ConsumerWidget {
   final Widget child;
@@ -32,10 +32,11 @@ class SettingsCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return CapsuleGlowCard(
+    return GlassCard(
       margin: margin ?? const EdgeInsets.symmetric(horizontal: 15),
       padding: padding,
-      borderRadius: const BorderRadius.all(Radius.circular(18)),
+      radius: 18,
+      sigma: 10,
       child: child,
     );
   }
