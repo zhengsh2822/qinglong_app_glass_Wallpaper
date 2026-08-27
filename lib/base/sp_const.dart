@@ -36,3 +36,4 @@ const String spCardBlurSigma = "spCardBlurSigma"; // 卡片模糊值（GlassCard
 const String spCardSolidOpacity = "spCardSolidOpacity"; // 卡片纯色不透明度（卡片模糊=0 时生效），默认 0.45
 const String spCardSolidColor = "spCardSolidColor"; // 卡片纯色自定义颜色（-1=随主题自动白/黑），用于不同壁纸适配
 const String spGithubLastReleaseTime = "spGithubLastReleaseTime"; // 已确认过的 GitHub 最新 release 发布时间(epoch 毫秒)，用于"获取新版安装包"时间对比（版本号不变，靠时间判断）
+const String spGithubLastReleaseNo = "spGithubLastReleaseNo"; // 已确认过的 GitHub 安装包文件名序号（release_N），用于序号对比判断新版

@@ -563,6 +563,7 @@ class _AboutPageState extends ConsumerState<AboutPage>
       // 上传新安装包时常替换同一 release 的附件（asset），release 的 published_at 不会更新，
       // 因此必须取 APK 附件的最新上传时间（updated_at）作为版本时间，否则永远检测不到新包。
       DateTime? publishedAt;
+      String? assetName;
       final assets = data['assets'];
       if (assets is List) {
         for (final a in assets) {
@@ -570,6 +571,7 @@ class _AboutPageState extends ConsumerState<AboutPage>
             final t = DateTime.tryParse(a['updated_at']?.toString() ?? '');
             if (t != null && (publishedAt == null || t.isAfter(publishedAt))) {
               publishedAt = t;
+              assetName = a['name']?.toString();
             }
           }
         }
@@ -584,8 +586,18 @@ class _AboutPageState extends ConsumerState<AboutPage>
       // 闭包内引用需要 final 局部变量（可空类型无法在闭包中窄化）
       final DateTime releaseTime = publishedAt;
       final int latestEpoch = releaseTime.millisecondsSinceEpoch;
-      // 与本地已确认的 release 时间对比：有更新的 release 才提示
+      // 从附件文件名解析安装包序号（qinglong_app_glass_Wallpaper_v3.0.0_release_N.apk → N），
+      // 无序号（旧命名）记为 0，交由时间戳判断兜底
+      int githubNo = 0;
+      if (assetName != null) {
+        final m = RegExp(r'_(\d+)\.apk$').firstMatch(assetName);
+        if (m != null) {
+          githubNo = int.tryParse(m.group(1) ?? '') ?? 0;
+        }
+      }
+      // 与本地已确认的 release 对比：时间 + 序号双基准，任一更新即提示
       final last = SpUtil.getInt(spGithubLastReleaseTime, defValue: 0);
+      final lastNo = SpUtil.getInt(spGithubLastReleaseNo, defValue: 0);
       // 构建时注入的本地构建时间戳 LOCAL_BUILD_TIME（epoch，0 表示未注入不参与比较）
       // 兼容秒/毫秒两种单位：毫秒时间戳为 13 位（≥1e11），秒为 10 位（<1e11），
       // 若传入的是秒则自动放大 1000 倍，避免与 GitHub updated_at 毫秒对比失效
@@ -596,7 +608,18 @@ class _AboutPageState extends ConsumerState<AboutPage>
       final int localBuildAt = localBuildRaw > 0 && localBuildRaw < 100000000000
           ? localBuildRaw * 1000
           : localBuildRaw;
-      if (latestEpoch <= last || (localBuildAt > 0 && latestEpoch <= localBuildAt)) {
+      // 构建时注入的本地安装包序号 LOCAL_BUILD_NO（0 表示未注入不参与比较）
+      final int localBuildNo = int.tryParse(
+            const String.fromEnvironment('LOCAL_BUILD_NO'),
+          ) ??
+          0;
+      // 时间基准：GitHub 附件时间 > 已确认时间 且 > 本地构建时间
+      final bool newByTime =
+          latestEpoch > last && (localBuildAt == 0 || latestEpoch > localBuildAt);
+      // 序号基准：GitHub 序号 > 已确认序号 且 > 本地构建序号
+      final bool newByNo =
+          githubNo > lastNo && (localBuildNo == 0 || githubNo > localBuildNo);
+      if (!newByTime && !newByNo) {
         // 主动提醒模式下静默（不 toast），避免每次启动打扰
         if (!autoRemind) "已是最新安装包".toast();
         return;
@@ -613,22 +636,28 @@ class _AboutPageState extends ConsumerState<AboutPage>
       final content =
           '名称：$name\n发布时间：$timeStr\n${body.length > 200 ? '${body.substring(0, 200)}...' : body}';
 
-      // 确认获取安装包后，记录该 release 时间，下次检测不到更新即不重复提示
+      // 确认获取安装包后，记录该 release 时间+序号，下次检测不到更新即不重复提示
       void markAndOpen() {
         SpUtil.putInt(
           spGithubLastReleaseTime,
           releaseTime.millisecondsSinceEpoch,
         );
+        if (githubNo > 0) {
+          SpUtil.putInt(spGithubLastReleaseNo, githubNo);
+        }
         launchUrl(Uri.parse(releaseUrl));
       }
 
-      // 主动提醒：同一 release 只提醒一次——检测到新包即写入时间，
+      // 主动提醒：同一 release 只提醒一次——检测到新包即写入时间+序号，
       // 下次启动不再重复提醒（用户选"稍后"或"获取安装包"都一样）
       if (autoRemind) {
         SpUtil.putInt(
           spGithubLastReleaseTime,
           releaseTime.millisecondsSinceEpoch,
         );
+        if (githubNo > 0) {
+          SpUtil.putInt(spGithubLastReleaseNo, githubNo);
+        }
       }
 
       final bool isCyber =
