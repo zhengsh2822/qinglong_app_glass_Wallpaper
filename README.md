@@ -72,12 +72,12 @@
 
 - Flutter：`3.29.3` → `3.44.4`（Dart 升级至 `3.12`）
 - Dart SDK：`>=2.18.0` → `^3.7.2`
-- `liquid_glass_easy`：新增本地依赖（`demos/liquid_glass_easy` v4.1.1），提供底部液态玻璃导航栏与顶部毛玻璃分段 Tab
+- `liquid_glass_easy`：新增本地依赖（`demos/liquid_glass_easy` v4.1.1）
 - `dio`：`4.0.6` → `5.10.0`
 - `flutter_slidable`：`2.0.0` → `3.1.2`
 - `shared_preferences`：`2.0.15` → `2.5.3`
 - `flutter_riverpod`：`2.1.1` → `2.6.1`
-- `webview_flutter`、`webview_flutter_android`：升级至 `4.13.0` / `4.10.1`（内置 CodeMirror 编辑器与搜索高亮）
+- `webview_flutter`、`webview_flutter_android`：升级至 `4.13.0` / `4.10.1`
 
 ## 致谢
 
