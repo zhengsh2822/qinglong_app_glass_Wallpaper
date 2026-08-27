@@ -1485,13 +1485,13 @@ class TaskItemCell extends StatelessWidget {
     );
   }
 
-  /// 状态色：运行中主色 / 待机灰 / 禁用灰（纯灰色系，无紫调）
+  /// 状态色：运行中主色 / 待机灰 / 禁用红（禁用保持红色，待机纯灰无紫调）
   Color _stateColor(bool isRunning, bool isDisabled) {
     final Color accent = isCyber
         ? CyberColors.cyan
         : ref.watch(themeProvider).primaryColor;
     if (isDisabled) {
-      return isCyber ? const Color(0xFF6E6E74) : const Color(0xFF9A9AA0);
+      return isCyber ? CyberColors.neonRed : const Color(0xFFFF3B30);
     }
     if (isRunning) return accent;
     return isCyber ? const Color(0xFF57575D) : const Color(0xFFB0B0B8);
