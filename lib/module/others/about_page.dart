@@ -237,7 +237,6 @@ class _AboutPageState extends ConsumerState<AboutPage>
                   "· 超长脚本分块懒加载，万行秒开\n"
                   "· 定时任务卡片新设计，一键运行/停止\n"
                   "· 安卓小白条+状态栏沉浸适配（兼容澎湃 OS）\n"
-                  "· 新版安装包主动提醒（序号+时间双判断）\n"
                   "· Flutter 3.44.4 全面升级\n",
                   style: TextStyle(
                     color: ref.watch(themeProvider).customPrimaryTextColor,

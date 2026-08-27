@@ -41,7 +41,6 @@ class _InAppPurchasePageState extends ConsumerState<InAppPurchasePage> {
                 "定时任务卡片新设计：状态竖条/胶囊标签/一键运行停止按钮",
                 "安卓沉浸式适配：小白条+状态栏透明，兼容澎湃 OS",
                 "仪表盘对齐 Web 端：7 日趋势折线图、耗时/次数 Top5、实时运行态、系统资源",
-                "新版安装包主动提醒：序号+时间双判断，同一版本只提醒一次",
                 "脚本搜索（正则高亮）、京东助手、悬浮时钟、iOS 风格文本选择放大镜",
               ], isAdvance: true),
               const SizedBox(height: 15),
