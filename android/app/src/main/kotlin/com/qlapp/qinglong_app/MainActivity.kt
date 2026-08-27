@@ -73,6 +73,9 @@ class MainActivity : FlutterActivity() {
     private var lastSecond = -1
     private var lastMillis = -1
 
+    // 独立时间校准周期：默认 30 分钟重新校准一次，避免长时间累计漂移
+    private val NTP_RESYNC_INTERVAL_MS = 30L * 60 * 1000
+
     // 悬浮时钟时间刷新 Handler
     // 使用 Handler.postDelayed 而非 Choreographer.postFrameCallback：
     // Choreographer 与屏幕渲染帧同步，应用在后台时无渲染帧不会触发，导致后台时间停止；
@@ -83,19 +86,32 @@ class MainActivity : FlutterActivity() {
             // Activity 已销毁或悬浮窗已移除时，不再继续 post，避免崩溃
             if (isDestroyed || isFinishing || floatingView == null) return
             try {
-                val now = java.util.Calendar.getInstance()
-                val sec = now.get(java.util.Calendar.SECOND)
-                val millis = now.get(java.util.Calendar.MILLISECOND)
+                // 显示独立校准时间（NTP 多源取时 + 单调时钟维持），不跟随系统时间
+                val nowCal = java.util.Calendar.getInstance().apply {
+                    timeInMillis = NtpTimeSync.now()
+                }
+                val sec = nowCal.get(java.util.Calendar.SECOND)
+                val millis = nowCal.get(java.util.Calendar.MILLISECOND)
                 if (sec != lastSecond || millis != lastMillis) {
                     lastSecond = sec
                     lastMillis = millis
-                    timeTextView?.text = formatTimeWithMillis(now)
+                    timeTextView?.text = formatTimeWithMillis(nowCal)
                 }
                 // 50ms 刷新间隔（约 20fps），保证毫秒显示流畅且不占用过多资源
                 timeHandler.postDelayed(this, 50)
             } catch (e: Exception) {
                 // 任何异常都不再继续 post，避免循环崩溃
             }
+        }
+    }
+
+    // 独立时间校准周期 Handler：开启悬浮窗时立即校准一次，之后每 30 分钟重新校准
+    private val ntpSyncHandler = Handler(Looper.getMainLooper())
+    private val ntpSyncRunnable = object : Runnable {
+        override fun run() {
+            if (isDestroyed || isFinishing || floatingView == null) return
+            NtpTimeSync.calibrate()
+            ntpSyncHandler.postDelayed(this, NTP_RESYNC_INTERVAL_MS)
         }
     }
 
@@ -592,6 +608,8 @@ class MainActivity : FlutterActivity() {
 
         floatingWindowManager?.addView(floatingView, floatingParams)
         timeHandler.post(timeRunnable)
+        // 开启悬浮窗即触发独立时间校准（立即一次 + 每 30 分钟周期校准）
+        ntpSyncHandler.post(ntpSyncRunnable)
     }
 
     private fun formatTimeWithMillis(cal: java.util.Calendar): String {
@@ -604,6 +622,7 @@ class MainActivity : FlutterActivity() {
 
     private fun stopFloatingWindow() {
         timeHandler.removeCallbacks(timeRunnable)
+        ntpSyncHandler.removeCallbacks(ntpSyncRunnable)
         try {
             floatingView?.let { floatingWindowManager?.removeView(it) }
         } catch (e: Exception) {
