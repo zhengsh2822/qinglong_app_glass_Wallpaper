@@ -677,8 +677,8 @@ class _LiquidTabBarSliderState extends State<_LiquidTabBarSlider>
                   // ---------- 液态滑块（弹簧位置 + 按压缩小 + 加速度果冻变形；每帧 setState 驱动） ----------
                   Positioned(
                     left: _pad + frac * tabWidth,
-                    top: 4,
-                    bottom: 4,
+                    top: 3.5,
+                    bottom: 3.5,
                     width: thumbWidth,
                     child: IgnorePointer(
                       child: Transform(
