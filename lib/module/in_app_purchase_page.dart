@@ -61,10 +61,6 @@ class _InAppPurchasePageState extends ConsumerState<InAppPurchasePage> {
               _buildSection("基础功能", [
                 "定时任务（运行/禁用/删除/日志）、环境变量、配置文件、脚本、依赖管理、订阅管理、实时日志、通知设置、仪表盘、应用设置",
               ], isAdvance: false),
-              const SizedBox(height: 15),
-              _buildSection("已移除的不兼容功能与依赖", [
-                "App 内消息推送、iOS 桌面快捷方式/换图标、file_picker、move_to_background、cached_network_image、json_table 等不兼容依赖（升级 Flutter 3.44.4 所致）",
-              ], isAdvance: false),
               const SizedBox(height: 30),
               Center(
                 child: Text(
