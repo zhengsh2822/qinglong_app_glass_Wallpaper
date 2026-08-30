@@ -11,6 +11,7 @@ import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/button.dart';
 import 'package:qinglong_app/base/ui/glass_text_field.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
+import 'package:qinglong_app/base/ui/selection_follow_text_field.dart';
 import 'package:qinglong_app/module/config/config_viewmodel.dart';
 import 'package:qinglong_app/module/env/env_bean.dart';
 import 'package:qinglong_app/module/env/env_viewmodel.dart';
@@ -119,12 +120,16 @@ class _AddEnvPageState extends ConsumerState<AddEnvPage> with LazyLoadState<AddE
                     const SizedBox(
                       height: 10,
                     ),
-                    GlassTextField(
+                    SelectionFollowTextField(
+                      debugLabel: 'AddEnvPage:值',
                       focusNode: (envBean.sId == null || envBean.sId!.isEmpty) ? null : focusNode,
                       controller: _valueController,
-                      hintText: "请输入值",
                       maxLines: 8,
                       minLines: 1,
+                      decoration: const InputDecoration(
+                        hintText: "请输入值",
+                      ),
+                      autofocus: false,
                     ),
                   ],
                 ),
