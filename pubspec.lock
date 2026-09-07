@@ -496,7 +496,7 @@ packages:
   liquid_glass_easy:
     dependency: "direct main"
     description:
-      path: "demos/liquid_glass_easy"
+      path: "packages/liquid_glass_easy"
       relative: true
     source: path
     version: "4.1.1"
