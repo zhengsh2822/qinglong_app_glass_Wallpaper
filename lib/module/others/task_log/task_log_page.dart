@@ -17,8 +17,8 @@ import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
+import 'package:qinglong_app/base/ui/floating_search_bar_area.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
-import 'package:qinglong_app/base/ui/search_cell.dart';
 import 'package:qinglong_app/module/others/task_log/task_log_bean.dart';
 import 'package:qinglong_app/module/task/intime_log/intime_history_log_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
@@ -90,14 +90,6 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
     }
   }
 
-  Widget searchCell(WidgetRef context) {
-    return Container(
-      color: Colors.transparent,
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-      child: SearchCell(controller: searchText),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
@@ -130,21 +122,20 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
           child:
             list.isEmpty
                 ? const Center(child: LoadingWidget())
-                : Column(
-                  children: [
-                    searchCell(ref),
-                    Expanded(
-                      child: SlidableAutoCloseBehavior(
-                        child: ListView.builder(
-                          padding: EdgeInsets.only(
-                            bottom:
-                                MediaQuery.of(context).viewPadding.bottom + 50,
-                          ),
-                          controller: controller,
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          keyboardDismissBehavior:
-                              ScrollViewKeyboardDismissBehavior.onDrag,
-                          itemBuilder: (context, index) {
+                : FloatingSearchBarArea(
+                    controller: searchText,
+                    listView: SlidableAutoCloseBehavior(
+                      child: ListView.builder(
+                        padding: EdgeInsets.only(
+                          top: 64,
+                          bottom:
+                              MediaQuery.of(context).viewPadding.bottom + 50,
+                        ),
+                        controller: controller,
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        keyboardDismissBehavior:
+                            ScrollViewKeyboardDismissBehavior.onDrag,
+                        itemBuilder: (context, index) {
                             TaskLogBean item = list[index];
 
                             if (searchText.text.isNotEmpty &&
@@ -156,8 +147,8 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                             if ((item.isDir ?? false)) {
                               if (isCyber) {
                                 return Container(
-                                  margin: const EdgeInsets.symmetric(
-                                    horizontal: 12,
+                                  margin: const EdgeInsets.fromLTRB(
+                                    12, 0, 12, 12,
                                   ),
                                   child: CyberSlidable(
                                   slidableKey: ValueKey(item.name ?? ""),
@@ -230,7 +221,7 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                           18,
                                         ),
                                         border: Border.all(
-                                          color: CyberColors.borderGlow,
+                                          color: CyberColors.cardStroke,
                                           width: 1,
                                         ),
                                       ),
@@ -338,14 +329,14 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                           );
                               }
                               return Container(
-                                margin: const EdgeInsets.symmetric(
-                                  horizontal: 12,
+                                margin: const EdgeInsets.fromLTRB(
+                                  12, 0, 12, 12,
                                 ),
                                 decoration: BoxDecoration(
                                   color: Colors.transparent,
                                   borderRadius: BorderRadius.circular(18),
                                   border: Border.all(
-                                    color: AppleColors.cardBorder,
+                                    color: CyberColors.cardStroke, width: 1,
                                   ),
                                 ),
                                 child: OptimizedFrostedGlass(
@@ -524,8 +515,8 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                             } else {
                               if (isCyber) {
                                 return Container(
-                                  margin: const EdgeInsets.symmetric(
-                                    horizontal: 12,
+                                  margin: const EdgeInsets.fromLTRB(
+                                    12, 0, 12, 12,
                                   ),
                                   child: CyberSlidable(
                                   slidableKey: ValueKey(item.name ?? ""),
@@ -598,7 +589,7 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                           18,
                                         ),
                                         border: Border.all(
-                                          color: CyberColors.borderGlow,
+                                          color: CyberColors.cardStroke,
                                           width: 1,
                                         ),
                                       ),
@@ -639,14 +630,14 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                           );
                               }
                               return Container(
-                                margin: const EdgeInsets.symmetric(
-                                  horizontal: 12,
+                                margin: const EdgeInsets.fromLTRB(
+                                  12, 0, 12, 12,
                                 ),
                                 decoration: BoxDecoration(
                                   color: Colors.transparent,
                                   borderRadius: BorderRadius.circular(18),
                                   border: Border.all(
-                                    color: AppleColors.cardBorder,
+                                    color: CyberColors.cardStroke, width: 1,
                                   ),
                                 ),
                                 child: OptimizedFrostedGlass(
@@ -761,9 +752,7 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                           },
                           itemCount: list.length,
                         ),
-                      ),
                     ),
-                  ],
                 ),
         ),
       ),

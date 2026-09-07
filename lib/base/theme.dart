@@ -863,41 +863,38 @@ class DartThemeColors extends ThemeColors {
 
 /// 赛博终端配色
 ///
-/// 文字色会根据壁纸亮度自动反色：亮背景用深色文字，暗背景用浅色文字。
-/// 由 [WallpaperService] 计算壁纸平均色和蒙层后的实际亮度决定。
-///
 /// 字体颜色分为两种样式（可在字体设置页自定义）：
 /// - 主字体样式（标题/任务名）：[titleColor] 优先读 SP[spPrimaryTextColor]
 /// - 次字体样式（时间/描述/命令）：[title2Color]/[descColor]/[hintColor]
 ///   优先读 SP[spSecondaryTextColor]
-/// 未设置（-1）时回退到壁纸反色。
+/// 未设置（-1）时使用固定默认色：主字体 FFFFFF、次字体 9A9A9A。
 class CyberThemeColors extends ThemeColors {
   @override
   Color titleColor() {
     final custom = SpUtil.getInt(spPrimaryTextColor, defValue: -1);
     if (custom >= 0) return Color(custom);
-    return WallpaperService.instance.contrastTextColor;
+    return const Color(0xFFFFFFFF);
   }
 
   @override
   Color title2Color() {
     final custom = SpUtil.getInt(spSecondaryTextColor, defValue: -1);
     if (custom >= 0) return Color(custom);
-    return WallpaperService.instance.contrastSubTextColor;
+    return const Color(0xFF9A9A9A);
   }
 
   @override
   Color descColor() {
     final custom = SpUtil.getInt(spSecondaryTextColor, defValue: -1);
     if (custom >= 0) return Color(custom);
-    return WallpaperService.instance.contrastDescTextColor;
+    return const Color(0xFF9A9A9A);
   }
 
   @override
   Color hintColor() {
     final custom = SpUtil.getInt(spSecondaryTextColor, defValue: -1);
     if (custom >= 0) return Color(custom);
-    return WallpaperService.instance.contrastHintTextColor;
+    return const Color(0xFF9A9A9A);
   }
 
   // 透明化以适配毛玻璃壁纸背景

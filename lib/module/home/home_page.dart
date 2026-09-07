@@ -439,11 +439,6 @@ class HomePageState extends ConsumerState<HomePage> {
     return LiquidGlassTabBar.withImpeller(
       items: _navItems,
       selectedIndex: homeIndex,
-      // 切页流畅度优化：双管道默认每帧全分辨率采样整页背景（切页动画期间
-      // 开销最大）。采样档位：0.5 略糊，1=官方原版全分辨率（观感最佳，
-      // 用户选定；GPU 开销最大但配合纯色模式/刷新率低档可接受）。
-      pixelRatio: 1,
-      refreshRate: LiquidGlassRefreshRate.low,
       onChanged: (index) async {
         final currentIdx = ref.read<int>(
           SingleAccountPageState.ofHomeIndexProvider(context)(
@@ -508,9 +503,10 @@ class HomePageState extends ConsumerState<HomePage> {
           ),
         ),
       ),
-      // 长按 100ms：跟随官方 demo 默认（最长按抓取响应）；"我的"弹窗
-      // 复用同时长，若日常滑动易误触可上调
+      // 长按识别：其余 tab 默认 0.1s 抓取拖拽（放大镜跟随）；仅"我的"tab 覆盖为
+      // 0.5s —— 满 0.5s 未滑动才弹账号窗，0.5s 内滑动位置仍走 Pan 抓取放大镜
       longPressDuration: const Duration(milliseconds: 100),
+      longPressDurationByIndex: const {3: Duration(milliseconds: 500)},
       onLongTapItem: (i) {
         if (i == 3) {
           HapticFeedback.mediumImpact();
@@ -521,6 +517,9 @@ class HomePageState extends ConsumerState<HomePage> {
       },
       // 按住胶囊直接左右滑动切换（无需长按等待，对齐 demo 手感）
       directDragSwitch: true,
+      // q 弹（按压缩放）：按下导航栏区域整栏放大（胶囊+图标+文案），松开
+      // easeOutBack 回弹；1.0256 = 放大量 0.0256（对齐主题版 demo 最终方案）
+      pressScale: 1.0256,
     );
   }
 

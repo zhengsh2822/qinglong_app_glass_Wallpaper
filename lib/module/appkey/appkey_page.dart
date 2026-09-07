@@ -15,8 +15,8 @@ import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
+import 'package:qinglong_app/base/ui/floating_search_bar_area.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
-import 'package:qinglong_app/base/ui/search_cell.dart';
 import 'package:qinglong_app/base/ui/tag_chip.dart';
 import 'package:qinglong_app/module/appkey/appkey_detail_page.dart';
 import 'package:qinglong_app/module/appkey/appkey_viewmodel.dart';
@@ -148,66 +148,53 @@ class _AppKeyPageState extends ConsumerState<AppKeyPage> {
     List<Map<String, dynamic>> list,
     WidgetRef ref,
   ) {
-    return Column(
-      children: [
-        searchCell(ref),
-        Expanded(
-          child: RefreshIndicator(
-            color: Theme.of(context).primaryColor,
-            onRefresh: () async {
-              return model.loadData(context, false);
-            },
-            child: IconTheme(
-              data: const IconThemeData(size: 25),
-              child: SlidableAutoCloseBehavior(
-                child: ListView.separated(
-                  padding: const EdgeInsets.only(bottom: 80),
-                  controller: controller,
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
-                  itemBuilder: (context, index) {
-                    Map<String, dynamic> item = list[index];
-                    if (searchText.text.isEmpty ||
-                        (item["name"]?.toLowerCase().contains(
-                              searchText.text.toLowerCase(),
-                            ) ??
-                            false)) {
-                      return AppKeyItemCell(item, ref);
-                    } else {
-                      return const SizedBox.shrink();
-                    }
-                  },
-                  itemCount: list.length,
-                  separatorBuilder: (BuildContext context, int index) {
-                    Map<String, dynamic> item = list[index];
-                    if (searchText.text.isEmpty ||
-                        (item["name"]?.toLowerCase().contains(
-                              searchText.text.toLowerCase(),
-                            ) ??
-                            false)) {
-                      // 卡片间距12px，不用分割线（与定时任务/环境变量一致）
-                      return const SizedBox(height: 12);
-                    } else {
-                      return const SizedBox.shrink();
-                    }
-                  },
-                ),
-              ),
+    // ⑨ 悬浮搜索框：搜索框固定悬浮顶部，列表从顶部铺满（顶部间距由列表 padding 提供）
+    return FloatingSearchBarArea(
+      controller: searchText,
+      listView: RefreshIndicator(
+        color: Theme.of(context).primaryColor,
+        onRefresh: () async {
+          return model.loadData(context, false);
+        },
+        child: IconTheme(
+          data: const IconThemeData(size: 25),
+          child: SlidableAutoCloseBehavior(
+            child: ListView.separated(
+              // 顶部间距 64 = 搜索框区域(10+44) + 间距10，放在列表内部（滚动时被内容填充）
+              padding: const EdgeInsets.only(top: 64, bottom: 80),
+              controller: controller,
+              physics: const AlwaysScrollableScrollPhysics(),
+              keyboardDismissBehavior:
+                  ScrollViewKeyboardDismissBehavior.onDrag,
+              itemBuilder: (context, index) {
+                Map<String, dynamic> item = list[index];
+                if (searchText.text.isEmpty ||
+                    (item["name"]?.toLowerCase().contains(
+                          searchText.text.toLowerCase(),
+                        ) ??
+                        false)) {
+                  return AppKeyItemCell(item, ref);
+                } else {
+                  return const SizedBox.shrink();
+                }
+              },
+              itemCount: list.length,
+              separatorBuilder: (BuildContext context, int index) {
+                Map<String, dynamic> item = list[index];
+                if (searchText.text.isEmpty ||
+                    (item["name"]?.toLowerCase().contains(
+                          searchText.text.toLowerCase(),
+                        ) ??
+                        false)) {
+                  // 卡片间距12px，不用分割线（与定时任务/环境变量一致）
+                  return const SizedBox(height: 12);
+                } else {
+                  return const SizedBox.shrink();
+                }
+              },
             ),
           ),
         ),
-      ],
-    );
-  }
-
-  Widget searchCell(WidgetRef context) {
-    return Container(
-      color: Colors.transparent,
-      padding: const EdgeInsets.only(left: 15, right: 15),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: SearchCell(controller: searchText),
       ),
     );
   }
@@ -302,7 +289,7 @@ class AppKeyItemCell extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: CyberColors.borderGlow, width: 1),
+          border: Border.all(color: CyberColors.cardStroke, width: 1),
         ),
         child: Material(
           color: Colors.transparent,
@@ -324,37 +311,57 @@ class AppKeyItemCell extends StatelessWidget {
   }
 
   /// 卡片内容：应用名 + scopes 标签
+  /// 高度恒定：应用名固定 1 行 + 权限标签固定单行（超出折叠为 +N），
+  /// 不随权限标签数量变化，保证列表卡片宽高统一
   Widget _buildCardContent(BuildContext context) {
+    final tags = AppKeyViewModel.getScopeNames(
+      (bean["scopes"] as List<dynamic>?),
+    );
+    // 单行最多展示 2 个完整标签 + 溢出折叠 +N，超出部分裁剪，保证卡片高度恒定
+    const int maxVisible = 2;
+    final visibleTags = tags.length > maxVisible
+        ? tags.sublist(0, maxVisible)
+        : tags;
+    final int overflowCount = tags.length - visibleTags.length;
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-            child: Text(
-              bean["name"] ?? "",
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+      child: SizedBox(
+        height: 60,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+              child: Text(
+                bean["name"] ?? "",
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                color: ref.watch(themeProvider).themeColor.titleColor(),
-                fontSize: 16,
+                style: TextStyle(
+                  overflow: TextOverflow.ellipsis,
+                  color: ref.watch(themeProvider).themeColor.titleColor(),
+                  fontSize: 16,
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 5),
-          Wrap(
-            runSpacing: 5,
-            spacing: 5,
-            children: AppKeyViewModel.getScopeNames(
-              (bean["scopes"] as List<dynamic>?),
-            ).map((e) => TagChip(label: e)).toList(),
-          ),
-          const SizedBox(height: 5),
-        ],
+            const Spacer(),
+            ClipRect(
+              child: SizedBox(
+                height: 24,
+                child: Wrap(
+                  runSpacing: 0,
+                  spacing: 5,
+                  children: [
+                    ...visibleTags.map((e) => TagChip(label: e)),
+                    if (overflowCount > 0) TagChip(label: '+$overflowCount'),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -192,6 +192,13 @@ class Url {
           ? "/open/scripts/detail"
           : "/api/scripts/detail";
 
+  /// 拉取脚本目录中的二进制文件（如脚本运行时保存的二维码 PNG）
+  /// 走 token 鉴权 GET，返回文件 bytes
+  get scriptFile =>
+      getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
+          ? "/open/scripts/file"
+          : "/api/scripts/file";
+
   get dependencies =>
       getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
           ? "/open/dependencies"

@@ -200,17 +200,10 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
                 decoration: BoxDecoration(
                   color: Colors.transparent,
                   borderRadius: BorderRadius.circular(18),
-                  border:
-                      isCyber
-                          ? Border.all(
-                            color: CyberColors.cyan.withValues(alpha: 0.3),
-                            width: 1,
-                          )
-                          : Border.all(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            width: 0.5,
-                            style: BorderStyle.solid,
-                          ),
+                  border: Border.all(
+                    color: CyberColors.cardStroke,
+                    width: 1,
+                  ),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,

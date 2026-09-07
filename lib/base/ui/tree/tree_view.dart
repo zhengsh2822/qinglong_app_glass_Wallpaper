@@ -67,6 +67,10 @@ class TreeView extends InheritedWidget {
   /// Defaults to true.
   final bool primary;
 
+  /// Padding for the internal scrolling [ListView] (e.g. top spacing for a
+  /// floating search bar). Scrolls away with content, no fixed background band.
+  final EdgeInsetsGeometry? padding;
+
   /// Determines whether the parent node can receive a double tap. This is
   /// useful if [allowParentSelect] is true. This allows the user to double tap
   /// the parent node to expand or collapse the parent when [allowParentSelect]
@@ -89,6 +93,7 @@ class TreeView extends InheritedWidget {
     this.supportParentDoubleTap = false,
     this.shrinkWrap = false,
     this.primary = true,
+    this.padding,
     this.nodeBuilder,
     TreeViewTheme? theme,
   })  : theme = theme ?? const TreeViewTheme(),
@@ -98,6 +103,7 @@ class TreeView extends InheritedWidget {
             shrinkWrap: shrinkWrap,
             primary: primary,
             physics: physics,
+            padding: padding,
           ),
         );
 
@@ -119,8 +125,15 @@ class _TreeViewData extends StatelessWidget {
   final bool? shrinkWrap;
   final bool? primary;
   final ScrollPhysics? physics;
+  final EdgeInsetsGeometry? padding;
 
-  const _TreeViewData(this._controller, {this.shrinkWrap, this.primary, this.physics});
+  const _TreeViewData(
+    this._controller, {
+    this.shrinkWrap,
+    this.primary,
+    this.physics,
+    this.padding,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -131,7 +144,7 @@ class _TreeViewData extends StatelessWidget {
         shrinkWrap: shrinkWrap!,
         primary: primary,
         physics: physics,
-        padding: EdgeInsets.zero,
+        padding: padding ?? EdgeInsets.zero,
         children: _controller.children.map((ScriptData node) {
           return TreeNode(node: node);
         }).toList(),

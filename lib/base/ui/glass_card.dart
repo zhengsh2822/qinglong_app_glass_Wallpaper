@@ -157,7 +157,7 @@ class GlassListItemCard extends ConsumerWidget {
     // 全透明，仅保留 BackdropFilter 高斯模糊
     final effectiveColor = Colors.transparent;
 
-    final effectiveBorder = isDark ? CyberColors.borderGlow : AppleColors.cardBorder;
+    final effectiveBorder = CyberColors.cardStroke;
 
     // 卡片模糊：SP 有设置时覆盖默认 sigma（用户在设置页调节）
     final effectiveSigma = SpUtil.getDouble(spCardBlurSigma, defValue: sigma);
@@ -272,7 +272,7 @@ class GlassAppBarContainer extends ConsumerWidget {
     // 全透明，仅保留 BackdropFilter 高斯模糊
     final effectiveColor = Colors.transparent;
 
-    final effectiveBorder = isDark ? CyberColors.borderGlow : AppleColors.cardBorder;
+    final effectiveBorder = CyberColors.cardStroke;
 
     // 卡片模糊：SP 有设置时覆盖默认 sigma（用户在设置页调节）
     final effectiveSigma = SpUtil.getDouble(spCardBlurSigma, defValue: sigma);

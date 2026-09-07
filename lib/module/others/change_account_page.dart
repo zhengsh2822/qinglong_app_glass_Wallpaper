@@ -168,7 +168,7 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
             decoration: BoxDecoration(
               color: Colors.transparent,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: CyberColors.borderGlow, width: 1),
+              border: Border.all(color: CyberColors.cardStroke, width: 1),
             ),
             child: Material(
               color: Colors.transparent,
@@ -188,7 +188,7 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
             decoration: BoxDecoration(
               color: Colors.transparent,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: AppleColors.cardBorder, width: 0.5),
+              border: Border.all(color: CyberColors.cardStroke, width: 1),
             ),
             child: Material(
               color: Colors.transparent,
@@ -361,7 +361,7 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
                       color: Colors.transparent,
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(
-                        color: CyberColors.borderGlow,
+                        color: CyberColors.cardStroke,
                         width: 1,
                       ),
                     ),
@@ -383,8 +383,8 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
                       color: Colors.transparent,
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(
-                        color: AppleColors.cardBorder,
-                        width: 0.5,
+                        color: CyberColors.cardStroke,
+                        width: 1,
                       ),
                     ),
                     child: _buildAddAccountContent(accentColor),

@@ -1110,12 +1110,8 @@ class TaskItemCell extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(AppleColors.radiusCard),
-        border: Border.all(color: AppleColors.cardBorder),
-      ),
       // 统一毛玻璃封装：sigma<=0 时自动退化为纯色（无 BackdropFilter）
+      // 边框由 _buildCardChild 统一绘制（cardStroke），避免外层残留浅灰双边框
       child: OptimizedFrostedGlass(
         sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
         borderRadius: BorderRadius.circular(AppleColors.radiusCard),
@@ -1247,12 +1243,10 @@ class TaskItemCell extends StatelessWidget {
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color:
-                bean.isPinned == 1 && isCyber
-                    ? CyberColors.cyan.withValues(alpha: 0.6)
-                    : (isCyber
-                          ? CyberColors.borderGlow
-                          : AppleColors.cardBorder),
-            width: 1,
+                bean.isPinned == 1
+                    ? CyberColors.cyan.withValues(alpha: 0.85)
+                    : CyberColors.cardStroke,
+            width: bean.isPinned == 1 ? 1.2 : 1,
           ),
         ),
         child: Material(

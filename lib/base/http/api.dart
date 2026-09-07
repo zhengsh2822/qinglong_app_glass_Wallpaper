@@ -595,6 +595,19 @@ class Api {
     );
   }
 
+  /// 拉取脚本运行时保存的二进制文件（如二维码 PNG）
+  /// [path] 脚本侧 print 出的绝对路径，如 /ql/data/scripts/pupu_login_qr.png
+  /// 成功 GetBytesResult.success(bytes)
+  /// 失败 GetBytesResult.fail(code, message, bodyPreview) —— 含真实 HTTP 状态码与响应体
+  Future<GetBytesResult> scriptFile(String path) async {
+    return await getIt<Http>(
+      instanceName: index.toString(),
+    ).getBytes(
+      getIt<Url>(instanceName: index.toString()).scriptFile,
+      {"path": path},
+    );
+  }
+
   Future<HttpResponse<List<DependencyBean>>> dependencies(String type) async {
     return await getIt<Http>(
       instanceName: index.toString(),

@@ -17,8 +17,8 @@ import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
 import 'package:qinglong_app/base/ui/enable_widget.dart';
 import 'package:qinglong_app/base/ui/lazy_first_screen.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
+import 'package:qinglong_app/base/ui/floating_search_bar_area.dart';
 import 'package:qinglong_app/base/ui/running_widget.dart';
-import 'package:qinglong_app/base/ui/search_cell.dart';
 import 'package:qinglong_app/base/ui/slidable_close_notifier.dart';
 import 'package:qinglong_app/module/subscribe/add_subscribe_page.dart';
 import 'package:qinglong_app/module/task/intime_log/intime_subscribe_log_page.dart';
@@ -171,77 +171,64 @@ class _SubscribePageState extends ConsumerState<SubscribePage> {
     WidgetRef ref,
   ) {
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
-    return Column(
-      children: [
-        searchCell(ref),
-        Expanded(
-          child: RefreshIndicator(
-            color: Theme.of(context).primaryColor,
-            onRefresh: () async {
-              return model.loadData(context, false);
-            },
-            child: IconTheme(
-              data: const IconThemeData(size: 25),
-              child: SlidableAutoCloseBehavior(
-                key: ValueKey('subscribe_slidable_${_slidableResetKey}'),
-                child: ListView.separated(
-                  padding: const EdgeInsets.only(bottom: 80),
-                  controller: controller,
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
-                  itemBuilder: (context, index) {
-                    Map<String, dynamic> item = list[index];
-                    if (searchText.text.isEmpty ||
-                        (item["name"]?.toLowerCase().contains(
-                              searchText.text.toLowerCase(),
-                            ) ??
-                            false) ||
-                        (item["url"]?.toLowerCase().contains(
-                              searchText.text.toLowerCase(),
-                            ) ??
-                            false)) {
-                      return TaskItemCell(item, ref);
-                    } else {
-                      return const SizedBox.shrink();
-                    }
-                  },
-                  itemCount: list.length,
-                  separatorBuilder: (BuildContext context, int index) {
-                    Map<String, dynamic> item = list[index];
-                    if (searchText.text.isEmpty ||
-                        (item["name"]?.toLowerCase().contains(
-                              searchText.text.toLowerCase(),
-                            ) ??
-                            false) ||
-                        (item["url"]?.toLowerCase().contains(
-                              searchText.text.toLowerCase(),
-                            ) ??
-                            false)) {
-                      // 赛博模式：用 SizedBox 间距替代 Divider
-                      if (isCyber) return const SizedBox(height: 12);
-                      // Apple主题：卡片间距12px，无分割线
-                      return const SizedBox(height: 12);
-                    } else {
-                      return const SizedBox.shrink();
-                    }
-                  },
-                ),
-              ),
+    // ⑨ 悬浮搜索框：搜索框固定悬浮顶部，列表从顶部铺满
+    return FloatingSearchBarArea(
+      controller: searchText,
+      listView: RefreshIndicator(
+        color: Theme.of(context).primaryColor,
+        onRefresh: () async {
+          return model.loadData(context, false);
+        },
+        child: IconTheme(
+          data: const IconThemeData(size: 25),
+          child: SlidableAutoCloseBehavior(
+            key: ValueKey('subscribe_slidable_${_slidableResetKey}'),
+            child: ListView.separated(
+              // 顶部间距 64 = 搜索框区域(10+44) + 间距10
+              padding: const EdgeInsets.only(top: 64, bottom: 80),
+              controller: controller,
+              physics: const AlwaysScrollableScrollPhysics(),
+              keyboardDismissBehavior:
+                  ScrollViewKeyboardDismissBehavior.onDrag,
+              itemBuilder: (context, index) {
+                Map<String, dynamic> item = list[index];
+                if (searchText.text.isEmpty ||
+                    (item["name"]?.toLowerCase().contains(
+                          searchText.text.toLowerCase(),
+                        ) ??
+                        false) ||
+                    (item["url"]?.toLowerCase().contains(
+                          searchText.text.toLowerCase(),
+                        ) ??
+                        false)) {
+                  return TaskItemCell(item, ref);
+                } else {
+                  return const SizedBox.shrink();
+                }
+              },
+              itemCount: list.length,
+              separatorBuilder: (BuildContext context, int index) {
+                Map<String, dynamic> item = list[index];
+                if (searchText.text.isEmpty ||
+                    (item["name"]?.toLowerCase().contains(
+                          searchText.text.toLowerCase(),
+                        ) ??
+                        false) ||
+                    (item["url"]?.toLowerCase().contains(
+                          searchText.text.toLowerCase(),
+                        ) ??
+                        false)) {
+                  // 赛博模式：用 SizedBox 间距替代 Divider
+                  if (isCyber) return const SizedBox(height: 12);
+                  // Apple主题：卡片间距12px，无分割线
+                  return const SizedBox(height: 12);
+                } else {
+                  return const SizedBox.shrink();
+                }
+              },
             ),
           ),
         ),
-      ],
-    );
-  }
-
-  Widget searchCell(WidgetRef context) {
-    return Container(
-      color: Colors.transparent,
-      padding: const EdgeInsets.only(left: 15, right: 15),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: SearchCell(controller: searchText),
       ),
     );
   }
@@ -547,17 +534,14 @@ class TaskItemCell extends StatelessWidget {
           borderRadius: BorderRadius.circular(18),
           child: Container(
               width: MediaQuery.of(context).size.width,
-              decoration:
-                  isCyber
-                      ? BoxDecoration(
+              decoration: BoxDecoration(
                         color: Colors.transparent,
                         borderRadius: BorderRadius.circular(18),
                         border: Border.all(
-                          color: CyberColors.borderGlow,
+                          color: CyberColors.cardStroke,
                           width: 1,
                         ),
-                      )
-                      : null,
+                      ),
               padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
               child: Column(
                 mainAxisSize: MainAxisSize.min,

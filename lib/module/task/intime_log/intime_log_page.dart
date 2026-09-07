@@ -13,6 +13,7 @@ import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
+import 'package:qinglong_app/base/ui/log_text_view.dart';
 import 'package:qinglong_app/module/scan_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
@@ -175,21 +176,11 @@ class _InTimeLogPageState extends ConsumerState<InTimeLogPage>
             child: (content == null)
                 ? const Center(child: LoadingWidget())
                 : CupertinoScrollbar(
-                    child: SingleChildScrollView(
-                      controller: controller,
-                      padding: EdgeInsets.only(
-                        left: 15,
-                        right: 15,
-                        bottom:
-                            MediaQuery.of(context).viewPadding.bottom + 20,
-                      ),
-                      child: SelectableText(
-                        (content == null || content!.isEmpty)
-                            ? "暂无日志"
-                            : content!,
-                        selectionControls: cupertinoTextSelectionControls,
-                        style: const TextStyle(fontSize: 12),
-                      ),
+                    child: LogTextView(
+                      content: content,
+                      accountIndex:
+                          SingleAccountPageState.of(context)?.index ?? 0,
+                      scrollController: controller,
                     ),
                   ),
           ),

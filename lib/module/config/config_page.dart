@@ -263,40 +263,27 @@ class ConfigCell extends ConsumerWidget {
                 horizontal: isCyber ? 12 : AppleColors.spaceMd,
                 vertical: 6,
               ),
-              decoration:
-                  isCyber
-                      ? null
-                      : BoxDecoration(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(
-                          AppleColors.radiusCard,
-                        ),
-                        border: Border.all(color: AppleColors.cardBorder),
-                      ),
               child: OptimizedFrostedGlass(
                 sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
                 borderRadius: BorderRadius.circular(AppleColors.radiusCard),
-                child:
-                      isCyber
-                          ? Container(
-                            decoration: BoxDecoration(
-                              color: Colors.transparent,
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: CyberColors.borderGlow,
-                                width: 1,
-                              ),
-                            ),
-                            child: Material(
-                              color: Colors.transparent,
-                              borderRadius: BorderRadius.circular(18),
-                              child: configContent,
-                            ),
-                          )
-                          : Material(
-                            color: Colors.transparent,
-                            child: configContent,
-                          ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(AppleColors.radiusCard),
+                    // 单层描边：所有模式统一 cardStroke，避免 cyber 模式双层叠加
+                    border: Border.all(
+                      color: CyberColors.cardStroke,
+                      width: 1,
+                    ),
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(
+                      AppleColors.radiusCard,
+                    ),
+                    child: configContent,
+                  ),
+                ),
               ),
             ),
             isCyber ? const SizedBox.shrink() : const SizedBox.shrink(),

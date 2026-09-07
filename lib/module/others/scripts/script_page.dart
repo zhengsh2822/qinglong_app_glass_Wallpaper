@@ -10,10 +10,10 @@ import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
+import 'package:qinglong_app/base/ui/floating_search_bar_area.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
-import 'package:qinglong_app/base/ui/search_cell.dart';
 import 'package:qinglong_app/base/ui/tree/models/script_data.dart';
 import 'package:qinglong_app/module/others/scripts/folder_add_page.dart';
 import 'package:qinglong_app/module/others/scripts/script_upload_page.dart';
@@ -157,18 +157,18 @@ class _ScriptPageState extends ConsumerState<ScriptPage>
           child:
             list.isEmpty
                 ? const Center(child: LoadingWidget())
-                : Column(
-                  children: [
-                    searchCell(ref),
-                    Expanded(
-                      child: RefreshIndicator(
-                        color: Theme.of(context).primaryColor,
-                        onRefresh: () async {
-                          await loadData();
-                          return Future.value();
-                        },
-                        child: TreeView(
-                          controller: _treeViewController,
+                : FloatingSearchBarArea(
+                    controller: searchText,
+                    listView: RefreshIndicator(
+                      color: Theme.of(context).primaryColor,
+                      onRefresh: () async {
+                        await loadData();
+                        return Future.value();
+                      },
+                      child: TreeView(
+                        // ⑨ 悬浮搜索框：顶部间距 64 放在列表内部（滚动时被内容填充，无背景色块）
+                        padding: const EdgeInsets.only(top: 64),
+                        controller: _treeViewController,
                           onExpansionChanged: (key, state) {
                             ScriptData? node = _treeViewController.getNode(key);
                             if (node != null) {
@@ -249,22 +249,12 @@ class _ScriptPageState extends ConsumerState<ScriptPage>
                                 });
                           },
                         ),
-                      ),
                     ),
-                  ],
-                ),
+                  ),
         ),
       ),
     );
     return isCyber ? CyberBackground(child: scaffold) : scaffold;
-  }
-
-  Widget searchCell(WidgetRef context) {
-    return Container(
-      color: Colors.transparent,
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-      child: SearchCell(controller: searchText),
-    );
   }
 
   Future<void> loadData() async {

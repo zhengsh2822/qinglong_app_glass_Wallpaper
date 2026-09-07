@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:qinglong_app/base/services/wallpaper_service.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 
@@ -46,20 +45,24 @@ class CyberColors {
   /// 边框微光
   static const Color borderGlow = Color(0x3300F0FF);
 
+  /// 卡片描边（统一所有卡片边缘，浅色/深色通用）：50% 透明度青色，
+  /// 提升边缘清晰度，防止毛玻璃卡片在壁纸上"糊"成一团
+  static const Color cardStroke = Color(0x8000F0FF);
+
   /// 主字体颜色（标题/任务名）
-  /// 优先读 SP[spPrimaryTextColor] 自定义颜色，未设置（-1）回退壁纸反色
+  /// 优先读 SP[spPrimaryTextColor] 自定义颜色，未设置（-1）默认白色 FFFFFF
   static Color get titleWhite {
     final custom = SpUtil.getInt(spPrimaryTextColor, defValue: -1);
     if (custom >= 0) return Color(custom);
-    return WallpaperService.instance.contrastTextColor;
+    return const Color(0xFFFFFFFF);
   }
 
   /// 次字体颜色（时间/描述/命令）
-  /// 优先读 SP[spSecondaryTextColor] 自定义颜色，未设置（-1）回退壁纸反色
+  /// 优先读 SP[spSecondaryTextColor] 自定义颜色，未设置（-1）默认 9A9A9A
   static Color get descColor {
     final custom = SpUtil.getInt(spSecondaryTextColor, defValue: -1);
     if (custom >= 0) return Color(custom);
-    return WallpaperService.instance.contrastDescTextColor;
+    return const Color(0xFF9A9A9A);
   }
 
   /// 等宽字体族（使用系统monospace字体，无需额外依赖）

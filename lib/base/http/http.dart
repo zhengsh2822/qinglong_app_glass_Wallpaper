@@ -348,6 +348,120 @@ class Http {
     }
   }
 
+  /// GET 拉取二进制文件（用于脚本运行时保存的图片、二维码等）
+  /// [uri] 请求路径，[query] 查询参数
+  /// 成功返回 GetBytesResult.success(bytes)
+  /// 失败：返回对应 .http404/.http500/.http401/.network 携带状态码和响应体前 200 字符
+  ///       便于 UI 直接把真实原因展示给用户
+  ///
+  /// 关键：青龙 v2.x 的 `/open/scripts/file` 实际是**统一 JSON 响应** `{code,data,message}`，
+  /// data 字段才是真正的文件内容（可能为空字符串=文件不存在/未授权）。
+  /// 我们会先按 JSON 解析；若 data 是空字符串则按"找不到"返回失败。
+  Future<GetBytesResult> getBytes(
+    String uri,
+    Map<String, String?>? query,
+  ) async {
+    try {
+      _init();
+      final response = await _dio!.get(
+        uri,
+        queryParameters: query,
+        options: Options(responseType: ResponseType.bytes),
+      );
+      final data = response.data;
+      if (data is List<int>) {
+        // 尝试按 UTF-8 解析 + JSON 解码（青龙统一 API 格式）
+        try {
+          final text = utf8.decode(data);
+          final json = jsonDecode(text);
+          if (json is Map && json.containsKey('code')) {
+            // 青龙统一响应
+            final code = json['code'];
+            final payload = json['data'];
+            final msg = json['message']?.toString() ?? '';
+            if (code == 200) {
+              if (payload is String && payload.isNotEmpty) {
+                return GetBytesResult.success(utf8.encode(payload));
+              }
+              if (payload is List<int>) {
+                return GetBytesResult.success(payload);
+              }
+              // data 为空字符串或 null = 文件不存在
+              return GetBytesResult.fail(
+                code: 200,
+                message: '文件不存在或为空',
+                bodyPreview:
+                    '${jsonEncode({'code': code, 'data': payload, 'message': msg})}',
+              );
+            }
+            return GetBytesResult.fail(
+              code: code is int ? code : 0,
+              message: msg.isNotEmpty ? msg : '业务错误',
+              bodyPreview:
+                  '${jsonEncode({'code': code, 'data': payload, 'message': msg})}',
+            );
+          }
+        } catch (_) {
+          // 不是 JSON 当成纯二进制（图片/文件流）
+        }
+        // 走纯二进制路径
+        return GetBytesResult.success(data);
+      }
+      return GetBytesResult.fail(
+        code: 0,
+        message: '响应格式异常',
+        bodyPreview: data?.toString() ?? '',
+      );
+    } on DioException catch (e) {
+      final status = e.response?.statusCode ?? 0;
+      String bodyPreview = '';
+      final respData = e.response?.data;
+      if (respData is List<int>) {
+        try {
+          bodyPreview = utf8.decode(respData.take(200).toList());
+        } catch (_) {}
+      } else if (respData != null) {
+        bodyPreview = respData.toString();
+        if (bodyPreview.length > 200) {
+          bodyPreview = bodyPreview.substring(0, 200);
+        }
+      }
+      if (status == 401) {
+        await _handleTokenExpired();
+        return GetBytesResult.fail(
+          code: 401,
+          message: '登录已过期',
+          bodyPreview: bodyPreview,
+        );
+      }
+      if (status == 404) {
+        return GetBytesResult.fail(
+          code: 404,
+          message: '接口不存在（404）',
+          bodyPreview: bodyPreview,
+        );
+      }
+      if (status == 500) {
+        return GetBytesResult.fail(
+          code: 500,
+          message: '服务器错误（500）',
+          bodyPreview: bodyPreview,
+        );
+      }
+      return GetBytesResult.fail(
+        code: status,
+        message: e.message ?? '网络请求失败',
+        bodyPreview: bodyPreview,
+      );
+    } catch (e) {
+      return GetBytesResult.fail(
+        code: -1,
+        message: e.toString(),
+        bodyPreview: '',
+      );
+    }
+  }
+
   /// 下载二进制流文件（用于数据导出 .tgz 压缩包备份）
   /// [uri] 请求路径，[body] JSON 请求体，[savePath] 本地保存路径
   /// 成功返回 null，失败返回错误信息
@@ -811,6 +925,42 @@ class HttpResponse<T> {
     this.bean,
     this.needRelogin = false,
   });
+}
+
+/// 二进制文件拉取结果（含错误详情）
+/// 比简单返回 `List<int>?` 更能帮助定位青龙接口问题
+class GetBytesResult {
+  final bool success;
+  final int code; // HTTP 状态码（0/-1 表示非 HTTP 错误）
+  final String? message;
+  final List<int> bytes;
+  final String bodyPreview; // 错误响应体前 200 字符
+
+  GetBytesResult._({
+    required this.success,
+    required this.code,
+    this.message,
+    required this.bytes,
+    this.bodyPreview = '',
+  });
+
+  factory GetBytesResult.success(List<int> bytes) => GetBytesResult._(
+    success: true,
+    code: 200,
+    bytes: bytes,
+  );
+
+  factory GetBytesResult.fail({
+    required int code,
+    String? message,
+    String bodyPreview = '',
+  }) => GetBytesResult._(
+    success: false,
+    code: code,
+    message: message,
+    bytes: const [],
+    bodyPreview: bodyPreview,
+  );
 }
 
 class DeserializeAction<T> {

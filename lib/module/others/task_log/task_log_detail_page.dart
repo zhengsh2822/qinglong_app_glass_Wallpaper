@@ -10,6 +10,7 @@ import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
+import 'package:qinglong_app/base/ui/log_text_view.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
 
@@ -48,14 +49,11 @@ class _TaskLogDetailPageState extends ConsumerState<TaskLogDetailPage>
                 padding: const EdgeInsets.symmetric(
                   horizontal: 15,
                 ),
-                child: SelectableText(
-                  (content == null || content!.isEmpty) ? "暂无数据" : content!,
-                  selectionControls: cupertinoTextSelectionControls,
-                  selectionHeightStyle: BoxHeightStyle.max,
-                  selectionWidthStyle: BoxWidthStyle.max,
-                  style: const TextStyle(
-                    fontSize: 12,
-                  ),
+                child: LogTextView(
+                  content: content,
+                  accountIndex:
+                      SingleAccountPageState.of(context)?.index ?? 0,
+                  emptyText: '暂无数据',
                 ),
               ),
       ),
