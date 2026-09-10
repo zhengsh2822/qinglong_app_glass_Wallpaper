@@ -17,6 +17,7 @@ import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
+import 'package:qinglong_app/base/ui/add_select_all_button.dart';
 import 'package:qinglong_app/base/ui/lazy_first_screen.dart';
 import 'package:qinglong_app/base/ui/slidable_close_notifier.dart';
 import 'package:qinglong_app/base/ui/enable_widget.dart';
@@ -160,9 +161,22 @@ class DependcyPageState extends ConsumerState<DependencyPage>
                 ),
               ),
             ),
-            CupertinoButton(
-              color: Colors.transparent,
-              padding: EdgeInsets.zero,
+            AddSelectAllNavButton(
+              editMode: editMode,
+              allChecked:
+                  checkedIds.length ==
+                  ref
+                      .read(
+                        SingleAccountPageState.ofDependencyProvider(
+                          context,
+                        )(getProviderName(context)).notifier,
+                      )
+                      .getListByType(_tabController!.index)
+                      .length,
+              color:
+                  Theme.of(context).appBarTheme.iconTheme?.color ??
+                  Colors.black,
+              padding: const EdgeInsets.symmetric(horizontal: 15),
               onPressed: () {
                 if (editMode) {
                   if (checkedIds.length ==
@@ -250,39 +264,6 @@ class DependcyPageState extends ConsumerState<DependencyPage>
                       }
                     });
               },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15),
-                child: Center(
-                  child:
-                      editMode
-                          ? Text(
-                            checkedIds.length ==
-                                    ref
-                                        .read(
-                                          SingleAccountPageState.ofDependencyProvider(
-                                            context,
-                                          )(getProviderName(context)).notifier,
-                                        )
-                                        .getListByType(_tabController!.index)
-                                        .length
-                                ? "全不选"
-                                : "全选",
-                            style: TextStyle(
-                              fontSize: 16,
-                              color:
-                                  Theme.of(
-                                    context,
-                                  ).appBarTheme.iconTheme?.color,
-                            ),
-                          )
-                          : Icon(
-                            CupertinoIcons.add,
-                            size: 24,
-                            color:
-                                Theme.of(context).appBarTheme.iconTheme?.color,
-                          ),
-                ),
-              ),
             ),
           ],
         ),

@@ -26,6 +26,7 @@ const String spTextScaleFactor = "spTextScaleFactor";
 const String spTextFontWeight = "spTextFontWeight"; // 全局字体粗细（400/500/600/700 四档），默认 400
 const String spPrimaryTextColor = "spPrimaryTextColor";
 const String spSecondaryTextColor = "spSecondaryTextColor";
+const String spTextAutoContrast = "spTextAutoContrast"; // 主/次字体自动根据壁纸亮度反色（默认开启，自定义颜色优先）
 const String spLogAutoJump2Bottom = "spLogAutoJump2Bottom";
 const String spAndroidKeyboardError = "spAndroidKeyboardError";
 const String spSingleInstance = "spSingleInstance";
@@ -37,3 +38,8 @@ const String spCardSolidOpacity = "spCardSolidOpacity"; // 卡片纯色不透明
 const String spCardSolidColor = "spCardSolidColor"; // 卡片纯色自定义颜色（-1=随主题自动白/黑），用于不同壁纸适配
 const String spGithubLastReleaseTime = "spGithubLastReleaseTime"; // 已确认过的 GitHub 最新 release 发布时间(epoch 毫秒)，用于"获取新版安装包"时间对比（版本号不变，靠时间判断）
 const String spGithubLastReleaseNo = "spGithubLastReleaseNo"; // 已确认过的 GitHub 安装包文件名序号（release_N），用于序号对比判断新版
+// 冷启动主动提醒时"已提醒过"的 GitHub release 附件上传时间(epoch 毫秒)，
+// 用于避免同一版本重复打扰；出现更新的 release 后才再次提醒
+const String spGithubLastRemindTime = "spGithubLastRemindTime";
+// 冷启动主动提醒时"已提醒过"的 GitHub 安装包文件名序号（release_N）
+const String spGithubLastRemindNo = "spGithubLastRemindNo";

@@ -15,6 +15,9 @@ class QlAppBar extends ConsumerWidget implements PreferredSizeWidget {
   final Widget? backWidget;
   final bool canClick2Vip;
 
+  /// 左侧区域宽度（容纳"编辑+名称"双按钮时透传给 AppBar）
+  final double? leadingWidth;
+
   const QlAppBar({
     super.key,
     required this.title,
@@ -23,6 +26,7 @@ class QlAppBar extends ConsumerWidget implements PreferredSizeWidget {
     this.canBack = true,
     this.backWidget,
     this.canClick2Vip = true,
+    this.leadingWidth,
   });
 
   @override
@@ -66,6 +70,7 @@ class QlAppBar extends ConsumerWidget implements PreferredSizeWidget {
       backgroundColor: Colors.transparent,
       primary: true,
       leading: canBack ? back : null,
+      leadingWidth: leadingWidth,
       automaticallyImplyLeading: canBack,
       title: GestureDetector(
         onTap: () {

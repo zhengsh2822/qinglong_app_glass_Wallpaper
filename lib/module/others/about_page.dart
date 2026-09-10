@@ -518,19 +518,24 @@ class _AboutPageState extends ConsumerState<AboutPage>
     }
   }
 
-  /// 获取新版安装包信息：GitHub Releases latest 的发布时间与本地已确认时间对比。
-  /// 构建版本号固定不变（3.0.0+300），仅靠时间判断是否有新安装包；
+  /// 获取新版安装包信息：GitHub Releases latest 与本地已装安装包对比。
+  /// 构建版本号固定不变（3.0.0+300），仅靠序号/时间判断是否有新安装包；
   /// 用户主动点击"版本"行时检测；[autoRemind] 为 true 时供 app 启动主动提醒。
   ///
-  /// 比较基准（取其中最晚者）：
-  /// 1. 本地确认过的 release 时间 [spGithubLastReleaseTime]（点过"获取安装包"后写入；
-  ///    主动提醒模式下检测到新包即写入，保证同一版本只提醒一次）
-  /// 2. 本地构建时间戳 LOCAL_BUILD_TIME（构建时通过 --dart-define 注入，epoch 毫秒）。
-  ///    本地包比 GitHub 附件还新（如刚构建完上传前）时不会重复提示。
+  /// 判定规则（序号优先，时间兜底）：
+  /// 1. 序号可比（GitHub 附件名与本地 LOCAL_BUILD_NO 均带序号）：GitHub 序号必须
+  ///    严格大于本地构建序号才算新版；相等即同一包（解决"先构建安装、
+  ///    后上传 GitHub"场景的误报，也保证"装上最新包后不再提示"）
+  /// 2. 序号不可比（任一方无序号）：退回附件上传时间对比，需晚于本地构建时间
+  ///    LOCAL_BUILD_TIME。
   ///
-  /// [autoRemind] = true（主动提醒）：
-  /// - 检测到新包即写入 [spGithubLastReleaseTime]，下次启动不再重复提醒该版本
-  ///   （用户选"稍后"或"获取安装包"都只提醒一次）
+  /// 新版判定只与"本地当前安装包"（构建注入序号/时间）比较，不再使用
+  /// "点击过获取"作为已确认基准，因此点"获取安装包"跳转 GitHub 不会
+  /// 被当成已是最新；只要本地还没装上 GitHub 的新包，刷新就始终能提醒。
+  ///
+  /// [autoRemind] = true（冷启动主动提醒）：
+  /// - 命中新版本且该版本未提醒过（[spGithubLastRemindTime]/[spGithubLastRemindNo]）
+  ///   才弹窗；弹窗后记录"已提醒"，同一版本不再重复打扰
   /// - "已是最新"/网络异常时静默，不 toast
   static Future<void> checkGithubUpdate(
     BuildContext context, {
@@ -551,7 +556,8 @@ class _AboutPageState extends ConsumerState<AboutPage>
         ),
       );
       if (resp.statusCode != 200 || resp.data is! Map) {
-        "获取更新信息失败".toast();
+        // 主动提醒模式下静默（不 toast），避免每次启动打扰
+        if (!autoRemind) "获取更新信息失败".toast();
         return;
       }
       final data = resp.data as Map;
@@ -576,7 +582,8 @@ class _AboutPageState extends ConsumerState<AboutPage>
         data['published_at']?.toString() ?? '',
       );
       if (publishedAt == null) {
-        "获取更新信息失败".toast();
+        // 主动提醒模式下静默（不 toast），避免每次启动打扰
+        if (!autoRemind) "获取更新信息失败".toast();
         return;
       }
       // 闭包内引用需要 final 局部变量（可空类型无法在闭包中窄化）
@@ -591,9 +598,9 @@ class _AboutPageState extends ConsumerState<AboutPage>
           githubNo = int.tryParse(m.group(1) ?? '') ?? 0;
         }
       }
-      // 与本地已确认的 release 对比：时间 + 序号双基准，任一更新即提示
-      final last = SpUtil.getInt(spGithubLastReleaseTime, defValue: 0);
-      final lastNo = SpUtil.getInt(spGithubLastReleaseNo, defValue: 0);
+      // 新版判定只与"本地当前安装包"（构建注入序号/时间）比较，不再使用
+      // "点击过获取"作为已确认基准：点跳转 GitHub 不会当成已是最新，
+      // 只要本地还没装上 GitHub 的新包，手动刷新就始终能提醒
       // 构建时注入的本地构建时间戳 LOCAL_BUILD_TIME（epoch，0 表示未注入不参与比较）
       // 兼容秒/毫秒两种单位：毫秒时间戳为 13 位（≥1e11），秒为 10 位（<1e11），
       // 若传入的是秒则自动放大 1000 倍，避免与 GitHub updated_at 毫秒对比失效
@@ -610,22 +617,35 @@ class _AboutPageState extends ConsumerState<AboutPage>
           ) ??
           0;
       // 序号可比（GitHub 与本地均带序号）时以序号为准：
-      // GitHub 序号必须严格大于本地构建序号才算新版，等于/小于都视为同一或更旧包。
-      // 解决"先本地构建安装、再上传 GitHub"场景：上传时间必然晚于本地构建时间，
-      // 仅靠时间对比会把刚上传的同一安装包误判为新版。
+      // GitHub 序号必须严格大于本地构建序号才算新版，等于即本地已装上该包
+      //（解决"先本地构建安装、后上传 GitHub"场景的误报，也保证装上新包后不再提示）
       final bool canCompareNo = githubNo > 0 && localBuildNo > 0;
-      // 序号基准：GitHub 序号 > 已确认序号 且 > 本地构建序号
-      final bool newByNo =
-          githubNo > 0 && githubNo > lastNo && githubNo > localBuildNo;
+      final bool newByNo = canCompareNo && githubNo > localBuildNo;
       // 时间基准：仅在序号无法比较（GitHub 或本地无序号）时兜底
       final bool newByTime =
           !canCompareNo &&
-          latestEpoch > last &&
           (localBuildAt == 0 || latestEpoch > localBuildAt);
       if (!newByTime && !newByNo) {
         // 主动提醒模式下静默（不 toast），避免每次启动打扰
         if (!autoRemind) "已是最新安装包".toast();
         return;
+      }
+
+      // 冷启动主动提醒：同一版本只提醒一次——命中新版本即记录"已提醒"，
+      // 下次启动不再重复提醒该版本（用户选"稍后"或"获取安装包"都一样）
+      if (autoRemind) {
+        final remindAt = SpUtil.getInt(spGithubLastRemindTime, defValue: 0);
+        final remindNo = SpUtil.getInt(spGithubLastRemindNo, defValue: 0);
+        // 序号路径：GitHub 序号 <= 已提醒序号，说明该版本已提醒过
+        // 时间路径：附件时间 <= 已提醒时间，说明该版本已提醒过
+        if ((newByNo && remindNo >= githubNo) ||
+            (newByTime && remindAt >= latestEpoch)) {
+          return;
+        }
+        SpUtil.putInt(spGithubLastRemindTime, latestEpoch);
+        if (githubNo > 0) {
+          SpUtil.putInt(spGithubLastRemindNo, githubNo);
+        }
       }
       final name = (data['name']?.toString().isNotEmpty ?? false)
           ? data['name'].toString()
@@ -639,28 +659,10 @@ class _AboutPageState extends ConsumerState<AboutPage>
       final content =
           '名称：$name\n发布时间：$timeStr\n${body.length > 200 ? '${body.substring(0, 200)}...' : body}';
 
-      // 确认获取安装包后，记录该 release 时间+序号，下次检测不到更新即不重复提示
-      void markAndOpen() {
-        SpUtil.putInt(
-          spGithubLastReleaseTime,
-          releaseTime.millisecondsSinceEpoch,
-        );
-        if (githubNo > 0) {
-          SpUtil.putInt(spGithubLastReleaseNo, githubNo);
-        }
+      // 点击"获取安装包"跳转 GitHub 下载；不写任何"已确认"状态，
+      // 只要本地没装上新包，之后手动刷新/冷启动仍能继续提醒
+      void openGithub() {
         launchUrl(Uri.parse(releaseUrl));
-      }
-
-      // 主动提醒：同一 release 只提醒一次——检测到新包即写入时间+序号，
-      // 下次启动不再重复提醒（用户选"稍后"或"获取安装包"都一样）
-      if (autoRemind) {
-        SpUtil.putInt(
-          spGithubLastReleaseTime,
-          releaseTime.millisecondsSinceEpoch,
-        );
-        if (githubNo > 0) {
-          SpUtil.putInt(spGithubLastReleaseNo, githubNo);
-        }
       }
 
       final bool isCyber =
@@ -674,7 +676,7 @@ class _AboutPageState extends ConsumerState<AboutPage>
           cancelLabel: "稍后",
           confirmLabel: "获取安装包",
         ).then((confirmed) {
-          if (confirmed == true) markAndOpen();
+          if (confirmed == true) openGithub();
         });
         return;
       }
@@ -693,7 +695,7 @@ class _AboutPageState extends ConsumerState<AboutPage>
               child: const Text("获取安装包"),
               onPressed: () {
                 Navigator.pop(childContext);
-                markAndOpen();
+                openGithub();
               },
             ),
           ],

@@ -107,6 +107,11 @@ class _SelectionFollowTextFieldState
   OverlayEntry? _badgeEntry;
   final ValueNotifier<String> _badgeText = ValueNotifier<String>('');
 
+  // 路由引用缓存：initState 中不可调用 ModalRoute.of（依赖 inherited widget 会触发
+  // 框架断言"dependOnInheritedWidgetOfExactType called before initState completed"红屏），
+  // 改在 didChangeDependencies 中获取并缓存，供手势错峰/离场短路复用
+  ModalRoute<dynamic>? _modal;
+
   @override
   void initState() {
     super.initState();
@@ -118,6 +123,37 @@ class _SelectionFollowTextFieldState
     _mountBadge();
     // 首帧后打印滚动层链（诊断 3）
     WidgetsBinding.instance.addPostFrameCallback((_) => _dumpScrollableChain());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // initState 期间禁止依赖 inherited widget，路由引用只能在依赖就绪后获取。
+    final modal = ModalRoute.of(context);
+    if (!identical(modal, _modal)) {
+      final old = _modal;
+      if (old != null && old.animation != null) {
+        old.animation!.removeStatusListener(_onRouteAnimationStatus);
+      }
+      _modal = modal;
+      if (modal != null && modal.animation != null) {
+        // 手势返回错峰：监听路由动画，进入 reverse（手势左滑/反向动画播放）时
+        // 立即收起键盘，让键盘收起动画与路由反向动画错开，避免双重动画叠加掉帧
+        modal.animation!.addStatusListener(_onRouteAnimationStatus);
+      }
+    }
+  }
+
+  /// 路由动画状态变化：reverse（手势返回/反向动画播放）时主动收起键盘，
+  /// 把键盘隐藏动画从路由动画中错峰出去（键盘动画 200-300ms + 路由动画 400ms
+  /// 重叠会让帧预算被打满，是手势返回掉帧的主因之一）
+  void _onRouteAnimationStatus(AnimationStatus status) {
+    if (status == AnimationStatus.reverse) {
+      final focus = FocusManager.instance.primaryFocus;
+      if (focus != null && focus.hasFocus) {
+        focus.unfocus();
+      }
+    }
   }
 
   @override
@@ -134,6 +170,10 @@ class _SelectionFollowTextFieldState
   @override
   void dispose() {
     widget.controller.removeListener(_onSelectionChanged);
+    final modal = _modal;
+    if (modal != null && modal.animation != null) {
+      modal.animation!.removeStatusListener(_onRouteAnimationStatus);
+    }
     _suppressTimer?.cancel();
     _innerPos?.removeListener(_onInnerPosChanged);
     _cachePainter?.dispose();
@@ -333,13 +373,30 @@ class _SelectionFollowTextFieldState
   }
 
   // ── selection 变化 → caret 全局可见性修正（诊断 5）──────────
-  // 事件合并：长按密集时每帧只处理最新一次 selection（丢弃中间状态，
+  // ── 事件合并：长按密集时每帧只处理最新一次 selection（丢弃中间状态，
   // 滚动基于最新光标位置），避免 addPostFrameCallback 排队堆积。
   bool _followScheduled = false;
   TextSelection? _pendingSel;
   int _pendingActive = 0;
+  // ── 快速路径缓存：文本内容与当前渲染一致时，直接复用上次"全文本 ≤ 视口
+  // （无需滚动）"的测量结论，跳过全链路坐标换算（根治退出页面掉帧）
+  String? _cachePlainText;
+  bool _cacheFitsViewport = false;
+  double _cacheViewportH = 0;
 
   void _onSelectionChanged() {
+    // 路由离场短路：停止跟随，杜绝动画帧内再触发全量 TextPainter layout
+    // （IME 键盘失焦/光标变化在返回时每帧触发 selection 变化，是退出页面掉帧的根因）
+    // 1) 点击左上角退出：pop 后本路由 isCurrent 立即变 false（上层路由接管）
+    // 2) 系统手势左滑返回：拖动期间 isCurrent 仍是 true（手势未结束不算真正 pop），
+    //    但 route.animation 已进入 reverse 状态（交互式手势驱动反向动画播放），
+    //    需同时判断动画状态——仅靠 isCurrent 拦不住手势返回，仍会掉帧
+    // 路由引用由 didChangeDependencies 缓存（_modal），此处避免重复依赖查找
+    final modal = _modal;
+    if (modal != null) {
+      final status = modal.animation?.status;
+      if (!modal.isCurrent || status == AnimationStatus.reverse) return;
+    }
     final TextSelection sel = widget.controller.selection;
     if (!sel.isValid) return;
     final TextSelection? prev = _lastSelection;
@@ -380,6 +437,13 @@ class _SelectionFollowTextFieldState
   void _scrollExtentIntoView(TextSelection sel, int activeOffset) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      // 路由离场二次短路：selection 事件可能在手势方向反转前就入队，
+      // 执行帧时才播放反向动画，这里再拦一次（与 _onSelectionChanged 同条件）
+      final modal = ModalRoute.of(context);
+      if (modal != null) {
+        final status = modal.animation?.status;
+        if (!modal.isCurrent || status == AnimationStatus.reverse) return;
+      }
       final editable = _findEditableTextState(_fieldKey.currentContext);
       if (editable == null) {
         _log('scroll: EditableTextState not mounted, skip');
@@ -402,6 +466,23 @@ class _SelectionFollowTextFieldState
         _innerPos = innerPos;
         _innerPos!.addListener(_onInnerPosChanged);
       }
+      // ── 快速路径（根治退出页面掉帧）────────────────────────────
+      // pop 动画期间 IME 键盘失焦只改 selection 不改文本，若文本未变且上次已
+      // 确认"全文本高度 ≤ 视口"（无需滚动），则本帧直接跳过：不再做
+      // getOffsetForCaret/localToGlobal/逐层坐标换算，避免动画每帧全链路重活。
+      // 文本一旦变化（真正输入/粘贴）缓存失效，重新走完整链路测量。
+      final String? plain = re.text?.toPlainText();
+      final double vpH = innerPos.viewportDimension;
+      if (plain != null &&
+          plain == _cachePlainText &&
+          _cacheFitsViewport &&
+          vpH == _cacheViewportH) {
+        return;
+      }
+      if (plain != _cachePlainText) {
+        _cachePlainText = plain;
+        _cacheFitsViewport = false; // 文本变化，需重新测量
+      }
 
       // caret offset（先 clamp 到文本长度）
       final int len = re.text?.toPlainText().length ?? 0;
@@ -423,6 +504,10 @@ class _SelectionFollowTextFieldState
         _log('scroll: fullTextPainter failed, skip');
         return;
       }
+      // 缓存测量结果：全文本高度 ≤ 内层视口高度 → 无需任何滚动，后续同文本
+      // selection 变化直接短路（配合上面的快速路径，pop 动画帧不再全链路重活）
+      _cacheViewportH = innerPos.viewportDimension;
+      _cacheFitsViewport = tp.height <= innerPos.viewportDimension;
       final Offset textOffset = tp.getOffsetForCaret(
         TextPosition(offset: offset, affinity: sel.affinity),
         Rect.zero,

@@ -310,58 +310,34 @@ class AppKeyItemCell extends StatelessWidget {
     );
   }
 
-  /// 卡片内容：应用名 + scopes 标签
-  /// 高度恒定：应用名固定 1 行 + 权限标签固定单行（超出折叠为 +N），
-  /// 不随权限标签数量变化，保证列表卡片宽高统一
+  /// 卡片内容：应用名 + scopes 标签（完整展示全部权限标签，Wrap 自动换行）
   Widget _buildCardContent(BuildContext context) {
-    final tags = AppKeyViewModel.getScopeNames(
-      (bean["scopes"] as List<dynamic>?),
-    );
-    // 单行最多展示 2 个完整标签 + 溢出折叠 +N，超出部分裁剪，保证卡片高度恒定
-    const int maxVisible = 2;
-    final visibleTags = tags.length > maxVisible
-        ? tags.sublist(0, maxVisible)
-        : tags;
-    final int overflowCount = tags.length - visibleTags.length;
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-      child: SizedBox(
-        height: 60,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-              child: Text(
-                bean["name"] ?? "",
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  overflow: TextOverflow.ellipsis,
-                  color: ref.watch(themeProvider).themeColor.titleColor(),
-                  fontSize: 16,
-                ),
-              ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            bean["name"] ?? "",
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              overflow: TextOverflow.ellipsis,
+              color: ref.watch(themeProvider).themeColor.titleColor(),
+              fontSize: 16,
             ),
-            const Spacer(),
-            ClipRect(
-              child: SizedBox(
-                height: 24,
-                child: Wrap(
-                  runSpacing: 0,
-                  spacing: 5,
-                  children: [
-                    ...visibleTags.map((e) => TagChip(label: e)),
-                    if (overflowCount > 0) TagChip(label: '+$overflowCount'),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            runSpacing: 5,
+            spacing: 5,
+            children: AppKeyViewModel.getScopeNames(
+              (bean["scopes"] as List<dynamic>?),
+            ).map((e) => TagChip(label: e)).toList(),
+          ),
+        ],
       ),
     );
   }

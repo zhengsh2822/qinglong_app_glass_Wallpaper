@@ -45,6 +45,13 @@ class _SearchCellState extends ConsumerState<SearchCell> {
     final bool solidMode = isCardSolidMode();
     final bool isDark = theme.themeMode == modeDark || isCyber;
 
+    // 纯色模式背景：固定 100% 不透明（不跟随卡片不透明度调节），
+    // 颜色仍可自定义（spCardSolidColor，-1 时浅色白/深色黑随壁纸深浅）
+    final Color solidBgColor = (() {
+      final custom = SpUtil.getInt(spCardSolidColor, defValue: -1);
+      return custom >= 0 ? Color(custom) : (isDark ? Colors.black : Colors.white);
+    })();
+
     final Color bgColor =
         isCyber ? const Color(0xFF12121A) : AppleColors.bgTertiary;
     final Color bgEndColor =
@@ -61,7 +68,7 @@ class _SearchCellState extends ConsumerState<SearchCell> {
       height: 44,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: solidMode ? cardSolidColor(isDark: isDark) : null,
+        color: solidMode ? solidBgColor : null,
         gradient: solidMode
             ? null
             : LinearGradient(

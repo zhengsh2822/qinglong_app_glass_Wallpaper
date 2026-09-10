@@ -22,6 +22,7 @@ import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/base/ui/search_cell.dart';
 import 'package:qinglong_app/base/ui/slidable_close_notifier.dart';
+import 'package:qinglong_app/base/ui/add_select_all_button.dart';
 import 'package:qinglong_app/module/task/add_task_page.dart';
 import 'package:qinglong_app/module/task/intime_log/intime_log_page.dart';
 import 'package:qinglong_app/module/task/task_bean.dart';
@@ -203,9 +204,32 @@ class TaskPageState extends ConsumerState<TaskPage>
             title: "拉库管理",
             canClick2Vip: !editMode,
             actions: [
-              CupertinoButton(
-                color: Colors.transparent,
-                padding: EdgeInsets.zero,
+              AddSelectAllNavButton(
+                editMode: editMode,
+                allChecked:
+                    checkedIds.length ==
+                    getListByType(_tabController?.index ?? 0).where((item) {
+                      if (searchText.text.isEmpty ||
+                          (item.name?.toLowerCase().contains(
+                                searchText.text.toLowerCase(),
+                              ) ??
+                              false) ||
+                          (item.command?.toLowerCase().contains(
+                                searchText.text.toLowerCase(),
+                              ) ??
+                              false) ||
+                          (item.schedule?.contains(
+                                searchText.text.toLowerCase(),
+                              ) ??
+                              false)) {
+                        return true;
+                      }
+                      return false;
+                    }).length,
+                color:
+                    Theme.of(context).appBarTheme.iconTheme?.color ??
+                    Colors.black,
+                padding: const EdgeInsets.only(left: 6, right: 16),
                 onPressed: () {
                   Navigator.of(context)
                       .push(
@@ -225,56 +249,6 @@ class TaskPageState extends ConsumerState<TaskPage>
                             .loadData(context, false);
                       });
                 },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 15),
-                  child: Center(
-                    child:
-                        editMode
-                            ? Text(
-                              checkedIds.length ==
-                                      getListByType(
-                                        _tabController?.index ?? 0,
-                                      ).where((item) {
-                                        if (searchText.text.isEmpty ||
-                                            (item.name?.toLowerCase().contains(
-                                                  searchText.text.toLowerCase(),
-                                                ) ??
-                                                false) ||
-                                            (item.command
-                                                    ?.toLowerCase()
-                                                    .contains(
-                                                      searchText.text
-                                                          .toLowerCase(),
-                                                    ) ??
-                                                false) ||
-                                            (item.schedule?.contains(
-                                                  searchText.text.toLowerCase(),
-                                                ) ??
-                                                false)) {
-                                          return true;
-                                        }
-                                        return false;
-                                      }).length
-                                  ? "全不选"
-                                  : "全选",
-                              style: TextStyle(
-                                fontSize: 16,
-                                color:
-                                    Theme.of(
-                                      context,
-                                    ).appBarTheme.iconTheme?.color,
-                              ),
-                            )
-                            : Icon(
-                              CupertinoIcons.add,
-                              size: 24,
-                              color:
-                                  Theme.of(
-                                    context,
-                                  ).appBarTheme.iconTheme?.color,
-                            ),
-                  ),
-                ),
               ),
             ],
           ),
@@ -343,17 +317,18 @@ class TaskPageState extends ConsumerState<TaskPage>
                     }
                   });
                   editMode = !editMode;
-                  // if (editMode) {
-                  //   searchText.text = "";
-                  // }
                   setState(() {});
                 },
-                child: Center(
-                  child: Text(
-                    editMode == true ? "完成" : "编辑",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Theme.of(context).appBarTheme.iconTheme?.color,
+                child: Padding(
+                  // 左缘对齐卡片宽度（AppleColors.spaceMd=16）
+                  padding: const EdgeInsets.only(left: 16),
+                  child: Center(
+                    child: Text(
+                      editMode == true ? "完成" : "编辑",
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Theme.of(context).appBarTheme.iconTheme?.color,
+                      ),
                     ),
                   ),
                 ),
@@ -361,9 +336,32 @@ class TaskPageState extends ConsumerState<TaskPage>
             },
           ),
           actions: [
-            CupertinoButton(
-              color: Colors.transparent,
-              padding: EdgeInsets.zero,
+            AddSelectAllNavButton(
+              editMode: editMode,
+              allChecked:
+                  checkedIds.length ==
+                  getListByType(_tabController?.index ?? 0).where((item) {
+                    if (searchText.text.isEmpty ||
+                        (item.name?.toLowerCase().contains(
+                              searchText.text.toLowerCase(),
+                            ) ??
+                            false) ||
+                        (item.command?.toLowerCase().contains(
+                              searchText.text.toLowerCase(),
+                            ) ??
+                            false) ||
+                        (item.schedule?.contains(
+                              searchText.text.toLowerCase(),
+                            ) ??
+                            false)) {
+                      return true;
+                    }
+                    return false;
+                  }).length,
+              color:
+                  Theme.of(context).appBarTheme.iconTheme?.color ??
+                  Colors.black,
+              padding: const EdgeInsets.symmetric(horizontal: 15),
               onPressed: () {
                 if (editMode) {
                   if (checkedIds.length ==
@@ -437,51 +435,6 @@ class TaskPageState extends ConsumerState<TaskPage>
                           .loadData(context, false);
                     });
               },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15),
-                child: Center(
-                  child:
-                      editMode
-                          ? Text(
-                            checkedIds.length ==
-                                    getListByType(
-                                      _tabController?.index ?? 0,
-                                    ).where((item) {
-                                      if (searchText.text.isEmpty ||
-                                          (item.name?.toLowerCase().contains(
-                                                searchText.text.toLowerCase(),
-                                              ) ??
-                                              false) ||
-                                          (item.command?.toLowerCase().contains(
-                                                searchText.text.toLowerCase(),
-                                              ) ??
-                                              false) ||
-                                          (item.schedule?.contains(
-                                                searchText.text.toLowerCase(),
-                                              ) ??
-                                              false)) {
-                                        return true;
-                                      }
-                                      return false;
-                                    }).length
-                                ? "全不选"
-                                : "全选",
-                            style: TextStyle(
-                              fontSize: 16,
-                              color:
-                                  Theme.of(
-                                    context,
-                                  ).appBarTheme.iconTheme?.color,
-                            ),
-                          )
-                          : Icon(
-                            CupertinoIcons.add,
-                            size: 24,
-                            color:
-                                Theme.of(context).appBarTheme.iconTheme?.color,
-                          ),
-                ),
-              ),
             ),
           ],
         ),

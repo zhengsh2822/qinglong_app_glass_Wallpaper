@@ -17,6 +17,7 @@ import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/animated_indexed_switch.dart';
+import 'package:qinglong_app/base/ui/keyboard_dismiss_observer.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/base/ui/wallpaper_background.dart';
 import 'package:qinglong_app/utils/extension.dart';
@@ -271,6 +272,9 @@ class QlAppState extends ConsumerState<QlApp> with WidgetsBindingObserver {
       title: "青龙客户端",
       locale: const Locale('zh', 'CN'),
       navigatorKey: navigatorState,
+      // 退场键盘错峰：手势返回/pop 开始瞬间即收键盘，键盘动画与退场动画
+      // 时间重叠被吸收，避免"键盘未收起就退出"导致掉帧（并行优化 B 方案）
+      navigatorObservers: [KeyboardDismissNavigatorObserver()],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,

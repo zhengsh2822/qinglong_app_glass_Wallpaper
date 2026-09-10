@@ -20,7 +20,7 @@ import 'package:qinglong_app/module/subscribe/subscribe_viewmodel.dart';
 import 'package:qinglong_app/module/task/task_viewmodel.dart';
 import 'package:qinglong_app/utils/icloud_utils.dart';
 import 'package:qinglong_app/utils/utils.dart';
-
+import 'package:qinglong_app/base/ui/keyboard_dismiss_observer.dart';
 import 'routes.dart';
 
 
@@ -142,6 +142,11 @@ class SingleAccountPageState extends State<SingleAccountPage> {
       return Navigator(
         key: navigator,
         restorationScopeId: index.toString(),
+        // 退场键盘错峰（并行优化 B 方案）：手势返回/pop 开始瞬间即收键盘，
+        // 键盘动画与退场动画时间重叠被吸收。必须挂在本自建 Navigator 上——
+        // MaterialApp.navigatorObservers 只对默认 Navigator 生效，业务页面
+        // 全部在本 Navigator 内，挂错位置 observer 不会触发（实测仍掉帧）
+        observers: [KeyboardDismissNavigatorObserver()],
         onGenerateRoute: (setting) {
           return Routes.generateRoute(setting);
         },

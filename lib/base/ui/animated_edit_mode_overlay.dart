@@ -113,9 +113,10 @@ class _AnimatedOverlayHostState extends ConsumerState<_AnimatedOverlayHost>
     widget.owner._host = this;
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300),
+      // 进场 260ms：干脆利落，进出动画保持一致（同步主题版最终定稿）
+      duration: const Duration(milliseconds: 260),
       // 退场时长与进场一致，避免退场太快看不出来
-      reverseDuration: const Duration(milliseconds: 300),
+      reverseDuration: const Duration(milliseconds: 260),
     );
     // 从屏幕底部滑入
     _slideOffset = Tween<Offset>(

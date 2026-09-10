@@ -20,6 +20,9 @@ import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/base/ui/search_cell.dart';
 import 'package:qinglong_app/base/ui/slidable_close_notifier.dart';
+import 'package:qinglong_app/base/ui/sort_nav_button.dart';
+import 'package:qinglong_app/base/ui/sort_triangle.dart';
+import 'package:qinglong_app/base/ui/add_select_all_button.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 import 'package:qinglong_app/module/env/add_env_page.dart';
 import 'package:qinglong_app/module/env/env_bean.dart';
@@ -125,6 +128,34 @@ class EnvPageState extends ConsumerState<EnvPage>
     });
   }
 
+  /// 顶部导航栏排序三态（对齐网页版）：默认=按创建时间、顺排/逆排
+  /// 名称与更新时间两个入口互斥，激活一个另一个回到默认
+  SortState _nameSort = SortState.none;
+  SortState _timeSort = SortState.none;
+
+  void _onNameSort() {
+    setState(() {
+      _nameSort = switch (_nameSort) {
+        SortState.none => SortState.asc,
+        SortState.asc => SortState.desc,
+        SortState.desc => SortState.none,
+      };
+      if (_nameSort != SortState.none) _timeSort = SortState.none;
+    });
+  }
+
+  void _onTimeSort() {
+    setState(() {
+      // 时间排序首击=逆排（最新优先），对齐网页版更新时间列默认降序
+      _timeSort = switch (_timeSort) {
+        SortState.none => SortState.desc,
+        SortState.desc => SortState.asc,
+        SortState.asc => SortState.none,
+      };
+      if (_timeSort != SortState.none) _nameSort = SortState.none;
+    });
+  }
+
   @override
   void dispose() {
     _searchDebounce?.cancel();
@@ -169,40 +200,111 @@ class EnvPageState extends ConsumerState<EnvPage>
                   ? "当前选中 ${checkedIds.length} 个变量"
                   : "环境变量",
           canClick2Vip: !editMode,
+          // leadingWidth 容纳 编辑(左对齐卡片16) + 间距26 + 名称排序按钮
+          leadingWidth: 132,
           backWidget: Builder(
             builder: (context) {
-              return CupertinoButton(
-                color: Colors.transparent,
-                padding: EdgeInsets.zero,
-                onPressed: () {
-                  checkedIds.clear();
-                  WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-                    if (editMode) {
-                      showOverlay(context);
-                    } else {
-                      removeOverlay();
-                    }
-                  });
-                  editMode = !editMode;
-                  // searchText.text = "";
-                  setState(() {});
-                },
-                child: Center(
-                  child: Text(
-                    editMode == true ? "完成" : "编辑",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Theme.of(context).appBarTheme.iconTheme?.color,
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CupertinoButton(
+                    color: Colors.transparent,
+                    // 左缘对齐卡片宽度（AppleColors.spaceMd=16）
+                    padding: const EdgeInsets.only(left: 16),
+                    onPressed: () {
+                      checkedIds.clear();
+                      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                        if (editMode) {
+                          showOverlay(context);
+                        } else {
+                          removeOverlay();
+                        }
+                      });
+                      editMode = !editMode;
+                      // searchText.text = "";
+                      setState(() {});
+                    },
+                    child: Center(
+                      child: Text(
+                        editMode == true ? "完成" : "编辑",
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Theme.of(context).appBarTheme.iconTheme?.color,
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  // 编辑 与 名称 间距（名称右移靠近标题，与右侧排序视觉对称）
+                  const SizedBox(width: 26),
+                  // 编辑态名称按钮淡出（占位保留，标题不跳动）
+                  AnimatedOpacity(
+                    opacity: editMode ? 0 : 1,
+                    duration: const Duration(milliseconds: 260),
+                    child: IgnorePointer(
+                      ignoring: editMode,
+                      child: SortNavButton(
+                        label: "名称",
+                        state: _nameSort,
+                        activeColor: sortActiveColor(context),
+                        inactiveColor: sortInactiveColor(
+                          ref.read(themeProvider).themeMode,
+                        ),
+                        onTap: _onNameSort,
+                      ),
+                    ),
+                  ),
+                ],
               );
             },
           ),
           actions: [
-            CupertinoButton(
-              color: Colors.transparent,
-              padding: EdgeInsets.zero,
+            // 排序与中间标题间距（右侧固定宽，微调不起作用，保持原值）
+            const SizedBox(width: 2),
+            // 编辑态排序按钮淡出（占位保留，避免标题/加号跳动）
+            AnimatedOpacity(
+              opacity: editMode ? 0 : 1,
+              duration: const Duration(milliseconds: 260),
+              child: IgnorePointer(
+                ignoring: editMode,
+                child: SortNavButton(
+                  label: "排序",
+                  state: _timeSort,
+                  activeColor: sortActiveColor(context),
+                  inactiveColor: sortInactiveColor(
+                    ref.read(themeProvider).themeMode,
+                  ),
+                  onTap: _onTimeSort,
+                ),
+              ),
+            ),
+            // 排序 ↔ 加号间距（与左侧 编辑 ↔ 名称 间距一致，加大避免切换时挤压）
+            const SizedBox(width: 16),
+            AddSelectAllNavButton(
+              editMode: editMode,
+              allChecked:
+                  checkedIds.length ==
+                  getListByType(_tabController?.index ?? 0).where((value) {
+                    if (searchText.text.isEmpty ||
+                        (value.name?.contains(
+                              searchText.text.toLowerCase(),
+                            ) ??
+                            false) ||
+                        (value.value?.contains(
+                              searchText.text.toLowerCase(),
+                            ) ??
+                            false) ||
+                        (value.remarks?.contains(
+                              searchText.text.toLowerCase(),
+                            ) ??
+                            false)) {
+                      return true;
+                    } else {
+                      return false;
+                    }
+                  }).length,
+              color:
+                  Theme.of(context).appBarTheme.iconTheme?.color ??
+                  Colors.black,
               onPressed: () {
                 if (editMode) {
                   if (checkedIds.length ==
@@ -276,52 +378,6 @@ class EnvPageState extends ConsumerState<EnvPage>
                           .loadData(context, false);
                     });
               },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15),
-                child: Center(
-                  child:
-                      editMode
-                          ? Text(
-                            checkedIds.length ==
-                                    getListByType(
-                                      _tabController?.index ?? 0,
-                                    ).where((value) {
-                                      if (searchText.text.isEmpty ||
-                                          (value.name?.contains(
-                                                searchText.text.toLowerCase(),
-                                              ) ??
-                                              false) ||
-                                          (value.value?.contains(
-                                                searchText.text.toLowerCase(),
-                                              ) ??
-                                              false) ||
-                                          (value.remarks?.contains(
-                                                searchText.text.toLowerCase(),
-                                              ) ??
-                                              false)) {
-                                        return true;
-                                      } else {
-                                        return false;
-                                      }
-                                    }).length
-                                ? "全不选"
-                                : "全选",
-                            style: TextStyle(
-                              fontSize: 16,
-                              color:
-                                  Theme.of(
-                                    context,
-                                  ).appBarTheme.iconTheme?.color,
-                            ),
-                          )
-                          : Icon(
-                            CupertinoIcons.add,
-                            size: 24,
-                            color:
-                                Theme.of(context).appBarTheme.iconTheme?.color,
-                          ),
-                ),
-              ),
             ),
           ],
         ),
@@ -384,6 +440,12 @@ class EnvPageState extends ConsumerState<EnvPage>
                           }
                           setState(() {});
                         },
+                        nameSort: _nameSort,
+                        timeSort: _timeSort,
+                        // 排序激活时禁用长按拖拽，避免与显示顺序冲突
+                        draggable:
+                            _nameSort == SortState.none &&
+                            _timeSort == SortState.none,
                       ),
                       EnvListView(
                         list: model.enabledList,
@@ -398,6 +460,8 @@ class EnvPageState extends ConsumerState<EnvPage>
                           }
                           setState(() {});
                         },
+                        nameSort: _nameSort,
+                        timeSort: _timeSort,
                       ),
                       EnvListView(
                         list: model.disabledList,
@@ -412,6 +476,8 @@ class EnvPageState extends ConsumerState<EnvPage>
                           }
                           setState(() {});
                         },
+                        nameSort: _nameSort,
+                        timeSort: _timeSort,
                       ),
                     ],
                   ),
@@ -586,6 +652,42 @@ class EnvPageState extends ConsumerState<EnvPage>
   }
 }
 
+/// 名称字母序比较（大小写不敏感，先按小写再按原串，保证稳定）
+int _compareEnvName(EnvBean a, EnvBean b) {
+  final an = (a.name ?? '').toLowerCase();
+  final bn = (b.name ?? '').toLowerCase();
+  final c = an.compareTo(bn);
+  return c != 0 ? c : (a.name ?? '').compareTo(b.name ?? '');
+}
+
+/// 更新时间毫秒：updatedAt（ISO）优先，timestamp 兜底；不可解析记 0
+int _envTimeMs(EnvBean e) {
+  final u = e.updatedAt;
+  if (u != null && u.isNotEmpty) {
+    final t = DateTime.tryParse(u);
+    if (t != null) return t.millisecondsSinceEpoch;
+  }
+  return DateTime.tryParse(e.timestamp ?? '')?.millisecondsSinceEpoch ?? 0;
+}
+
+/// 更新时间比较（早→晚）
+int _compareEnvTime(EnvBean a, EnvBean b) =>
+    _envTimeMs(a).compareTo(_envTimeMs(b));
+
+/// 对已过滤列表应用导航栏排序（默认=保持服务端创建时间顺序，不重排）
+void _applyEnvSort(List<EnvBean> list, SortState nameSort, SortState timeSort) {
+  if (nameSort == SortState.asc) {
+    list.sort(_compareEnvName);
+  } else if (nameSort == SortState.desc) {
+    list.sort((a, b) => _compareEnvName(b, a));
+  } else if (timeSort == SortState.desc) {
+    // 最新优先
+    list.sort((a, b) => _compareEnvTime(b, a));
+  } else if (timeSort == SortState.asc) {
+    list.sort(_compareEnvTime);
+  }
+}
+
 class EnvItemCell extends StatelessWidget {
   final EnvBean bean;
   final int index;
@@ -624,7 +726,7 @@ class EnvItemCell extends StatelessWidget {
       child: Row(
         children: [
           AnimatedSize(
-            duration: const Duration(milliseconds: 250),
+            duration: const Duration(milliseconds: 260),
             child: SizedBox(
               width: editMode ? 40 : 0,
               height: 40,
@@ -746,8 +848,10 @@ class EnvItemCell extends StatelessWidget {
                         ),
                       ),
                       SizedBox(width: isCyber ? 15 : AppleColors.spaceMd),
-                      Visibility(
-                        visible: !editMode2,
+                      // 编辑态卡片时间淡出（占位保留，状态徽标不跳动）
+                      AnimatedOpacity(
+                        opacity: editMode2 ? 0 : 1,
+                        duration: const Duration(milliseconds: 260),
                         child: Material(
                           color: Colors.transparent,
                           child: Text(
@@ -765,6 +869,7 @@ class EnvItemCell extends StatelessWidget {
                                           .descColor()
                                       : AppleColors.textSecondary,
                               fontSize: isCyber ? 12 : 13,
+                              fontFamily: 'MiSans',
                             ),
                           ),
                         ),
@@ -795,16 +900,30 @@ class EnvItemCell extends StatelessWidget {
               ),
             ),
           ),
-          Visibility(
-            visible: editMode2,
-            child: const IgnorePointer(
-              ignoring: true,
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 15),
-                child: Icon(
-                  CupertinoIcons.line_horizontal_3,
-                  color: Color(0xff999999),
-                  size: 20,
+          // 编辑态拖拽三条杠：淡入 + 横向展开（AnimatedSize 零宽时不占布局空间，
+          // ClipRect 裁剪避免展开过程溢出绘制）
+          AnimatedOpacity(
+            opacity: editMode2 ? 1 : 0,
+            duration: const Duration(milliseconds: 260),
+            child: AnimatedSize(
+              duration: const Duration(milliseconds: 260),
+              curve: Curves.easeOutCubic,
+              alignment: Alignment.centerLeft,
+              child: ClipRect(
+                child: SizedBox(
+                  width: editMode2 ? 50 : 0,
+                  height: 20,
+                  child: const IgnorePointer(
+                    ignoring: true,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 15),
+                      child: Icon(
+                        CupertinoIcons.line_horizontal_3,
+                        color: Color(0xff999999),
+                        size: 20,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -1075,6 +1194,8 @@ class EnvListView extends ConsumerStatefulWidget {
   final bool editMode;
   final Set<String> checked;
   final ValueChanged<String> changed;
+  final SortState nameSort;
+  final SortState timeSort;
 
   const EnvListView({
     Key? key,
@@ -1083,6 +1204,8 @@ class EnvListView extends ConsumerStatefulWidget {
     required this.editMode,
     required this.checked,
     required this.changed,
+    this.nameSort = SortState.none,
+    this.timeSort = SortState.none,
   }) : super(key: key);
 
   @override
@@ -1109,6 +1232,8 @@ class _EnvListViewState extends ConsumerState<EnvListView>
         filtered.add(value);
       }
     }
+    // 导航栏排序（默认=保持创建时间顺序）
+    _applyEnvSort(filtered, widget.nameSort, widget.timeSort);
 
     return ListView.separated(
       padding: const EdgeInsets.only(
@@ -1144,6 +1269,10 @@ class EnvRecordListView extends ConsumerStatefulWidget {
   final bool editMode;
   final Set<String> checked;
   final ValueChanged<String> changed;
+  final SortState nameSort;
+  final SortState timeSort;
+  /// 是否可长按拖拽排序（导航栏排序激活时为 false，避免与显示顺序冲突）
+  final bool draggable;
 
   const EnvRecordListView({
     Key? key,
@@ -1152,6 +1281,9 @@ class EnvRecordListView extends ConsumerStatefulWidget {
     required this.editMode,
     required this.checked,
     required this.changed,
+    this.nameSort = SortState.none,
+    this.timeSort = SortState.none,
+    this.draggable = true,
   }) : super(key: key);
 
   @override
@@ -1169,31 +1301,37 @@ class _EnvRecordListViewState extends ConsumerState<EnvRecordListView>
     // 使用局部变量，避免在 build 中修改实例字段
     final List<Widget> children = [];
     int displayIndex = 0;
+    // 先过滤 + 导航栏排序，再构建卡片（默认=保持创建时间顺序）
+    final List<EnvBean> filtered = [];
     for (int i = 0; i < widget.list.length; i++) {
       EnvBean value = widget.list[i];
       if (widget.searchText.isEmpty ||
           (value.name?.contains(widget.searchText) ?? false) ||
           (value.value?.contains(widget.searchText) ?? false) ||
           (value.remarks?.contains(widget.searchText) ?? false)) {
-        children.add(
-          Padding(
-            key: ValueKey(value.sId),
-            padding: const EdgeInsets.only(bottom: 12),
-            child: EnvItemCell(
-              value,
-              displayIndex,
-              ref,
-              editMode: widget.editMode,
-              editMode2: widget.editMode,
-              checkedCallback: (id) {
-                widget.changed(id);
-              },
-              checked: widget.checked.contains(value.sId),
-            ),
-          ),
-        );
-        displayIndex++;
+        filtered.add(value);
       }
+    }
+    _applyEnvSort(filtered, widget.nameSort, widget.timeSort);
+    for (final value in filtered) {
+      children.add(
+        Padding(
+          key: ValueKey(value.sId),
+          padding: const EdgeInsets.only(bottom: 12),
+          child: EnvItemCell(
+            value,
+            displayIndex,
+            ref,
+            editMode: widget.editMode,
+            editMode2: widget.editMode,
+            checkedCallback: (id) {
+              widget.changed(id);
+            },
+            checked: widget.checked.contains(value.sId),
+          ),
+        ),
+      );
+      displayIndex++;
     }
     return ReorderableListView(
       padding: const EdgeInsets.only(
@@ -1201,29 +1339,34 @@ class _EnvRecordListViewState extends ConsumerState<EnvRecordListView>
         top: 67,
       ),
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-      onReorder: (int oldIndex, int newIndex) {
-        if (widget.searchText.isNotEmpty) {
-          "请先清空搜索关键词".toast();
-          return;
-        }
+      // 排序激活时禁用拖拽（buildDefaultDragHandles=false + onReorder 空），
+      // 避免拖拽基于原始 list 与显示顺序错位
+      buildDefaultDragHandles: widget.draggable,
+      onReorder: widget.draggable
+          ? (int oldIndex, int newIndex) {
+              if (widget.searchText.isNotEmpty) {
+                "请先清空搜索关键词".toast();
+                return;
+              }
 
-        setState(() {
-          //交换数据
-          if (newIndex > oldIndex) {
-            newIndex -= 1;
-          }
-          final EnvBean item = widget.list.removeAt(oldIndex);
-          widget.list.insert(newIndex, item);
+              setState(() {
+                //交换数据
+                if (newIndex > oldIndex) {
+                  newIndex -= 1;
+                }
+                final EnvBean item = widget.list.removeAt(oldIndex);
+                widget.list.insert(newIndex, item);
 
-          ref
-              .read(
-                SingleAccountPageState.ofEnvProvider(context)(
-                  getProviderName(context),
-                ).notifier,
-              )
-              .update(context, item.sId ?? "", newIndex, oldIndex);
-        });
-      },
+                ref
+                    .read(
+                      SingleAccountPageState.ofEnvProvider(context)(
+                        getProviderName(context),
+                      ).notifier,
+                    )
+                    .update(context, item.sId ?? "", newIndex, oldIndex);
+              });
+            }
+          : (_, __) {},
       children: children,
     );
   }

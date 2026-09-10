@@ -868,11 +868,21 @@ class DartThemeColors extends ThemeColors {
 /// - 次字体样式（时间/描述/命令）：[title2Color]/[descColor]/[hintColor]
 ///   优先读 SP[spSecondaryTextColor]
 /// 未设置（-1）时使用固定默认色：主字体 FFFFFF、次字体 9A9A9A。
+/// 开启「自动适配壁纸亮度」（spTextAutoContrast）且壁纸偏亮时，
+/// 默认色自动反色为深色（主字 1A1A1A / 次字 4A4A4A）保证可读性。
 class CyberThemeColors extends ThemeColors {
+  /// 自动反色开关（默认开启）
+  static bool get _autoContrast =>
+      SpUtil.getBool(spTextAutoContrast, defValue: true);
+
+  /// 壁纸是否偏亮（考虑蒙层后的实际亮度）
+  static bool get _lightBg => WallpaperService.instance.isLightBackground;
+
   @override
   Color titleColor() {
     final custom = SpUtil.getInt(spPrimaryTextColor, defValue: -1);
     if (custom >= 0) return Color(custom);
+    if (_autoContrast && _lightBg) return const Color(0xFF1A1A1A);
     return const Color(0xFFFFFFFF);
   }
 
@@ -880,6 +890,7 @@ class CyberThemeColors extends ThemeColors {
   Color title2Color() {
     final custom = SpUtil.getInt(spSecondaryTextColor, defValue: -1);
     if (custom >= 0) return Color(custom);
+    if (_autoContrast && _lightBg) return const Color(0xFF4A4A4A);
     return const Color(0xFF9A9A9A);
   }
 
@@ -887,6 +898,7 @@ class CyberThemeColors extends ThemeColors {
   Color descColor() {
     final custom = SpUtil.getInt(spSecondaryTextColor, defValue: -1);
     if (custom >= 0) return Color(custom);
+    if (_autoContrast && _lightBg) return const Color(0xFF4A4A4A);
     return const Color(0xFF9A9A9A);
   }
 
@@ -894,6 +906,7 @@ class CyberThemeColors extends ThemeColors {
   Color hintColor() {
     final custom = SpUtil.getInt(spSecondaryTextColor, defValue: -1);
     if (custom >= 0) return Color(custom);
+    if (_autoContrast && _lightBg) return const Color(0xFF4A4A4A);
     return const Color(0xFF9A9A9A);
   }
 
