@@ -1,0 +1,67 @@
+name: Build iOS IPA (unsigned)
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'ios-v*'
+
+jobs:
+  build-ios-ipa:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          # 钉到与本地一致的版本（本地 Flutter 3.44.4 / Dart 3.12.2），
+          # 代码已适配 3.44（Material 主题重命名等），低版本会编译失败
+          flutter-version: '3.44.4'
+          channel: stable
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build iOS (unsigned)
+        run: flutter build ios --release --no-codesign
+
+      - name: Package unsigned IPA
+        run: |
+          mkdir -p Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -r qinglong_app_ios_unsigned.ipa Payload
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: qinglong_app_ios_unsigned
+          path: qinglong_app_ios_unsigned.ipa
+          if-no-files-found: error
+
+      - name: Build for iOS Simulator
+        run: flutter build ios --simulator
+
+      - name: Run app on iOS Simulator and take screenshots
+        run: |
+          UDID=$(xcrun simctl list devices available | awk -F'[()]' '/iPhone/{print $2; exit}' | tr -d ' ')
+          echo "Using simulator UDID: $UDID"
+          xcrun simctl boot "$UDID" 2>/dev/null || true
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl install "$UDID" build/ios/iphonesimulator/Runner.app
+          xcrun simctl launch "$UDID" com.qlapp.qinglongApp
+          sleep 20
+          xcrun simctl io "$UDID" screenshot simulator_screen_1.png
+          sleep 5
+          xcrun simctl io "$UDID" screenshot simulator_screen_2.png
+
+      - name: Upload simulator screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios_simulator_screenshots
+          path: |
+            simulator_screen_1.png
+            simulator_screen_2.png
+          if-no-files-found: error
