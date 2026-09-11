@@ -543,6 +543,19 @@ class _AboutPageState extends ConsumerState<AboutPage>
   }) async {
     const String releaseUrl =
         'https://github.com/zhengsh2822/qinglong_app_glass_Wallpaper/releases/latest';
+    // iOS 跳过安装包版本检测：云构建 IPA 未注入 LOCAL_BUILD_NO/LOCAL_BUILD_TIME，
+    // 本地无比对基准会恒判有新版；且 IPA 靠手动下载安装，App 内无法得知已装包序号。
+    // 冷启动静默跳过；关于页手动刷新改为直接打开 GitHub release 页由用户自行查看。
+    if (Platform.isIOS) {
+      if (!autoRemind) {
+        try {
+          await launchUrl(Uri.parse(releaseUrl));
+        } catch (e) {
+          logger.e(e);
+        }
+      }
+      return;
+    }
     try {
       final resp = await Dio().get(
         'https://api.github.com/repos/zhengsh2822/qinglong_app_glass_Wallpaper/releases/latest',
@@ -564,16 +577,20 @@ class _AboutPageState extends ConsumerState<AboutPage>
       // 版本号固定不变，只能靠时间判断；
       // 上传新安装包时常替换同一 release 的附件（asset），release 的 published_at 不会更新，
       // 因此必须取 APK 附件的最新上传时间（updated_at）作为版本时间，否则永远检测不到新包。
+      // 只认 .apk 附件：iOS 云构建 IPA 与 APK 同挂一个 release 且上传更晚，
+      // 不过滤会选中 IPA（解析不出序号、时间必晚于本地构建）导致恒判有新版。
       DateTime? publishedAt;
       String? assetName;
       final assets = data['assets'];
       if (assets is List) {
         for (final a in assets) {
           if (a is Map) {
+            final name = a['name']?.toString() ?? '';
+            if (!name.toLowerCase().endsWith('.apk')) continue;
             final t = DateTime.tryParse(a['updated_at']?.toString() ?? '');
             if (t != null && (publishedAt == null || t.isAfter(publishedAt))) {
               publishedAt = t;
-              assetName = a['name']?.toString();
+              assetName = name;
             }
           }
         }
