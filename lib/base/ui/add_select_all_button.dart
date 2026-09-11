@@ -4,9 +4,12 @@ import 'package:flutter/material.dart';
 /// 导航栏「+ ↔ 全选/全不选」切换按钮
 ///
 /// 非编辑态显示加号图标（24px），编辑态切换为「全选 / 全不选」文本（16px）。
-/// 内容固定 52 宽居中，切换用 AnimatedSwitcher 原地淡出淡入（260ms）：
-/// 旧内容淡出、新内容淡入，位置不变；按钮宽度不变，避免挤压左侧排序按钮
-/// 或中间标题跳位。供 env_page / task_page / dependency_page 共用。
+/// 内容固定 52 宽且区域内**右对齐**：`+` 右缘贴齐卡片右缘（与左侧"编辑"文字
+/// 左缘对齐卡片左缘对称）。图标与文本常驻 Stack 同一右对齐锚点，
+/// 用两个 AnimatedOpacity 交叉淡化（260ms）——只有透明度变化，
+/// 无 AnimatedSwitcher 新旧 child 宽度跳动 / 重叠脏帧，切换最平滑。
+/// 按钮宽度固定，不挤压左侧排序按钮或中间标题。
+/// 供 env_page / task_page / dependency_page 共用。
 class AddSelectAllNavButton extends StatelessWidget {
   final bool editMode;
 
@@ -38,27 +41,34 @@ class AddSelectAllNavButton extends StatelessWidget {
       onPressed: onPressed,
       child: Padding(
         padding: padding,
-        child: Center(
-          child: SizedBox(
-            width: 52,
-            child: Center(
-              child: AnimatedSwitcher(
+        child: SizedBox(
+          width: 52,
+          height: 24,
+          child: Stack(
+            alignment: Alignment.centerRight,
+            children: [
+              // 文本层：编辑态显示
+              AnimatedOpacity(
+                opacity: editMode ? 1 : 0,
                 duration: const Duration(milliseconds: 260),
-                child:
-                    editMode
-                        ? Text(
-                          allChecked ? "全不选" : "全选",
-                          key: ValueKey('select-all-$allChecked'),
-                          style: TextStyle(fontSize: 16, color: color),
-                        )
-                        : Icon(
-                          CupertinoIcons.add,
-                          key: const ValueKey('add'),
-                          size: 24,
-                          color: color,
-                        ),
+                child: IgnorePointer(
+                  ignoring: !editMode,
+                  child: Text(
+                    allChecked ? "全不选" : "全选",
+                    style: TextStyle(fontSize: 16, color: color),
+                  ),
+                ),
               ),
-            ),
+              // 图标层：非编辑态显示
+              AnimatedOpacity(
+                opacity: editMode ? 0 : 1,
+                duration: const Duration(milliseconds: 260),
+                child: IgnorePointer(
+                  ignoring: editMode,
+                  child: Icon(CupertinoIcons.add, size: 24, color: color),
+                ),
+              ),
+            ],
           ),
         ),
       ),

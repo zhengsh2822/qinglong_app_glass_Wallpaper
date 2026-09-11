@@ -200,8 +200,8 @@ class EnvPageState extends ConsumerState<EnvPage>
                   ? "当前选中 ${checkedIds.length} 个变量"
                   : "环境变量",
           canClick2Vip: !editMode,
-          // leadingWidth 容纳 编辑(左对齐卡片16) + 间距26 + 名称排序按钮
-          leadingWidth: 132,
+          // leadingWidth 容纳 编辑(左16) + 间距17 + 名称按钮，名称右移后内容变宽故加宽防溢出
+          leadingWidth: 141,
           backWidget: Builder(
             builder: (context) {
               return Row(
@@ -234,8 +234,9 @@ class EnvPageState extends ConsumerState<EnvPage>
                       ),
                     ),
                   ),
-                  // 编辑 与 名称 间距（名称右移靠近标题，与右侧排序视觉对称）
-                  const SizedBox(width: 26),
+                  // 编辑 与 名称 间距 31：360逻辑宽实测 名称→标题 16.3 / 标题→排序 16.5（diff=0.2）
+                  // 配合 QlAppBar titleSpacing=4 后标题"环境变量"完整显示（trunc=N，标题居中）
+                  const SizedBox(width: 31),
                   // 编辑态名称按钮淡出（占位保留，标题不跳动）
                   AnimatedOpacity(
                     opacity: editMode ? 0 : 1,
@@ -258,8 +259,8 @@ class EnvPageState extends ConsumerState<EnvPage>
             },
           ),
           actions: [
-            // 排序与中间标题间距（右侧固定宽，微调不起作用，保持原值）
-            const SizedBox(width: 2),
+            // actions 首间距 4：仅控制标题↔排序最小空隙（titleSpacing=4 兜底），对对称性无影响
+            const SizedBox(width: 4),
             // 编辑态排序按钮淡出（占位保留，避免标题/加号跳动）
             AnimatedOpacity(
               opacity: editMode ? 0 : 1,
@@ -277,8 +278,8 @@ class EnvPageState extends ConsumerState<EnvPage>
                 ),
               ),
             ),
-            // 排序 ↔ 加号间距（与左侧 编辑 ↔ 名称 间距一致，加大避免切换时挤压）
-            const SizedBox(width: 16),
+            // 排序 ↔ 加号间距 10：与左侧"编辑→名称=31"配对（差 21≈20.8），实测两侧缝隙 16.3/16.5
+            const SizedBox(width: 10),
             AddSelectAllNavButton(
               editMode: editMode,
               allChecked:

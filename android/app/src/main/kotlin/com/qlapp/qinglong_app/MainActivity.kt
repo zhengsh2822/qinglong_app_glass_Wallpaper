@@ -499,7 +499,8 @@ class MainActivity : FlutterActivity() {
             y = 200
         }
 
-        val sampleText = "00:00:00.000"
+        // 毫秒一位：占位串与真实格式一致，避免 minWidth 留白过多
+        val sampleText = "00:00:00.0"
         val textPaint = android.graphics.Paint().apply {
             typeface = Typeface.MONOSPACE
             textSize = TypedValue.applyDimension(
@@ -616,7 +617,7 @@ class MainActivity : FlutterActivity() {
         val h = cal.get(java.util.Calendar.HOUR_OF_DAY).toString().padStart(2, '0')
         val m = cal.get(java.util.Calendar.MINUTE).toString().padStart(2, '0')
         val s = cal.get(java.util.Calendar.SECOND).toString().padStart(2, '0')
-        val ms = cal.get(java.util.Calendar.MILLISECOND).toString().padStart(3, '0')
+        val ms = (cal.get(java.util.Calendar.MILLISECOND) / 100).toString()
         return "$h:$m:$s.$ms"
     }
 

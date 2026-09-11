@@ -89,6 +89,9 @@ class QlAppBar extends ConsumerWidget implements PreferredSizeWidget {
         child: Text(title),
       ),
       centerTitle: true,
+      // titleSpacing 默认 16 会吃中间区 32px：360 逻辑宽设备上 env 页标题被截断成"环境…"，
+      // 收窄至 4 给标题让出空间（标题与左右按钮实际间隙由各页 leading/actions 间距控制）
+      titleSpacing: 4,
       actions: [...?actions],
       flexibleSpace: const GlassAppBarContainer(
         child: SizedBox.expand(),
