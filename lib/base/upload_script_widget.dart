@@ -25,6 +25,7 @@ import 'package:qinglong_app/utils/sp_utils.dart';
 import '../module/others/scripts/script_download_page.dart';
 import '../module/subscribe/add_subscribe_page.dart';
 import 'single_account_page.dart';
+import 'package:qinglong_app/base/ui/script_image_preview_page.dart';
 import 'package:qinglong_app/base/ui/wallpaper_page_route.dart';
 
 typedef StringCallBack = void Function(String? name);
@@ -447,6 +448,18 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
     return GestureDetector(
       onTap: () async {
         try {
+          // 图片文件直接本地预览，不走文本读取（二进制 readAsString 会抛异常）
+          if (isImageFileName(getFileName())) {
+            Navigator.of(context).push(
+              WallpaperPageRoute(
+                builder: (context) => ScriptImagePreviewPage(
+                  fileName: getFileName(),
+                  localPath: file!.path,
+                ),
+              ),
+            );
+            return;
+          }
           String content = await file!.readAsString();
           Navigator.of(context).push(
             WallpaperPageRoute(

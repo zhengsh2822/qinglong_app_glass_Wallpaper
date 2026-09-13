@@ -71,20 +71,8 @@ class _ScriptDetailPageState extends ConsumerState<ScriptDetailPage>
   }
 
   /// 二进制图片文件：不走文本加载链路（scriptDetail 按文本拉会得到乱码），
-  /// body 直接换成图片预览（demo）
-  static const List<String> _imageExts = [
-    ".png",
-    ".jpg",
-    ".jpeg",
-    ".gif",
-    ".webp",
-    ".bmp",
-  ];
-
-  bool get _isImageFile {
-    final t = widget.title.toLowerCase();
-    return _imageExts.any(t.endsWith);
-  }
+  /// body 直接换成图片预览
+  bool get _isImageFile => isImageFileName(widget.title);
 
   @override
   void initState() {
