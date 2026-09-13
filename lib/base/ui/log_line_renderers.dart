@@ -302,45 +302,50 @@ class _PathActionSheetState extends ConsumerState<_PathActionSheet> {
     setState(() => _loading = true);
     try {
       final api = Api(widget.accountIndex);
-      // 候选 path 列表
-      final idx = widget.path.lastIndexOf('/');
-      final rel = idx >= 0 && idx < widget.path.length - 1
-          ? widget.path.substring(idx + 1)
-          : widget.path;
-      final candidates = <String>[
-        widget.path,
-        if (rel != widget.path) rel,
-        if (rel != widget.path) 'data/scripts/$rel',
-        if (rel != widget.path) 'scripts/$rel',
+      // 脚本可能 print 绝对路径（/ql/data/scripts/sub/x.png）或相对路径；
+      // POST /scripts/download 需要 filename + scripts 相对子目录，先归一化
+      final p = widget.path.replaceAll('\\', '/');
+      final idx = p.lastIndexOf('/');
+      final filename =
+          (idx >= 0 && idx < p.length - 1) ? p.substring(idx + 1) : p;
+      var dir = idx >= 0 ? p.substring(0, idx) : '';
+      const serverPrefixes = [
+        '/ql/data/scripts/',
+        '/ql/scripts/',
+        'data/scripts/',
+        'scripts/',
       ];
-
-      GetBytesResult? success;
-      GetBytesResult? lastError;
-      for (final p in candidates) {
-        final r = await api.scriptFile(p);
-        if (r.success && r.bytes.isNotEmpty) {
-          success = r;
+      for (final prefix in serverPrefixes) {
+        if (dir.startsWith(prefix)) {
+          dir = dir.substring(prefix.length);
           break;
         }
-        lastError = r;
+      }
+      if (dir.startsWith('/')) dir = dir.substring(1);
+
+      // 传入子目录形态优先，空路径兜底（文件实际在 scripts 根）
+      GetBytesResult r = await api.scriptFileDownload(filename, dir);
+      if (!r.success && dir.isNotEmpty) {
+        r = await api.scriptFileDownload(filename, '');
       }
 
       if (!mounted) return;
       Navigator.of(context).pop();
 
-      if (success != null) {
+      if (r.success && r.bytes.isNotEmpty) {
+        final bytes = Uint8List.fromList(r.bytes);
         Navigator.of(context).push(
           PageRouteBuilder(
             opaque: false,
             barrierColor: Colors.black87,
             pageBuilder: (_, __, ___) => LogImagePreviewPage(
               path: widget.path,
-              bytes: Uint8List.fromList(success!.bytes),
+              bytes: bytes,
             ),
           ),
         );
       } else {
-        _showFetchFailedDialog(lastError);
+        _showFetchFailedDialog(r);
       }
     } finally {
       if (mounted) setState(() => _loading = false);

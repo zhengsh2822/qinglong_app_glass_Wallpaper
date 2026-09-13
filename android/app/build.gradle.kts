@@ -42,6 +42,22 @@ android {
         }
     }
 
+    // 渠道：prod=正式包（构建脚本必须传 --flavor prod，名字不能叫 main——与 main 源集冲突会炸 assets 合并任务）；
+    // demo=并装演示包，包名加 .demo 后缀、独立桌面名，与正式应用共存互不覆盖
+    flavorDimensions += "channel"
+    productFlavors {
+        create("prod") {
+            dimension = "channel"
+            manifestPlaceholders["appLabel"] = "青龙客户端"
+        }
+        create("demo") {
+            dimension = "channel"
+            applicationIdSuffix = ".demo"
+            versionNameSuffix = "-demo"
+            manifestPlaceholders["appLabel"] = "青龙Demo"
+        }
+    }
+
     lint {
         abortOnError = false
         checkReleaseBuilds = false

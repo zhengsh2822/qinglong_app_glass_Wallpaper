@@ -608,6 +608,21 @@ class Api {
     );
   }
 
+  /// 单个脚本文件原始二进制下载：POST /scripts/download，res.download() 文件流
+  /// [filename] 文件名；[path] scripts 下相对子目录，可空
+  /// 这是 PNG 等二进制文件唯一不损字节取数通道（scriptFile 的 JSON 字符串信封会毁掉二进制）
+  Future<GetBytesResult> scriptFileDownload(
+    String filename,
+    String path,
+  ) async {
+    return await getIt<Http>(
+      instanceName: index.toString(),
+    ).postBytes(
+      getIt<Url>(instanceName: index.toString()).scriptFileDownload,
+      {"filename": filename, "path": path},
+    );
+  }
+
   Future<HttpResponse<List<DependencyBean>>> dependencies(String type) async {
     return await getIt<Http>(
       instanceName: index.toString(),

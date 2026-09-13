@@ -462,6 +462,89 @@ class Http {
     }
   }
 
+  /// POST 二进制：青龙 `POST /scripts/download`（filename+path JSON body）
+  /// 以 res.download() 回**原始文件流**（非 JSON 信封），是脚本二进制文件
+  /// （PNG 等）唯一可靠取数通道——/open/scripts/file 是 UTF-8 字符串信封
+  /// （二进制必损），/scripts/:file 已下线（410）。
+  /// 错误时响应仍是 JSON（403 暂无权限等），需先按 JSON 识别。
+  Future<GetBytesResult> postBytes(
+    String uri,
+    Map<String, dynamic>? body,
+  ) async {
+    try {
+      _init();
+      final response = await _dio!.post(
+        uri,
+        data: body,
+        options: Options(responseType: ResponseType.bytes),
+      );
+      final data = response.data;
+      if (data is List<int>) {
+        try {
+          final text = utf8.decode(data);
+          final json = jsonDecode(text);
+          if (json is Map && json.containsKey('code')) {
+            final code = json['code'];
+            final msg = json['message']?.toString() ?? '';
+            return GetBytesResult.fail(
+              code: code is int ? code : 0,
+              message: msg.isNotEmpty ? msg : '业务错误',
+              bodyPreview: '${jsonEncode({'code': code, 'message': msg})}',
+            );
+          }
+        } catch (_) {
+          // 不是 JSON 当成纯二进制（图片/文件流）
+        }
+        return GetBytesResult.success(data);
+      }
+      return GetBytesResult.fail(
+        code: 0,
+        message: '响应格式异常',
+        bodyPreview: data?.toString() ?? '',
+      );
+    } on DioException catch (e) {
+      final status = e.response?.statusCode ?? 0;
+      String bodyPreview = '';
+      final respData = e.response?.data;
+      if (respData is List<int>) {
+        try {
+          bodyPreview = utf8.decode(respData.take(200).toList());
+        } catch (_) {}
+      } else if (respData != null) {
+        bodyPreview = respData.toString();
+        if (bodyPreview.length > 200) {
+          bodyPreview = bodyPreview.substring(0, 200);
+        }
+      }
+      if (status == 401) {
+        await _handleTokenExpired();
+        return GetBytesResult.fail(
+          code: 401,
+          message: '登录已过期',
+          bodyPreview: bodyPreview,
+        );
+      }
+      if (status == 404) {
+        return GetBytesResult.fail(
+          code: 404,
+          message: '接口不存在（404）',
+          bodyPreview: bodyPreview,
+        );
+      }
+      return GetBytesResult.fail(
+        code: status,
+        message: e.message ?? '网络请求失败',
+        bodyPreview: bodyPreview,
+      );
+    } catch (e) {
+      return GetBytesResult.fail(
+        code: -1,
+        message: e.toString(),
+        bodyPreview: '',
+      );
+    }
+  }
+
   /// 下载二进制流文件（用于数据导出 .tgz 压缩包备份）
   /// [uri] 请求路径，[body] JSON 请求体，[savePath] 本地保存路径
   /// 成功返回 null，失败返回错误信息

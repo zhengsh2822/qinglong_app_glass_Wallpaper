@@ -19,6 +19,7 @@ import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/highlight/selectable_code_view.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
+import 'package:qinglong_app/base/ui/script_image_preview_page.dart';
 import 'package:qinglong_app/module/task/add_task_page.dart';
 import 'package:qinglong_app/module/task/task_bean.dart';
 import 'package:qinglong_app/utils/extension.dart';
@@ -67,6 +68,22 @@ class _ScriptDetailPageState extends ConsumerState<ScriptDetailPage>
       return 'yaml';
     }
     return "shell";
+  }
+
+  /// 二进制图片文件：不走文本加载链路（scriptDetail 按文本拉会得到乱码），
+  /// body 直接换成图片预览（demo）
+  static const List<String> _imageExts = [
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".webp",
+    ".bmp",
+  ];
+
+  bool get _isImageFile {
+    final t = widget.title.toLowerCase();
+    return _imageExts.any(t.endsWith);
   }
 
   @override
@@ -236,32 +253,40 @@ class _ScriptDetailPageState extends ConsumerState<ScriptDetailPage>
           Navigator.of(context).pop();
         },
         title: widget.title,
-        actions: [
-          CupertinoButton(
-            color: Colors.transparent,
-            padding: EdgeInsets.zero,
-            onPressed: () async {
-              await hideKeyboardFocus();
-              showMoreOperate(context, actions);
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15),
-              child: Center(
-                child: Icon(
-                  Icons.more_horiz,
-                  size: 26,
-                  color:
-                      isCyber
-                          ? CyberColors.cyan
-                          : Theme.of(context).appBarTheme.iconTheme?.color,
+        // 图片预览时隐藏文本类操作（编辑/添加到任务均基于文本内容，对图片无意义）
+        actions: _isImageFile
+            ? []
+            : [
+                CupertinoButton(
+                  color: Colors.transparent,
+                  padding: EdgeInsets.zero,
+                  onPressed: () async {
+                    await hideKeyboardFocus();
+                    showMoreOperate(context, actions);
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 15),
+                    child: Center(
+                      child: Icon(
+                        Icons.more_horiz,
+                        size: 26,
+                        color:
+                            isCyber
+                                ? CyberColors.cyan
+                                : Theme.of(context).appBarTheme.iconTheme?.color,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ),
-        ],
+              ],
       ),
-      body:
-          content == null
+      body: _isImageFile
+          ? ScriptImagePreviewBody(
+              accountIndex: SingleAccountPageState.of(context)?.index ?? 0,
+              fileName: widget.title,
+              dirPath: widget.path,
+            )
+          : content == null
               ? Center(
                 child: LoadingWidget(
                   color:

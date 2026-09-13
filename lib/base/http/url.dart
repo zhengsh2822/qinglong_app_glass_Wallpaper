@@ -199,6 +199,15 @@ class Url {
           ? "/open/scripts/file"
           : "/api/scripts/file";
 
+  /// 单个脚本文件原始二进制下载：POST /scripts/download（body: filename+path）
+  /// 后端 res.download() 回原始文件流；二进制文件只认这条——
+  /// /open/scripts/file 是 UTF-8 字符串 JSON 信封（二进制必损），
+  /// /scripts/:file 老接口已下线（返回 410）
+  get scriptFileDownload =>
+      getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
+          ? "/open/scripts/download"
+          : "/api/scripts/download";
+
   get dependencies =>
       getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
           ? "/open/dependencies"

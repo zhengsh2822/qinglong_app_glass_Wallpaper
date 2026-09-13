@@ -56,6 +56,8 @@ class LogImagePreviewPage extends StatelessWidget {
                           child: Image.memory(
                             bytes,
                             fit: BoxFit.contain,
+                            // 像素级缩放：二维码等小图保持锐利可扫（默认插值会糊）
+                            filterQuality: FilterQuality.none,
                             gaplessPlayback: true,
                           ),
                         ),
