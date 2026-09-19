@@ -403,7 +403,7 @@ class TaskItemCell extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(AppleColors.radiusCard),
-        border: Border.all(color: AppleColors.cardBorder),
+        border: Border.all(color: CyberColors.cardStroke),
       ),
       child: OptimizedFrostedGlass(
         sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),

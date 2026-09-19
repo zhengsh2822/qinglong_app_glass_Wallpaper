@@ -223,7 +223,8 @@ class AppKeyItemCell extends StatelessWidget {
     // 对齐定时任务卡片方案：外层 margin 12 + CyberSlidable + _buildCardChild(BackdropFilter + 边框光晕)
     // 滑动内容（操作按钮）在 CyberSlidable 的设计下与卡片分离，符合赛博模式视觉规范
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12),
+      // 固定宽度：左右留白 16，卡片撑满剩余宽度（杜绝自适应宽窄不一）
+      margin: const EdgeInsets.symmetric(horizontal: 16),
       child: CyberSlidable(
         slidableKey: ValueKey(getAppKeyId(bean)),
         borderRadius: 18,
@@ -289,7 +290,10 @@ class AppKeyItemCell extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: CyberColors.cardStroke, width: 1),
+          border: Border.all(
+            color: CyberColors.cardStroke,
+            width: 1,
+          ),
         ),
         child: Material(
           color: Colors.transparent,
@@ -313,31 +317,37 @@ class AppKeyItemCell extends StatelessWidget {
   /// 卡片内容：应用名 + scopes 标签（完整展示全部权限标签，Wrap 自动换行）
   Widget _buildCardContent(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            bean["name"] ?? "",
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: SizedBox(
+        // 固定宽度：强制撑满卡片可用宽度，杜绝随标签数量自适应（对齐主题版）
+        width: double.infinity,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              bean["name"] ?? "",
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              color: ref.watch(themeProvider).themeColor.titleColor(),
-              fontSize: 16,
+              style: TextStyle(
+                overflow: TextOverflow.ellipsis,
+                color: ref.watch(themeProvider).themeColor.titleColor(),
+                fontSize: 16,
+                // 跟随全局字重调节（spTextFontWeight），与主题版一致
+                fontWeight: FontWeight(ref.watch(textWeightProvider)),
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            runSpacing: 5,
-            spacing: 5,
-            children: AppKeyViewModel.getScopeNames(
-              (bean["scopes"] as List<dynamic>?),
-            ).map((e) => TagChip(label: e)).toList(),
-          ),
-        ],
+            const SizedBox(height: 10),
+            Wrap(
+              runSpacing: 6,
+              spacing: 6,
+              children: AppKeyViewModel.getScopeNames(
+                (bean["scopes"] as List<dynamic>?),
+              ).map((e) => TagChip(label: e)).toList(),
+            ),
+          ],
+        ),
       ),
     );
   }

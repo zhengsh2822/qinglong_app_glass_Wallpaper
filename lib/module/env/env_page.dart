@@ -168,7 +168,8 @@ class EnvPageState extends ConsumerState<EnvPage>
     super.dispose();
   }
 
-  double searchCellHeight = 55;
+  // 对齐主题版：搜索框高度 48（55=18方在上面时会偏大，现与 env/task/dependency 统一为 48）
+  double searchCellHeight = 48;
 
   SliverAppBar _buildAppBar(WidgetRef ref, EnvViewModel model) {
     return SliverAppBar(
@@ -501,7 +502,8 @@ class EnvPageState extends ConsumerState<EnvPage>
   Widget searchCell(BuildContext context, WidgetRef ref, EnvViewModel model) {
     return Container(
       color: Colors.transparent,
-      padding: const EdgeInsets.only(left: 15, right: 15, top: 10, bottom: 10),
+      // 只保留顶部留白；底部不设留白，避免与顶部 tab 顶部 padding 拼成宽缝（对齐主题版间距优化）
+      padding: const EdgeInsets.only(left: 15, right: 15, top: 10, bottom: 0),
       height: searchCellHeight.toDouble(),
       child: SearchCell(controller: searchText),
     );
@@ -1003,7 +1005,7 @@ class EnvItemCell extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(AppleColors.radiusCard),
-        border: Border.all(color: AppleColors.cardBorder),
+        border: Border.all(color: CyberColors.cardStroke),
       ),
       // 统一毛玻璃封装：sigma<=0 时自动退化为纯色（无 BackdropFilter）
       child: OptimizedFrostedGlass(
@@ -1101,7 +1103,10 @@ class EnvItemCell extends StatelessWidget {
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(18),
           // 统一青色描边：浅色/深色通用，提升卡片边缘清晰度
-          border: Border.all(color: CyberColors.cardStroke, width: 1),
+          border: Border.all(
+            color: CyberColors.cardStroke,
+            width: 1,
+          ),
         ),
         child: Material(
           color: Colors.transparent,
@@ -1239,7 +1244,7 @@ class _EnvListViewState extends ConsumerState<EnvListView>
     return ListView.separated(
       padding: const EdgeInsets.only(
         bottom: kBottomNavigationBarHeight + 50,
-        top: 67,
+        top: kToolbarHeight,
       ),
       separatorBuilder: (BuildContext context, int i) {
         return const SizedBox(height: 12);
@@ -1337,7 +1342,7 @@ class _EnvRecordListViewState extends ConsumerState<EnvRecordListView>
     return ReorderableListView(
       padding: const EdgeInsets.only(
         bottom: kBottomNavigationBarHeight + 50,
-        top: 67,
+        top: kToolbarHeight,
       ),
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       // 排序激活时禁用拖拽（buildDefaultDragHandles=false + onReorder 空），

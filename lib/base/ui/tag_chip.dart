@@ -2,7 +2,6 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
@@ -36,13 +35,8 @@ class TagChip extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final _ = ref.watch(themeProvider);
-    final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
-
-    final Color borderColor = isCyber
-        ? CyberColors.borderGlow
-        : AppleColors.accent.withValues(alpha: 0.4);
-    final Color textColor =
-        isCyber ? CyberColors.titleWhite : AppleColors.textPrimary;
+    // 主题色：高亮胶囊背景 + 主题色文字/边框（同步主题版 TagChip 设计风格，保留毛玻璃模糊特性）
+    final Color accentColor = ref.watch(themeProvider).primaryColor;
     final double sigma = SpUtil.getDouble(spCardBlurSigma, defValue: 8);
 
     // 统一毛玻璃封装：sigma<=0 时自动退化为纯色（无 BackdropFilter）
@@ -50,11 +44,11 @@ class TagChip extends ConsumerWidget {
       sigma: sigma,
       borderRadius: BorderRadius.circular(5),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
-          color: Colors.transparent,
+          color: accentColor.withValues(alpha: 0.15), // 主题色高亮背景（叠于毛玻璃上）
           borderRadius: BorderRadius.circular(5),
-          border: Border.all(color: borderColor, width: 0.5),
+          border: Border.all(color: accentColor.withValues(alpha: 0.4)),
         ),
         child: Text(
           label,
@@ -62,7 +56,8 @@ class TagChip extends ConsumerWidget {
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
             fontSize: 12,
-            color: textColor,
+            fontWeight: FontWeight.w500,
+            color: accentColor,
           ),
         ),
       ),

@@ -270,7 +270,7 @@ class ConfigCell extends ConsumerWidget {
                   decoration: BoxDecoration(
                     color: Colors.transparent,
                     borderRadius: BorderRadius.circular(AppleColors.radiusCard),
-                    // 单层描边：所有模式统一 cardStroke，避免 cyber 模式双层叠加
+                    // 单层描边：统一明显青色描边（cardStroke）
                     border: Border.all(
                       color: CyberColors.cardStroke,
                       width: 1,

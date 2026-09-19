@@ -35,45 +35,90 @@ class TaskViewModel extends BaseViewModel {
       loading(notify: true);
     }
 
+    final tasks = await _fetchTasks(context);
+    if (tasks == null) {
+      list.clear();
+      failed(null, notify: true);
+      return;
+    }
+    list.clear();
+    list.addAll(tasks);
+    sortList(context);
+    success();
+    // 同步"运行中"快照，确保加载后启动轮询首轮不会因快照为空而误判有变化
+    _syncRunningSnapshot();
+    if (MultiAccountPageState.actionRunAll == MultiAccountPageState.useAction() &&
+        !runAllTasked) {
+      runAllTasked = true;
+      runAllTasks(context);
+    }
+  }
+
+  /// 按青龙版本分支拉取任务列表（成功返回解析后的列表，失败返回 null）。
+  Future<List<TaskBean>?> _fetchTasks(BuildContext context) {
     if (getIt<SystemBean>(
       instanceName: (SingleAccountPageState.of(context)?.index ?? 0).toString(),
     ).isUpperVersion2_13_9()) {
-      var temp = await SingleAccountPageState.ofApi(context).crons2_13_09();
-      if (temp.success && temp.bean != null) {
-        list.clear();
-        list.addAll(temp.bean?.data ?? []);
-        sortList(context);
-        success();
-        if (MultiAccountPageState.actionRunAll ==
-                MultiAccountPageState.useAction() &&
-            !runAllTasked) {
-          runAllTasked = true;
-          runAllTasks(context);
+      return SingleAccountPageState.ofApi(context).crons2_13_09().then((temp) {
+        if (temp.success && temp.bean != null) {
+          return temp.bean!.data ?? [];
         }
-      } else {
-        list.clear();
-        failed(temp.message, notify: true);
-      }
+        return null;
+      });
     } else {
-      HttpResponse<List<TaskBean>> result =
-          await SingleAccountPageState.ofApi(context).crons();
-      if (result.success && result.bean != null) {
-        list.clear();
-        list.addAll(result.bean!);
-        sortList(context);
-        success();
-        if (MultiAccountPageState.actionRunAll ==
-                MultiAccountPageState.useAction() &&
-            !runAllTasked) {
-          runAllTasked = true;
-          runAllTasks(context);
+      return SingleAccountPageState.ofApi(context).crons().then((result) {
+        if (result.success && result.bean != null) {
+          return result.bean!;
         }
-      } else {
-        list.clear();
-        failed(result.message, notify: true);
-      }
+        return null;
+      });
     }
   }
+
+  // ------------------------------------------------------------------
+  // 运行中状态实时同步（方案 B 的轻量轮询）
+  // ------------------------------------------------------------------
+  // 上一轮"运行中"任务 id 快照：轮询时只对比快照变化，没有变化就完全不
+  // notify 列表（零重建），从而保证"只在有运行中任务、且状态真的变化时才刷新"。
+  Set<String> _runningIdsSnapshot = {};
+
+  /// 从当前 [list] 重建"运行中"快照。
+  void _syncRunningSnapshot() {
+    _runningIdsSnapshot = list
+        .where((e) => (e.status ?? 1) == 0)
+        .map((e) => e.sId ?? "")
+        .where((id) => id.isNotEmpty)
+        .toSet();
+  }
+
+  /// 对比最新任务列表里的"运行中"集合，若与上一轮一致则静默跳过（不刷新），
+  /// 一旦有任务开始/结束就正常刷新一次。供 TaskPage 定时轮询调用。
+  Future<bool> pollRunning(BuildContext context) async {
+    final tasks = await _fetchTasks(context);
+    if (tasks == null) return false;
+
+    final newRunning = tasks
+        .where((e) => (e.status ?? 1) == 0)
+        .map((e) => e.sId ?? "")
+        .where((id) => id.isNotEmpty)
+        .toSet();
+
+    final changed =
+        newRunning.length != _runningIdsSnapshot.length ||
+        !newRunning.containsAll(_runningIdsSnapshot);
+    _runningIdsSnapshot = newRunning;
+
+    if (changed) {
+      list.clear();
+      list.addAll(tasks);
+      sortList(context);
+      success();
+    }
+    return changed;
+  }
+
+  /// 清除运行中快照（初始化/重进时避免误判"有变化"）。
+  void resetRunningSnapshot() => _runningIdsSnapshot = {};
 
   static int _compareCreatedDesc(TaskBean a, TaskBean b) {
     bool aBeforeB = DateTime.fromMillisecondsSinceEpoch(

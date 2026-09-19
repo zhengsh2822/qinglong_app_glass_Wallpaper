@@ -473,8 +473,10 @@ class HomePageState extends ConsumerState<HomePage> {
         // 壁纸版仅赛博模式：固定深色半透明胶囊 + 光学边框
         shape: cyberShape(30),
         appearance: const LiquidGlassAppearance(
-          color: Color(0x8C12121A), // 深色半透明（对齐主题版赛博结构）
-          blur: LiquidGlassBlur(sigmaX: 5, sigmaY: 5),
+          // 底色不透明度 0xB3(约70%)：壁纸版需适配大量背景元素，保证可读性又不过黑
+          color: Color(0xB312121A), // 半透明深色（对齐主题版赛博结构，透出壁纸）
+          // 模糊值 5→2：降低底部导航毛玻璃模糊（对齐主题版"液态玻璃曾试改2/3最终确定2"）
+          blur: LiquidGlassBlur(sigmaX: 2, sigmaY: 2),
           shadow: LiquidGlassShadow(blur: 9, opacity: 0.2),
         ),
         refraction: const LiquidGlassRefraction(
@@ -599,9 +601,9 @@ class HomePageState extends ConsumerState<HomePage> {
           decoration: BoxDecoration(
             color: Colors.transparent,
             borderRadius: BorderRadius.circular(cardRadius),
-            // 边框对齐"我的"页面其他 GlassCard 卡片（cyber青微光 / 浅色浅灰）
+            // 边框对齐全项目统一明显青色描边（cardStroke，不分深浅）
             border: Border.all(
-              color: isCyber ? CyberColors.borderGlow : AppleColors.cardBorder,
+              color: CyberColors.cardStroke,
               width: 1,
             ),
           ),

@@ -1924,10 +1924,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                           AppleColors.radiusSmall,
                         ),
                         border: Border.all(
-                          color:
-                              isCyber
-                                  ? CyberColors.borderGlow
-                                  : AppleColors.cardBorder,
+                          color: CyberColors.cardStroke,
                           width: 0.5,
                         ),
                       ),

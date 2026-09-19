@@ -144,15 +144,21 @@ class Api {
     return await getIt<Http>(instanceName: index.toString()).get<TaskBean2>(
       getIt<Url>(instanceName: index.toString()).tasks,
       {"page": "1", "size": "10000", "searchText": ""},
+      // 任务运行状态是高频动态数据：禁用 1 分钟分级缓存，否则脚本结束后
+      // 卡片仍停留在"运行中"（需等缓存过期或重进才刷新）。
+      useCache: false,
     );
   }
 
   Future<HttpResponse<List<TaskBean>>> crons() async {
     return await getIt<Http>(
       instanceName: index.toString(),
-    ).get<List<TaskBean>>(getIt<Url>(instanceName: index.toString()).tasks, {
-      "searchValue": "",
-    });
+    ).get<List<TaskBean>>(
+      getIt<Url>(instanceName: index.toString()).tasks,
+      {"searchValue": ""},
+      // 同上：任务运行状态实时性优先，不走通用分级缓存
+      useCache: false,
+    );
   }
 
   Future<HttpResponse<NullResponse>> deleteLogFold(

@@ -67,9 +67,8 @@ class GlassCard extends ConsumerWidget {
     // 全透明，仅保留 BackdropFilter 高斯模糊
     final effectiveColor = color ?? Colors.transparent;
 
-    // 默认边框色：浅色用浅灰，暗色用青色微光
-    final effectiveBorder = borderColor ??
-        (isDark ? CyberColors.borderGlow : AppleColors.cardBorder);
+    // 默认边框色：统一明显青色描边（cardStroke），不分深浅
+    final effectiveBorder = borderColor ?? CyberColors.cardStroke;
 
     final br = borderRadius ?? BorderRadius.circular(radius);
 

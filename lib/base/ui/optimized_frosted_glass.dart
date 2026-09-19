@@ -146,8 +146,8 @@ class _OptimizedFrostedGlassState extends ConsumerState<OptimizedFrostedGlass> {
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeProvider).themeMode;
     final isDark = themeMode == modeDark || themeMode == modeCyber;
-    // sigma 控制在 10 以内（超出 12 人眼几乎无差异，GPU 开销却成倍增长）
-    final sigma = widget.sigma.clamp(0.0, 10.0);
+    // sigma 上限对齐设置页滑块 max(30)，让用户可自由调节（30 以内全程真实生效）
+    final sigma = widget.sigma.clamp(0.0, 30.0);
 
     // 强制 100% 不透明固定纯色（弹窗/顶部 tab）：既不模糊，也不跟随卡片
     // 纯色调节，固定浅色白底/深色黑底，保证内容可读

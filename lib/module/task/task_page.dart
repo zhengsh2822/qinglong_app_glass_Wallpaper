@@ -13,6 +13,7 @@ import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/glass_segmented_tab.dart';
+import 'package:qinglong_app/base/ui/pauseable_timer_mixin.dart';
 import 'package:qinglong_app/base/ui/animated_edit_mode_overlay.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
@@ -50,9 +51,13 @@ class TaskPage extends ConsumerStatefulWidget {
 }
 
 class TaskPageState extends ConsumerState<TaskPage>
-    with TickerProviderStateMixin, WidgetsBindingObserver, AutomaticKeepAliveClientMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver, AutomaticKeepAliveClientMixin, PauseableTimerMixin<TaskPage> {
   @override
   bool get wantKeepAlive => true;
+
+  /// 运行中状态轮询间隔：仅在"当前在任务页 + 存在运行中任务"时 3 秒刷新一次，
+  /// 无运行中 / 切走页面 / 退后台 立即停止（见 _pollRunning）。
+  static const Duration _runningPollInterval = Duration(seconds: 3);
   TextEditingController searchText = TextEditingController();
   Timer? _searchDebounce;
 
@@ -98,6 +103,33 @@ class TaskPageState extends ConsumerState<TaskPage>
     } else if (state == AppLifecycleState.inactive) {}
   }
 
+  /// 运行中状态轮询回调：仅当"当前在任务页 + 有运行中任务"时才继续轮询，
+  /// 否则停止。数据更新走 viewModel.pollRunning（运行中集合无变化则零刷新）。
+  void _pollRunning() {
+    if (!mounted) return;
+    // 不在任务页（底部 tab 切走）→ 停止轮询
+    final int homeIdx = ref.read<int>(
+      SingleAccountPageState.ofHomeIndexProvider(context)(
+        getProviderName(context),
+      ),
+    );
+    if (homeIdx != 0) {
+      stopPauseableTimer();
+      return;
+    }
+    final notifier = ref.read(
+      SingleAccountPageState.ofTaskProvider(context)(
+        getProviderName(context),
+      ).notifier,
+    );
+    // 没有运行中任务 → 停止轮询（空闲零开销）
+    if (notifier.running.isEmpty) {
+      stopPauseableTimer();
+      return;
+    }
+    notifier.pollRunning(context);
+  }
+
   Future<void> scrollToTop() async {
     await _scrollController.animateTo(
       0,
@@ -123,6 +155,11 @@ class TaskPageState extends ConsumerState<TaskPage>
     _tabController!.addListener(_onInnerTabChanged);
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // 启动"运行中状态"轻量轮询：只有在当前确为任务页且有运行中任务时才开销，
+    // 否则立即自我停止（见 _pollRunning）
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) startPauseableTimer(_runningPollInterval, _pollRunning);
+    });
     searchText.addListener(() {
       _searchDebounce?.cancel();
       _searchDebounce = Timer(const Duration(milliseconds: 300), () {
@@ -152,7 +189,8 @@ class TaskPageState extends ConsumerState<TaskPage>
     });
   }
 
-  double searchCellHeight = 55;
+  // 对齐主题版：搜索框高度 48（搜索框自身更紧凑，顶部整体间距同步优化）
+  double searchCellHeight = 48;
 
   SliverAppBar _buildAppBar(WidgetRef ref, TaskViewModel model) {
     return SliverAppBar(
@@ -550,7 +588,9 @@ class TaskPageState extends ConsumerState<TaskPage>
   Widget searchCell(WidgetRef context, TaskViewModel model) {
     return Container(
       color: Colors.transparent,
-      padding: const EdgeInsets.only(left: 15, right: 15, top: 10, bottom: 10),
+      // 只保留顶部 10px 留白；底部不设留白，避免与顶部 tab 自身 6px top padding 拼成 16px 宽缝
+      // （对齐主题版间距优化）
+      padding: const EdgeInsets.only(left: 15, right: 15, top: 10, bottom: 0),
       height: searchCellHeight.toDouble(),
       child: SearchCell(controller: searchText),
     );
@@ -558,6 +598,7 @@ class TaskPageState extends ConsumerState<TaskPage>
 
   @override
   void dispose() {
+    cancelPauseableTimer();
     _searchDebounce?.cancel();
     _tabController?.removeListener(_onInnerTabChanged);
     SlidableCloseNotifier.listenable.removeListener(_onSlidableClose);
@@ -916,7 +957,8 @@ class _ListBodyState extends ConsumerState<ListBodyWidget>
     return ListView.separated(
       padding: EdgeInsets.only(
         bottom: kBottomNavigationBarHeight + 50,
-        top: widget.onlyShowPullRepo ? 0 : 67,
+        // 对齐主题版：tab 顶部固定高度用 kToolbarHeight(56)，首卡与 tab 紧凑相接
+        top: widget.onlyShowPullRepo ? 0 : kToolbarHeight,
       ),
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       itemBuilder: (context, index) {

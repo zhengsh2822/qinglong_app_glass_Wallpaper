@@ -1075,8 +1075,10 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppleColors.radiusCard),
           color: Colors.transparent,
-          border:
-              Border.all(color: CyberColors.cardStroke, width: 1),
+          border: Border.all(
+              color: CyberColors.cardStroke,
+              width: 1,
+            ),
         ),
         padding: const EdgeInsets.all(16),
         child: child,

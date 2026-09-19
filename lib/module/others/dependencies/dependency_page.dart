@@ -420,7 +420,8 @@ class DependcyPageState extends ConsumerState<DependencyPage>
         });
   }
 
-  double searchCellHeight = 55;
+  // 对齐主题版：搜索框高度 48（搜索框自身更紧凑，顶部整体间距同步优化）
+  double searchCellHeight = 48;
 
   SliverAppBar _buildAppBar(
     BuildContext context,
@@ -446,7 +447,8 @@ class DependcyPageState extends ConsumerState<DependencyPage>
   ) {
     return Container(
       color: Colors.transparent,
-      padding: const EdgeInsets.only(left: 15, right: 15, top: 10, bottom: 10),
+      // 只保留顶部留白；底部不设留白，避免与顶部 tab 顶部 padding 拼成宽缝（对齐主题版间距优化）
+      padding: const EdgeInsets.only(left: 15, right: 15, top: 10, bottom: 0),
       height: searchCellHeight.toDouble(),
       child: SearchCell(controller: searchText),
     );
@@ -696,7 +698,7 @@ class _DepListViewState extends State<DepListView>
     return ListView.separated(
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       // NestedScrollView 已为 header 留出空间，列表顶部不再额外加 padding
-      padding: const EdgeInsets.only(bottom: 80, top: 67),
+      padding: const EdgeInsets.only(bottom: 80, top: kToolbarHeight),
       itemBuilder: (context, index) {
         DependencyBean item = widget.list[index];
         if (widget.searchText.isEmpty ||
