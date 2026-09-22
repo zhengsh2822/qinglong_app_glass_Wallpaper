@@ -814,23 +814,23 @@ class _SelectionFollowTextFieldState
     final bool above = _pointer.dy < e.top;
     if (!below && !above) return false;
 
-    final ScrollPosition innerPos = probe.layers.first.position;
     final int len = re.text?.toPlainText().length ?? 0;
-    final int edgeOff;
-    if (below && innerPos.pixels >= innerPos.maxScrollExtent - 0.5) {
-      edgeOff = len; // 已经滚到底：端点直接落到文本末尾
-    } else if (above && innerPos.pixels <= 0.5) {
-      edgeOff = 0; // 已经滚到顶：端点直接落到文本开头
-    } else {
-      final double anchorY =
-          below ? e.bottom - widget.edgePadding : e.top + widget.edgePadding;
-      final double x = _pointer.dx.clamp(vp.left + 1, vp.right - 1);
-      // getPositionForPoint 收全局坐标（内部 globalToLocal - _paintOffset）
-      edgeOff = re
-          .getPositionForPoint(Offset(x, anchorY))
-          .offset
-          .clamp(0, math.max(0, len));
-    }
+    // 锚点必须落在"最靠边那一行的中心"，不能用固定的 edgePadding：
+    // 行高通常小于 edgePadding(24)，固定值会让锚点落到倒数第二行 —— 表现成
+    // "最后一行怎么拖都选不到，只能一路跳到文本末尾"。半行高与字号无关，
+    // 永远命中边缘那一行；行内具体字符由 x 坐标决定，于是最后一行的中间
+    // 位置也能自由选（原来"已滚到底 → 端点=文本末尾"的短路会把 x 丢掉）。
+    final double margin = math.min(
+      widget.edgePadding,
+      re.preferredLineHeight * 0.5,
+    );
+    final double anchorY = below ? e.bottom - margin : e.top + margin;
+    final double x = _pointer.dx.clamp(vp.left + 1, vp.right - 1);
+    // getPositionForPoint 收全局坐标（内部 globalToLocal - _paintOffset）
+    final int edgeOff = re
+        .getPositionForPoint(Offset(x, anchorY))
+        .offset
+        .clamp(0, math.max(0, len));
 
     // 改的是"被拖的那一端"，并钳在"不越过另一端"的区间里
     // （选区可能反向 base>extent，所以区间要按方向给）
@@ -940,6 +940,10 @@ class _SelectionFollowTextFieldState
     if (step.abs() > cap) step = step.sign * cap;
 
     final double applied = _scrollLayers(probe.layers, step);
+    // 先按手指位置重写端点，再决定是否停表：已经滚到顶/底时 applied==0，
+    // 若在这里直接 return 就再也不会重写端点 —— "滚到底后想把端点挪到最后
+    // 一行的别的位置"会完全没反应（最后一行无法自由选择的另一半原因）。
+    _rewriteEndpointToEdge();
     if (applied.abs() < 0.01) {
       _stopTicker('已到文本末尾/开头');
       return;
@@ -947,8 +951,6 @@ class _SelectionFollowTextFieldState
     if (widget.showDebugBadge) {
       _badgeText.value = '${applied.toStringAsFixed(1)}px';
     }
-    // 拖拽期间实时把端点钳到可视边缘（所见即所选）
-    _rewriteEndpointToEdge();
     // 被拖的那一端已经顶到文本头/尾：再滚也没有可伸缩的内容了，停表
     if (_activeStuck(dir)) {
       _stopTicker('已选到文本末尾/开头');
