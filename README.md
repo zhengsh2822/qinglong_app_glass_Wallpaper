@@ -45,13 +45,10 @@
 
 ### 脚本管理
 
-- 树形目录展示，顶部常驻胶囊形搜索栏（圆角 24），300ms 防抖递归过滤文件名/目录名
-- 脚本查看/编辑页：点击右上角搜索图标弹出搜索卡片，支持 `/re/flags` 正则语法，200ms 防抖
-- 搜索卡片含上一个（chevron_up）/下一个（chevron_down）/关闭（xmark）按钮
-- 通过 `WebView.runJavaScript` 注入 `appSearch/appSearchNext/appSearchPrev` 函数，使用 CodeMirror `getSearchCursor` + `markText` 高亮匹配
-- CSS 类 `.cm-app-search-match` / `.cm-app-search-current` 区分普通匹配与当前匹配
-- 代码高亮基于 `flutter_highlight`，支持 90+ 主题
-- 代码区 `SelectableText.rich` 同样启用 iOS 风格放大镜
+- 树形目录展示，顶部常驻胶囊形搜索栏，过滤文件名/目录名
+- 脚本查看/编辑页：点击右上角搜索图标弹出搜索卡片
+- 搜索卡片含上一个/下一个
+- 代码区同样启用 iOS 风格放大镜
 
 ### 京东助手（独立模块）
 
