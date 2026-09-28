@@ -322,6 +322,23 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
               '一对多推送的“群组编码”（一对多推送下面->您的群组(如无则新建)->群组编码，如果您是创建群组人。也需点击“查看二维码”扫描绑定，否则不能接受群组消息推送）',
         },
       ],
+      "wpush": [
+        {
+          "label": 'wpushApiKey',
+          "tip":
+              'WPUSH的API Key，在 https://wpush.cn/settings 获取，参考 https://wpush.cn/docs',
+          "required": true,
+        },
+        {
+          "label": 'wpushChannel',
+          "tip":
+              '推送渠道，支持 wechat/app/sms/mail/webhook/dingtalk/feishu/wechat_work/clawbot/qqbot，默认 wechat',
+        },
+        {
+          "label": 'wpushTopicCode',
+          "tip": '可选，Topic 广播编码；填写后按 Topic 推送，参考 https://wpush.cn/docs',
+        },
+      ],
       "chat": [
         {"label": 'chatUrl', "tip": 'chat的url地址', "required": true},
         {"label": 'chatToken', "tip": 'chat的token码', "required": true},
@@ -503,6 +520,8 @@ String getNameByKey(String key) {
     return "IGot";
   } else if (key == "pushPlus") {
     return "PushPlus";
+  } else if (key == "wpush") {
+    return "WPUSH";
   } else if (key == "chat") {
     return "群晖chat";
   } else if (key == "email") {

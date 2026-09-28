@@ -94,6 +94,133 @@ class Api {
     );
   }
 
+  // 今日成功任务明细（按成功次数降序）
+  Future<HttpResponse<String>> dashboardSuccesses() async {
+    return await getIt<Http>(instanceName: index.toString()).get<String>(
+      getIt<Url>(instanceName: index.toString()).dashboardSuccesses,
+      {},
+    );
+  }
+
+  // 今日失败任务明细（按失败次数降序）
+  Future<HttpResponse<String>> dashboardFailures() async {
+    return await getIt<Http>(instanceName: index.toString()).get<String>(
+      getIt<Url>(instanceName: index.toString()).dashboardFailures,
+      {},
+    );
+  }
+
+  // ==== 青龙 2.22 新增接口（客户端补齐对齐） ====
+
+  /// 可信代理解析配置（GET，返回 trustProxy/source/editable）
+  Future<HttpResponse<String>> clientIpConfig() async {
+    return await getIt<Http>(instanceName: index.toString()).get<String>(
+      getIt<Url>(instanceName: index.toString()).clientIpConfig,
+      {},
+    );
+  }
+
+  /// 更新可信代理解析配置（PUT）
+  Future<HttpResponse<String>> updateClientIpConfig(String trustProxy) async {
+    return await getIt<Http>(instanceName: index.toString()).put<String>(
+      getIt<Url>(instanceName: index.toString()).clientIpConfig,
+      {"trustProxy": trustProxy},
+    );
+  }
+
+  /// 访问链路诊断（GET）
+  Future<HttpResponse<String>> clientIpDiagnose() async {
+    return await getIt<Http>(instanceName: index.toString()).get<String>(
+      getIt<Url>(instanceName: index.toString()).clientIpDiagnose,
+      {},
+    );
+  }
+
+  /// 登录 IP 黑名单列表（GET）
+  Future<HttpResponse<String>> ipBlacklist() async {
+    return await getIt<Http>(instanceName: index.toString()).get<String>(
+      getIt<Url>(instanceName: index.toString()).ipBlacklist,
+      {},
+    );
+  }
+
+  /// 添加 IP 到黑名单（PUT，body: {ip}）
+  Future<HttpResponse<String>> addIpBlacklist(String ip) async {
+    return await getIt<Http>(instanceName: index.toString()).put<String>(
+      getIt<Url>(instanceName: index.toString()).ipBlacklist,
+      {"ip": ip},
+    );
+  }
+
+  /// 从黑名单移除 IP（DELETE，body: {ip}）
+  Future<HttpResponse<String>> removeIpBlacklist(String ip) async {
+    return await getIt<Http>(instanceName: index.toString()).delete<String>(
+      getIt<Url>(instanceName: index.toString()).ipBlacklist,
+      {"ip": ip},
+    );
+  }
+
+  /// 更新存储保留策略（PUT）
+  Future<HttpResponse<String>> updateRetentionConfig(
+    int runningInstanceRetentionDays,
+    int cronStatRetentionDays,
+  ) async {
+    return await getIt<Http>(instanceName: index.toString()).put<String>(
+      getIt<Url>(instanceName: index.toString()).retentionConfig,
+      {
+        "runningInstanceRetentionDays": runningInstanceRetentionDays,
+        "cronStatRetentionDays": cronStatRetentionDays,
+      },
+    );
+  }
+
+  /// 清理预览（POST）
+  Future<HttpResponse<String>> previewRetention(
+    Map<String, dynamic> body,
+  ) async {
+    return await getIt<Http>(instanceName: index.toString()).post<String>(
+      getIt<Url>(instanceName: index.toString()).retentionPreview,
+      body,
+    );
+  }
+
+  /// 执行清理（POST，自动补 confirmation: 'CLEAN'）
+  Future<HttpResponse<String>> cleanupRetention(
+    Map<String, dynamic> body,
+  ) async {
+    return await getIt<Http>(instanceName: index.toString()).post<String>(
+      getIt<Url>(instanceName: index.toString()).retentionCleanup,
+      {...body, "confirmation": "CLEAN"},
+    );
+  }
+
+  /// 某任务的历史运行实例列表（GET）
+  Future<HttpResponse<String>> cronInstances(dynamic id) async {
+    return await getIt<Http>(instanceName: index.toString()).get<String>(
+      getIt<Url>(instanceName: index.toString()).cronInstances(id),
+      {},
+    );
+  }
+
+  /// 停止指定运行实例（POST）
+  Future<HttpResponse<String>> stopCronInstance(
+    dynamic id,
+    dynamic instanceId,
+  ) async {
+    return await getIt<Http>(instanceName: index.toString()).post<String>(
+      getIt<Url>(instanceName: index.toString()).cronInstanceStop(id, instanceId),
+      {},
+    );
+  }
+
+  /// 某任务的历史日志文件列表（GET）
+  Future<HttpResponse<String>> cronLogs(dynamic id) async {
+    return await getIt<Http>(instanceName: index.toString()).get<String>(
+      getIt<Url>(instanceName: index.toString()).cronLogs(id),
+      {},
+    );
+  }
+
   Future<HttpResponse<LoginBean>> login(
     String userName,
     String passWord,
@@ -267,6 +394,8 @@ class Api {
     return await getIt<Http>(instanceName: index.toString()).get<String>(
       getIt<Url>(instanceName: index.toString()).intimeLog(cron),
       null,
+      // 实时日志接口禁用缓存,否则 2s 轮询会被 TTL 缓存层抵消
+      useCache: false,
     );
   }
 
@@ -274,6 +403,7 @@ class Api {
     return await getIt<Http>(instanceName: index.toString()).get<String>(
       getIt<Url>(instanceName: index.toString()).intimeDepLog(cron),
       null,
+      useCache: false,
     );
   }
 
@@ -281,6 +411,7 @@ class Api {
     return await getIt<Http>(instanceName: index.toString()).get<String>(
       getIt<Url>(instanceName: index.toString()).intimeSubscribeLog(cron),
       null,
+      useCache: false,
     );
   }
 
@@ -386,9 +517,16 @@ class Api {
   }
 
   Future<HttpResponse<String>> content(String name) async {
+    final SystemBean systemBean = getIt<SystemBean>(
+      instanceName: index.toString(),
+    );
+    final Url url = getIt<Url>(instanceName: index.toString());
+    // 2.22+：/configs/:file 已下线（业务码 410），改用 /configs/detail?path=
+    // 2.21 及更早：无 detail 路由，仍走旧路径
+    final bool useDetail = systemBean.isUpperVersion2_22_0();
     return await getIt<Http>(instanceName: index.toString()).get<String>(
-      getIt<Url>(instanceName: index.toString()).configContent + name,
-      null,
+      useDetail ? url.configDetail : url.configContent + name,
+      useDetail ? {"path": name} : null,
     );
   }
 
@@ -507,26 +645,40 @@ class Api {
     );
   }
 
-  Future<HttpResponse<String>> taskLogDetail(String name, String path) async {
-    if (getIt<SystemBean>(
+  /// 任务日志内容读取
+  /// [offset] 为 null 时返回尾部片段（2.22+ 默认策略，尾部 256KB）；
+  /// 传入 offset 则从该字节位置读取，用于向上加载更早的日志
+  Future<HttpResponse<String>> taskLogDetail(
+    String name,
+    String path, {
+    int? offset,
+  }) async {
+    final SystemBean systemBean = getIt<SystemBean>(
       instanceName: index.toString(),
-    ).isUpperVersion2_13_0()) {
+    );
+    final Url url = getIt<Url>(instanceName: index.toString());
+    // 2.22+：/logs/:file 已下线（业务码 410），改用 /logs/detail?file=&path=
+    // 并支持 offset 分块续读；响应含 offset/nextOffset/total/truncated
+    if (systemBean.isUpperVersion2_22_0()) {
+      final Map<String, String?> query = {"file": name, "path": path};
+      if (offset != null) {
+        query["offset"] = offset.toString();
+      }
       return await getIt<Http>(instanceName: index.toString()).get<String>(
-        getIt<Url>(instanceName: index.toString()).taskLogDetail +
-            name +
-            "?path=" +
-            path,
-        null,
+        url.logDetail,
+        query,
       );
-    } else {
+    }
+    if (systemBean.isUpperVersion2_13_0()) {
       return await getIt<Http>(instanceName: index.toString()).get<String>(
-        getIt<Url>(instanceName: index.toString()).taskLogDetail +
-            path +
-            "/" +
-            name,
+        url.taskLogDetail + name + "?path=" + path,
         null,
       );
     }
+    return await getIt<Http>(instanceName: index.toString()).get<String>(
+      url.taskLogDetail + path + "/" + name,
+      null,
+    );
   }
 
   Future<HttpResponse<List<ScriptData>>> scripts() async {
@@ -670,10 +822,15 @@ class Api {
   // 青龙面板 v2.21+ 新增：依赖代理 + Node/Python/Linux 镜像源配置
 
   /// 获取系统配置（含依赖设置字段：dependenceProxy/nodeMirror/pythonMirror/linuxMirror）
+  /// 禁用缓存：依赖设置页面每次打开都需要最新配置，避免 _origXxx 保存旧值导致比对错误
   Future<HttpResponse<String>> systemConfig() async {
     return await getIt<Http>(
       instanceName: index.toString(),
-    ).get<String>(getIt<Url>(instanceName: index.toString()).systemConfig, null);
+    ).get<String>(
+      getIt<Url>(instanceName: index.toString()).systemConfig,
+      null,
+      useCache: false,
+    );
   }
 
   /// 更新依赖代理（http_proxy/https_proxy）
@@ -687,8 +844,9 @@ class Api {
 
   /// 更新 Node.js 镜像源（pnpm config set registry）
   /// 传空字符串清除镜像源
-  /// 注意：此接口返回 application/octet-stream 流式响应（重装依赖进度日志）
-  /// 非标准 JSON，需用 rawResponse 跳过 JSON 解析；重装依赖耗时较长，设 5 分钟超时
+  /// 注意：此接口会触发 pnpm i -g 重装已安装的 nodejs 依赖，耗时较长；
+  /// 返回 application/octet-stream 流式响应（重装依赖进度日志）非标准 JSON，
+  /// 需用 rawResponse 跳过 JSON 解析，并设 5 分钟超时
   Future<HttpResponse<String>> updateNodeMirror(String mirror) async {
     return await getIt<Http>(instanceName: index.toString()).put<String>(
       getIt<Url>(instanceName: index.toString()).nodeMirror,

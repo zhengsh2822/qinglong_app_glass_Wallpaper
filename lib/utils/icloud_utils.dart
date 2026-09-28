@@ -8,6 +8,7 @@ import 'package:qinglong_app/base/userinfo_viewmodel.dart';
 import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/module/env/env_bean.dart';
 import 'package:qinglong_app/utils/extension.dart';
+import 'package:qinglong_app/utils/file_picker_utils.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 import 'package:qinglong_app/utils/utils.dart';
 import 'package:path/path.dart' as path;
@@ -93,18 +94,16 @@ class ICloudUtils {
     } catch (e) {}
   }
 
-  void restoreEnv(String path) async {
+  void restoreEnv(String? path) async {
     if (SpUtil.getInt(spVIP, defValue: typeNormal) == typeNormal) return;
 
     if (path == null) {
-      dynamic result = await Future.value(null);
-      if (result != null &&
-          result.files.isNotEmpty &&
-          result.files.single.path != null) {
-        if (!result.files.single.path!.endsWith(FileUtil.env)) {
+      final result = await FilePickerUtils.pickFile();
+      if (result != null && result.path != null) {
+        if (!result.path!.endsWith(FileUtil.env)) {
           "只支持 .${FileUtil.env} 结尾的文件".toast();
         } else {
-          _handleRestoreEnv(result.files.single.path!);
+          _handleRestoreEnv(result.path!);
         }
       }
     } else {
@@ -112,17 +111,15 @@ class ICloudUtils {
     }
   }
 
-  void restoreSubscribe(String path) async {
+  void restoreSubscribe(String? path) async {
     if (SpUtil.getInt(spVIP, defValue: typeNormal) == typeNormal) return;
     if (path == null) {
-      dynamic result = await Future.value(null);
-      if (result != null &&
-          result.files.isNotEmpty &&
-          result.files.single.path != null) {
-        if (!result.files.single.path!.endsWith(FileUtil.subscribe)) {
+      final result = await FilePickerUtils.pickFile();
+      if (result != null && result.path != null) {
+        if (!result.path!.endsWith(FileUtil.subscribe)) {
           "只支持 .${FileUtil.subscribe} 结尾的文件".toast();
         } else {
-          _handleRestoreSubscribe(result.files.single.path!);
+          _handleRestoreSubscribe(result.path!);
         }
       }
     } else {
@@ -130,17 +127,16 @@ class ICloudUtils {
     }
   }
 
-  void restoreConfig(String path) async {
+  void restoreConfig(String? path) async {
     if (SpUtil.getInt(spVIP, defValue: typeNormal) == typeNormal) return;
     if (path == null) {
-      dynamic result = await Future.value(null);
-      if (result != null &&
-          result.files.isNotEmpty &&
-          result.files.single.path != null) {
-        if (!result.files.single.path!.endsWith(FileUtil.config)) {
+      final result = await FilePickerUtils.pickFile();
+      if (result != null && result.path != null) {
+        final pickedPath = result.path!;
+        if (!pickedPath.endsWith(FileUtil.config)) {
           "只支持 .${FileUtil.config} 结尾的文件".toast();
         } else {
-          String p = result.files.single.path!;
+          String p = pickedPath;
           String title = "nameNotFound.sh";
 
           try {

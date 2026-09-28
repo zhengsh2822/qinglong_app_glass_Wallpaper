@@ -23,7 +23,9 @@ class Http {
   Dio? _dio;
   bool pushedLoginPage = false;
 
-  /// 非激活账号有待处理的登录失败弹窗，切换到该账号时触发
+  /// 标记该账号有待处理的登录失败弹窗（后台账号断网时延迟弹窗）
+  /// IndexedStack 会同时构建所有账号，非激活账号断网不应立即弹窗
+  /// 切换到该账号时由 MultiAccountPageState.updateIndex 触发
   bool pendingExitLogin = false;
 
   String host;
@@ -348,6 +350,48 @@ class Http {
     }
   }
 
+  /// 下载二进制流文件（用于数据导出 .tgz 压缩包备份）
+  /// [uri] 请求路径，[body] JSON 请求体，[savePath] 本地保存路径
+  /// 成功返回 null，失败返回错误信息
+  Future<String?> downloadFile(
+    String uri,
+    Map<String, dynamic> body,
+    String savePath,
+  ) async {
+    try {
+      _init();
+      final response = await _dio!.put(
+        uri,
+        data: body,
+        options: Options(responseType: ResponseType.bytes),
+      );
+
+      // 检查响应是否为二进制流（导出成功）还是 JSON（导出失败）
+      final data = response.data;
+      if (data is List<int>) {
+        final file = await File(savePath).create(recursive: true);
+        await file.writeAsBytes(data);
+        return null;
+      }
+
+      // 非 bytes 响应，可能是错误 JSON
+      final raw = data is String ? data : data.toString();
+      if (_isHtmlResponse(raw)) {
+        await _handleTokenExpired();
+        return "登录已过期，请重试";
+      }
+      return "服务器返回异常格式";
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        await _handleTokenExpired();
+        return "登录已过期，请重试";
+      }
+      return e.message ?? "网络请求失败";
+    } catch (e) {
+      return e.toString();
+    }
+  }
+
   /// GET 拉取二进制文件（用于脚本运行时保存的图片、二维码等）
   /// [uri] 请求路径，[query] 查询参数
   /// 成功返回 GetBytesResult.success(bytes)
@@ -545,48 +589,6 @@ class Http {
     }
   }
 
-  /// 下载二进制流文件（用于数据导出 .tgz 压缩包备份）
-  /// [uri] 请求路径，[body] JSON 请求体，[savePath] 本地保存路径
-  /// 成功返回 null，失败返回错误信息
-  Future<String?> downloadFile(
-    String uri,
-    Map<String, dynamic> body,
-    String savePath,
-  ) async {
-    try {
-      _init();
-      final response = await _dio!.put(
-        uri,
-        data: body,
-        options: Options(responseType: ResponseType.bytes),
-      );
-
-      // 检查响应是否为二进制流（导出成功）还是 JSON（导出失败）
-      final data = response.data;
-      if (data is List<int>) {
-        final file = await File(savePath).create(recursive: true);
-        await file.writeAsBytes(data);
-        return null;
-      }
-
-      // 非 bytes 响应，可能是错误 JSON
-      final raw = data is String ? data : data.toString();
-      if (_isHtmlResponse(raw)) {
-        await _handleTokenExpired();
-        return "登录已过期，请重试";
-      }
-      return "服务器返回异常格式";
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 401) {
-        await _handleTokenExpired();
-        return "登录已过期，请重试";
-      }
-      return e.message ?? "网络请求失败";
-    } catch (e) {
-      return e.toString();
-    }
-  }
-
   /// 上传文件（用于数据导入 .tgz 压缩包恢复）
   /// [uri] 请求路径，[filePath] 本地文件路径，[fieldName] 上传字段名
   /// 返回标准 HttpResponse，包含服务器解压输出信息
@@ -675,12 +677,13 @@ class Http {
 
   /// 刷新失败后弹窗让用户选择是否重新登录（不直接跳转）
   /// 用 pushedLoginPage 防止并发请求触发多个弹窗
-  /// 非激活账号不弹窗，标记 pendingExitLogin，切换到该账号时再弹
+  /// 非当前激活账号延迟弹窗：IndexedStack 后台账号断网时不打扰用户，
+  /// 切换到该账号时由 MultiAccountPageState.updateIndex 触发
   Future<void> exitLogin() async {
     if (pushedLoginPage) return;
 
-    // 多账号场景：非激活账号不弹窗，标记待处理，切换到该账号时再弹
-    // 避免断网的非激活账号在后台请求失败时弹窗干扰用户
+    // 非当前激活账号：标记待处理，不立即弹窗
+    // 场景：多账号中有一个断网，启动时不应弹窗打扰用户
     if (MultiAccountPageState.currentAccountIndex != index) {
       pendingExitLogin = true;
       return;
@@ -741,6 +744,28 @@ class Http {
     return lower.contains('<html') ||
         lower.contains('<!doctype') ||
         lower.contains('<script');
+  }
+
+  /// API 接口在面板上不存在时的统一提示。
+  ///
+  /// 青龙 Express 对未匹配的路径会落到 `app.get('*')` 的前端 SPA 兜底，
+  /// 返回 HTTP 200 + index.html。若面板的版本号（/ql/version.yaml）与实际
+  /// 运行代码不一致（更新未生效/部分更新），新接口就会这样"假装成功"。
+  static const String _apiNotExistMessage =
+      "接口不存在：面板返回网页而非数据，请确认面板已真正更新到对应版本";
+
+  /// 判断该响应是否属于 API 命名空间（/api 或 /open）。
+  ///
+  /// 青龙对 API 路径从不返回 HTML：正常走接口、异常返回 401/4xx JSON。
+  /// 因此 API 路径出现 200 + HTML 只能是"路由不存在"的 SPA 兜底，
+  /// 与 token 过期无关，重登再多次也不会成功。
+  static bool _isApiRequest(Response<dynamic> response) {
+    try {
+      final path = response.requestOptions.uri.path;
+      return path.startsWith('/api/') || path.startsWith('/open/');
+    } catch (_) {
+      return false;
+    }
   }
 
   /// 判断本地是否有足够凭证进行静默刷新
@@ -820,10 +845,38 @@ class Http {
     }
   }
 
+  /// 判断 401 是否为 OpenAPI 权限不足（而非 token 过期）。
+  ///
+  /// 青龙对 `/open/*` 的应用 scope 校验失败时，返回的是 UnauthorizedError →
+  /// HTTP 401 + `{code:401, message:'暂无权限'}`，与 token 过期同为 401。
+  /// 权限不足重登多少次都没用，必须与过期区分，否则会误弹"是否重新登录"。
+  static bool _isScopeDenied(dynamic data) {
+    dynamic decoded = data;
+    if (decoded is String) {
+      try {
+        decoded = jsonDecode(decoded);
+      } catch (_) {
+        return false;
+      }
+    }
+    if (decoded is! Map) return false;
+    final message = decoded["message"]?.toString() ?? "";
+    return message.contains("暂无权限");
+  }
+
   HttpResponse<T> exceptionHandler<T>(DioException e, String path) {
     try {
       logger.e(e);
       if (e.response?.statusCode == 401 && !Url.inWhiteList(path)) {
+        // OpenAPI 应用 scope 不足：不触发静默刷新（重登也无法获得权限），
+        // 直接返回明确提示引导用户去「应用设置」勾选对应权限
+        if (_isScopeDenied(e.response?.data)) {
+          return HttpResponse<T>(
+            success: false,
+            message: "暂无权限：请在「应用设置」中为该应用勾选对应权限",
+            code: 401,
+          );
+        }
         // 401 统一标记 needRelogin，由 get/post/put/delete 触发静默刷新
         return HttpResponse<T>(
           success: false,
@@ -860,21 +913,48 @@ class Http {
             code: responseData["code"] ?? 0,
           );
         } else {
+          // 非 JSON 响应体（空串 / HTML 兜底页）：服务端没给可读 message，
+          // 按状态码兜底，避免把 Dio 原始异常文本抛给用户
           return HttpResponse(
             success: false,
-            message: e.message ?? responseData.toString(),
+            message: _readableMessageByStatus(
+              e.response?.statusCode,
+              e.message,
+            ),
             code: e.response?.statusCode ?? 0,
           );
         }
       } else {
         return HttpResponse(
           success: false,
-          message: e.message,
+          message: _readableMessageByStatus(e.response?.statusCode, e.message),
           code: e.response?.statusCode ?? 0,
         );
       }
     } catch (e) {
       return HttpResponse(success: false, message: e.toString(), code: 400);
+    }
+  }
+
+  /// 响应体不是 JSON（拿不到服务端 message）时，按 HTTP 状态码给出可读提示。
+  ///
+  /// 典型场景：新接口在面板上不存在时 Express 返回 404，响应体为 HTML/空串，
+  /// 若直接透传 `e.message` 用户会看到
+  /// "This exception was thrown because the response has a status code of 404..."。
+  static String _readableMessageByStatus(int? status, String? fallback) {
+    switch (status) {
+      case 404:
+        return _apiNotExistMessage;
+      case 403:
+        return "暂无权限（403）";
+      case 500:
+        return "服务器错误（500）";
+      case 502:
+      case 503:
+      case 504:
+        return "面板服务不可用（$status），请确认面板进程已启动";
+      default:
+        return fallback ?? "网络请求失败";
     }
   }
 
@@ -897,17 +977,36 @@ class Http {
               needRelogin: true,
             );
           }
-          // 检测 HTML 登录页：青龙面板 token 过期后返回 302 → 登录页 HTML（状态码 200）
-          // 此时 jsonDecode 必然抛异常，提前识别并标记 needRelogin
-          if (_isHtmlResponse(data)) {
+          // 先尝试 JSON 解析：脚本/日志等读取接口的 data 字段可能是源码文本，
+          // 其中若含 <script/<html 等字符串，不能误判为"token 失效的 HTML 登录页"。
+          // 只有 JSON 解析失败且确实是 HTML 特征时才判定为登录失效。
+          try {
+            data = jsonDecode(data);
+          } catch (_) {
+            if (_isHtmlResponse(data)) {
+              // API 路径返回 HTML = 前端 SPA 兜底（接口不存在），不是登录过期
+              if (_isApiRequest(response)) {
+                return HttpResponse<T>(
+                  success: false,
+                  code: 404,
+                  message: _apiNotExistMessage,
+                );
+              }
+              return HttpResponse<T>(
+                success: false,
+                code: -1000,
+                message: "登录已过期，请重新登录",
+                needRelogin: true,
+              );
+            }
+            // 非 JSON 非 HTML 的异常格式：触发重建 Dio + 静默刷新 + 重试
             return HttpResponse<T>(
               success: false,
               code: -1000,
-              message: "登录已过期，请重新登录",
+              message: "服务器响应格式异常",
               needRelogin: true,
             );
           }
-          data = jsonDecode(data);
         }
         if (data is! Map) {
           // 非 Map 非 HTML 的异常格式（如纯数组、纯字符串）
@@ -961,6 +1060,14 @@ class Http {
         // catch 分支也检测 HTML：jsonDecode 抛异常时，原始数据可能是 HTML 登录页
         final rawData = response.data;
         if (_isHtmlResponse(rawData)) {
+          // API 路径返回 HTML = 前端 SPA 兜底（接口不存在），不是登录过期
+          if (_isApiRequest(response)) {
+            return HttpResponse<T>(
+              success: false,
+              code: 404,
+              message: _apiNotExistMessage,
+            );
+          }
           return HttpResponse<T>(
             success: false,
             code: -1000,

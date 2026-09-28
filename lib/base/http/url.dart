@@ -118,6 +118,13 @@ class Url {
           ? "/open/configs/"
           : "/api/configs/";
 
+  /// 2.22+ 配置文件内容读取：/configs/detail?path=<name>
+  /// 旧 /configs/:file 在 2.22 已下线（返回业务码 410），响应结构不变
+  get configDetail =>
+      getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
+          ? "/open/configs/detail"
+          : "/api/configs/detail";
+
   get saveFile =>
       getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
           ? "/open/configs/save"
@@ -167,6 +174,14 @@ class Url {
       getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
           ? "/open/logs/"
           : "/api/logs/";
+
+  /// 2.22+ 任务日志内容读取：/logs/detail?file=<name>&path=<path>
+  /// 旧 /logs/:file 在 2.22 已下线（返回业务码 410）；
+  /// 新增 offset/limit/tail 参数，响应含 offset/nextOffset/total/truncated
+  get logDetail =>
+      getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
+          ? "/open/logs/detail"
+          : "/api/logs/detail";
 
   get scripts =>
       getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
@@ -285,6 +300,73 @@ class Url {
           ? "/open/system/update-check"
           : "/api/system/update-check";
 
+  // ==== 青龙 2.22 新增：客户端 IP / 可信代理解析 ====
+  // GET 读取配置；PUT 更新（body: {trustProxy}）
+  get clientIpConfig =>
+      getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
+          ? "/open/system/client-ip/config"
+          : "/api/system/client-ip/config";
+
+  // GET 访问链路诊断（返回 remoteAddress/forwardedFor/expressIps/clientIp/hops）
+  get clientIpDiagnose =>
+      getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
+          ? "/open/system/client-ip/diagnose"
+          : "/api/system/client-ip/diagnose";
+
+  // ==== 青龙 2.22 新增：登录 IP 黑名单 ====
+  // GET 列表；PUT 添加（body: {ip}）；DELETE 移除（body: {ip}）
+  get ipBlacklist =>
+      getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
+          ? "/open/user/ip-blacklist"
+          : "/api/user/ip-blacklist";
+
+  // ==== 青龙 2.22 新增：存储保留策略与清理 ====
+  // PUT 更新保留策略（body: runningInstanceRetentionDays + cronStatRetentionDays）
+  get retentionConfig =>
+      getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
+          ? "/open/system/storage-retention/config"
+          : "/api/system/storage-retention/config";
+
+  // POST 清理预览（body 同策略 + dependenceCacheTypes + compactDatabase）
+  get retentionPreview =>
+      getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
+          ? "/open/system/storage-retention/preview"
+          : "/api/system/storage-retention/preview";
+
+  // POST 执行清理（body 需额外带 confirmation: 'CLEAN'）
+  get retentionCleanup =>
+      getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
+          ? "/open/system/storage-retention/cleanup"
+          : "/api/system/storage-retention/cleanup";
+
+  // ==== 青龙 2.22 新增：任务历史运行实例 ====
+  // GET 某任务的历史运行实例列表（按 started_at 倒序）
+  cronInstances(dynamic id) {
+    return getIt<UserInfoViewModel>(
+          instanceName: index.toString(),
+        ).useSecretLogined
+        ? "/open/crons/${id.toString()}/instances"
+        : "/api/crons/${id.toString()}/instances";
+  }
+
+  // POST 停止指定运行实例
+  cronInstanceStop(dynamic id, dynamic instanceId) {
+    return getIt<UserInfoViewModel>(
+          instanceName: index.toString(),
+        ).useSecretLogined
+        ? "/open/crons/${id.toString()}/instances/${instanceId.toString()}/stop"
+        : "/api/crons/${id.toString()}/instances/${instanceId.toString()}/stop";
+  }
+
+  // GET 某任务的历史日志文件列表
+  cronLogs(dynamic id) {
+    return getIt<UserInfoViewModel>(
+          instanceName: index.toString(),
+        ).useSecretLogined
+        ? "/open/crons/${id.toString()}/logs"
+        : "/api/crons/${id.toString()}/logs";
+  }
+
   get dashboardOverview =>
       getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
           ? "/open/dashboard/overview"
@@ -323,6 +405,18 @@ class Url {
       getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
           ? "/open/dashboard/labels"
           : "/api/dashboard/labels";
+
+  // 今日成功任务明细（按成功次数降序，无参数）
+  get dashboardSuccesses =>
+      getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
+          ? "/open/dashboard/successes"
+          : "/api/dashboard/successes";
+
+  // 今日失败任务明细（按失败次数降序，无参数）
+  get dashboardFailures =>
+      getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
+          ? "/open/dashboard/failures"
+          : "/api/dashboard/failures";
 
   get appkeys =>
       getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined

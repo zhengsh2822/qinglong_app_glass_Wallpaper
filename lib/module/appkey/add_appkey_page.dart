@@ -35,6 +35,8 @@ class _AddAppKeyPageState extends ConsumerState<AddAppKeyPage> {
   final TextEditingController _customScopeController = TextEditingController();
 
   /// 全部可选权限（与青龙面板 scopes 对应）
+  /// 「仪表盘」为青龙 2.22 新增 scope（dashboard），2.21 及更早的面板未提供该
+  /// 勾选项，导致旧应用缺少 dashboard 权限、访问 /open/dashboard/* 返回暂无权限
   static const List<String> _allPermissions = [
     '定时任务',
     '环境变量',
@@ -44,6 +46,7 @@ class _AddAppKeyPageState extends ConsumerState<AddAppKeyPage> {
     '依赖管理',
     '订阅管理',
     '系统信息',
+    '仪表盘',
   ];
 
   List<String> selectedPermissions = ["定时任务"];

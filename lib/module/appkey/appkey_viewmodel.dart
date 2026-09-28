@@ -70,7 +70,7 @@ class AppKeyViewModel extends BaseViewModel {
   }
 
   static List<String> getScopeNames(List<dynamic>? scopeKeys) {
-    //"crons","envs","configs","scripts","logs","dependencies","subscriptions","system"
+    //"crons","envs","configs","scripts","logs","dependencies","subscriptions","system","dashboard"
     //配置文件脚本管理环境变量任务日志订阅管理
     Map<String, String> keyMaps = {
       "crons": "定时任务",
@@ -81,6 +81,8 @@ class AppKeyViewModel extends BaseViewModel {
       "dependencies": "依赖管理",
       "subscriptions": "订阅管理",
       "system": "系统信息",
+      // 青龙 2.22 新增 scope
+      "dashboard": "仪表盘",
     };
 
     List<String> result = [];
@@ -96,7 +98,7 @@ class AppKeyViewModel extends BaseViewModel {
   }
 
   static List<String> getScopeKeys(List<String> scopeNames) {
-    //"crons","envs","configs","scripts","logs","dependencies","subscriptions","system"
+    //"crons","envs","configs","scripts","logs","dependencies","subscriptions","system","dashboard"
     //配置文件脚本管理环境变量任务日志订阅管理
     Map<String, String> keyMaps = {
       "定时任务": "crons",
@@ -107,6 +109,8 @@ class AppKeyViewModel extends BaseViewModel {
       "依赖管理": "dependencies",
       "订阅管理": "subscriptions",
       "系统信息": "system",
+      // 青龙 2.22 新增 scope
+      "仪表盘": "dashboard",
     };
 
     List<String> result = [];

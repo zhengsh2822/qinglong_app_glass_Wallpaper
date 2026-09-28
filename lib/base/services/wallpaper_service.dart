@@ -12,10 +12,13 @@ import 'package:image_picker/image_picker.dart';
 enum WallpaperType {
   /// 默认渐变。
   gradient,
+
   /// 纯色背景。
   solid,
+
   /// 本地相册图片。
   local,
+
   /// 网络图片 URL。
   network,
 }
@@ -24,28 +27,39 @@ enum WallpaperType {
 @immutable
 class WallpaperConfig {
   final WallpaperType type;
+
   /// 纯色背景的颜色值（仅 [WallpaperType.solid] 生效）。
   final int? solidColor;
+
   /// 本地图片在 app docs 目录下的相对路径（仅 [WallpaperType.local] 生效）。
   final String? localPath;
+
   /// 网络图片 URL（仅 [WallpaperType.network] 生效）。
   final String? networkUrl;
+
   /// 背景模糊度 sigma（0 表示不模糊）。
   final double blurSigma;
+
   /// 蒙层不透明度（0~1，黑色蒙层增强文字可读性）。
   final double dimOpacity;
+
   /// 是否启用自动切换。
   final bool autoSwitchEnabled;
+
   /// 自动切换间隔（分钟）。
   final int autoSwitchMinutes;
+
   /// 自动切换的壁纸池（网络 URL 列表）。
   final List<String> autoSwitchPool;
+
   /// 渐变预设索引（仅 [WallpaperType.gradient] 生效）。
   /// -1 表示使用自定义渐变（见 [customGradientA]/[customGradientB]）。
   /// 0 及以上表示使用 [PresetGradients.all] 中的第 n 项。
   final int gradientIndex;
+
   /// 自定义渐变起始色（仅当 [gradientIndex] == -1 时生效）。
   final int? customGradientA;
+
   /// 自定义渐变结束色（仅当 [gradientIndex] == -1 时生效）。
   final int? customGradientB;
 
@@ -77,56 +91,55 @@ class WallpaperConfig {
     int? gradientIndex,
     int? customGradientA,
     int? customGradientB,
-  }) =>
-      WallpaperConfig(
-        type: type ?? this.type,
-        solidColor: solidColor ?? this.solidColor,
-        localPath: localPath ?? this.localPath,
-        networkUrl: networkUrl ?? this.networkUrl,
-        blurSigma: blurSigma ?? this.blurSigma,
-        dimOpacity: dimOpacity ?? this.dimOpacity,
-        autoSwitchEnabled: autoSwitchEnabled ?? this.autoSwitchEnabled,
-        autoSwitchMinutes: autoSwitchMinutes ?? this.autoSwitchMinutes,
-        autoSwitchPool: autoSwitchPool ?? this.autoSwitchPool,
-        gradientIndex: gradientIndex ?? this.gradientIndex,
-        customGradientA: customGradientA ?? this.customGradientA,
-        customGradientB: customGradientB ?? this.customGradientB,
-      );
+  }) => WallpaperConfig(
+    type: type ?? this.type,
+    solidColor: solidColor ?? this.solidColor,
+    localPath: localPath ?? this.localPath,
+    networkUrl: networkUrl ?? this.networkUrl,
+    blurSigma: blurSigma ?? this.blurSigma,
+    dimOpacity: dimOpacity ?? this.dimOpacity,
+    autoSwitchEnabled: autoSwitchEnabled ?? this.autoSwitchEnabled,
+    autoSwitchMinutes: autoSwitchMinutes ?? this.autoSwitchMinutes,
+    autoSwitchPool: autoSwitchPool ?? this.autoSwitchPool,
+    gradientIndex: gradientIndex ?? this.gradientIndex,
+    customGradientA: customGradientA ?? this.customGradientA,
+    customGradientB: customGradientB ?? this.customGradientB,
+  );
 
   Map<String, dynamic> toJson() => {
-        'type': type.name,
-        'solidColor': solidColor,
-        'localPath': localPath,
-        'networkUrl': networkUrl,
-        'blurSigma': blurSigma,
-        'dimOpacity': dimOpacity,
-        'autoSwitchEnabled': autoSwitchEnabled,
-        'autoSwitchMinutes': autoSwitchMinutes,
-        'autoSwitchPool': autoSwitchPool,
-        'gradientIndex': gradientIndex,
-        'customGradientA': customGradientA,
-        'customGradientB': customGradientB,
-      };
+    'type': type.name,
+    'solidColor': solidColor,
+    'localPath': localPath,
+    'networkUrl': networkUrl,
+    'blurSigma': blurSigma,
+    'dimOpacity': dimOpacity,
+    'autoSwitchEnabled': autoSwitchEnabled,
+    'autoSwitchMinutes': autoSwitchMinutes,
+    'autoSwitchPool': autoSwitchPool,
+    'gradientIndex': gradientIndex,
+    'customGradientA': customGradientA,
+    'customGradientB': customGradientB,
+  };
 
   factory WallpaperConfig.fromJson(Map<String, dynamic> j) => WallpaperConfig(
-        type: WallpaperType.values.firstWhere(
-          (t) => t.name == (j['type'] as String? ?? 'gradient'),
-          orElse: () => WallpaperType.gradient,
-        ),
-        solidColor: j['solidColor'] as int?,
-        localPath: j['localPath'] as String?,
-        networkUrl: j['networkUrl'] as String?,
-        blurSigma: (j['blurSigma'] as num?)?.toDouble() ?? 0,
-        dimOpacity: (j['dimOpacity'] as num?)?.toDouble() ?? 0.3,
-        autoSwitchEnabled: j['autoSwitchEnabled'] as bool? ?? false,
-        autoSwitchMinutes: j['autoSwitchMinutes'] as int? ?? 30,
-        autoSwitchPool:
-            (j['autoSwitchPool'] as List?)?.map((e) => e.toString()).toList() ??
-                const [],
-        gradientIndex: j['gradientIndex'] as int? ?? 0,
-        customGradientA: j['customGradientA'] as int?,
-        customGradientB: j['customGradientB'] as int?,
-      );
+    type: WallpaperType.values.firstWhere(
+      (t) => t.name == (j['type'] as String? ?? 'gradient'),
+      orElse: () => WallpaperType.gradient,
+    ),
+    solidColor: j['solidColor'] as int?,
+    localPath: j['localPath'] as String?,
+    networkUrl: j['networkUrl'] as String?,
+    blurSigma: (j['blurSigma'] as num?)?.toDouble() ?? 0,
+    dimOpacity: (j['dimOpacity'] as num?)?.toDouble() ?? 0.3,
+    autoSwitchEnabled: j['autoSwitchEnabled'] as bool? ?? false,
+    autoSwitchMinutes: j['autoSwitchMinutes'] as int? ?? 30,
+    autoSwitchPool:
+        (j['autoSwitchPool'] as List?)?.map((e) => e.toString()).toList() ??
+        const [],
+    gradientIndex: j['gradientIndex'] as int? ?? 0,
+    customGradientA: j['customGradientA'] as int?,
+    customGradientB: j['customGradientB'] as int?,
+  );
 
   static const empty = WallpaperConfig();
 }
@@ -218,8 +231,7 @@ class WallpaperService extends ChangeNotifier {
       }
     }
     // 若有网络壁纸，启动时尝试用本地缓存
-    if (_config.type == WallpaperType.network &&
-        _config.networkUrl != null) {
+    if (_config.type == WallpaperType.network && _config.networkUrl != null) {
       _networkCachedPath = _findCachedNetworkFile(_config.networkUrl!);
     }
     _applyAutoSwitch();
@@ -327,10 +339,7 @@ class WallpaperService extends ChangeNotifier {
   /// 后台用 http 下载到 app docs dir 的 network_cache/ →
   /// 下载完成后切换到本地缓存路径显示，下次启动无需重新下载。
   Future<void> setNetworkUrl(String url) async {
-    _config = _config.copyWith(
-      type: WallpaperType.network,
-      networkUrl: url,
-    );
+    _config = _config.copyWith(type: WallpaperType.network, networkUrl: url);
     _networkCachedPath = _findCachedNetworkFile(url);
     await _save();
     notifyListeners();
@@ -351,8 +360,7 @@ class WallpaperService extends ChangeNotifier {
     try {
       final dir = Directory('$_docsDirPath/network_cache');
       if (!dir.existsSync()) dir.createSync(recursive: true);
-      final name =
-          'net_${url.hashCode.abs()}${_extFromUrl(url)}';
+      final name = 'net_${url.hashCode.abs()}${_extFromUrl(url)}';
       final target = File('${dir.path}/$name');
       if (!target.existsSync()) {
         final resp = await http.get(Uri.parse(url));
@@ -383,8 +391,7 @@ class WallpaperService extends ChangeNotifier {
     final dot = u.lastIndexOf('.');
     if (dot >= 0) {
       final ext = u.substring(dot);
-      if ({'.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp'}
-          .contains(ext)) {
+      if ({'.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp'}.contains(ext)) {
         return ext;
       }
     }
@@ -604,7 +611,12 @@ class PresetGradients {
   static const LinearGradient defaultGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF0D1B2A), Color(0xFF1B263B), Color(0xFF0F2027), Color(0xFF203A43)],
+    colors: [
+      Color(0xFF0D1B2A),
+      Color(0xFF1B263B),
+      Color(0xFF0F2027),
+      Color(0xFF203A43),
+    ],
     stops: [0.0, 0.35, 0.65, 1.0],
   );
 
@@ -673,23 +685,84 @@ class PresetSolidColors {
   ];
 }
 
-/// 内置网络壁纸源（Bing 每日壁纸，无密钥）。
+/// 内置网络壁纸源（全部按**手机竖屏**尺寸取图，无密钥）。
+///
+/// 为什么不沿用横屏（1920×1080）：壁纸层用 BoxFit.cover 铺满竖屏，
+/// 横屏图会被左右大幅裁掉，只剩中间一条 —— 观感就是"电脑端壁纸"。
+/// 竖屏图由服务端按 9:20 左右裁切，构图完整、同时省流量。
 class NetworkWallpaperSources {
   NetworkWallpaperSources._();
 
-  /// Bing 每日壁纸（最近 8 天，idx=0 为今天）。
-  static List<String> bingDaily({int count = 8}) {
-    return List.generate(count, (i) {
-      return 'https://bing.biturl.top/?resolution=1920&index=$i&format=image';
-    });
+  /// 手机竖屏取图尺寸：跟随当前设备物理分辨率（宽高都限幅，防止 2K/4K
+  /// 机型拉出过大图片），拿不到设备信息时退回 1080×2400。
+  static ({int w, int h}) portraitSize() {
+    int w = 1080;
+    int h = 2400;
+    try {
+      final Size physical =
+          WidgetsBinding.instance.platformDispatcher.views.first.physicalSize;
+      if (physical.width > 0 && physical.height > 0) {
+        // 物理像素可能含旋转（横屏时宽高反过来），统一按"高 > 宽"取竖屏
+        final double shortSide = math.min(physical.width, physical.height);
+        final double longSide = math.max(physical.width, physical.height);
+        final double scale = math.min(1.0, 1080 / shortSide); // 宽不超过 1080
+        w = (shortSide * scale).round();
+        h = (longSide * scale).round();
+      }
+    } catch (_) {
+      // 首帧前/无视图时用默认值
+    }
+    return (w: w, h: h);
   }
 
-  /// picsum 随机壁纸。
-  static String picsum({int seed = 0, int w = 1920, int h = 1080}) {
-    return 'https://picsum.photos/seed/$seed/$w/$h';
+  /// Bing 每日壁纸（**竖屏**）。
+  ///
+  /// biturl 之类的第三方镜像只有横屏资源（`resolution=1080` 直接 502），
+  /// 只有 Bing 官方 `th` 端点能用 `w/h/c=4` 出竖屏裁切 —— 但它需要先取
+  /// `HPImageArchive` 拿到当日图 id，所以这里是 async：返回可直接使用的
+  /// 竖屏图片 URL，失败返回 null（调用方回退到 picsum）。
+  ///
+  /// [index] 0 = 今天，1 = 昨天，最多 7 天。
+  static Future<String?> bingPortrait({
+    int index = 0,
+    String mkt = 'zh-CN',
+  }) async {
+    final ({int w, int h}) size = portraitSize();
+    try {
+      final Uri api = Uri.parse(
+        'https://www.bing.com/HPImageArchive.aspx'
+        '?format=js&idx=$index&n=1&mkt=$mkt',
+      );
+      final http.Response resp = await http.get(api);
+      if (resp.statusCode != 200) return null;
+      // 显式按 UTF-8 解：http 的 resp.body 在响应头没带 charset 时会按
+      // latin1 解，中文标题会变乱码（本处只取 url 字段，但别留隐患）
+      final Map<String, dynamic> json =
+          jsonDecode(utf8.decode(resp.bodyBytes)) as Map<String, dynamic>;
+      final List<dynamic> images =
+          (json['images'] as List<dynamic>?) ?? const [];
+      if (images.isEmpty) return null;
+      final String raw =
+          ((images.first as Map<String, dynamic>)['url'] as String?) ?? '';
+      if (raw.isEmpty) return null;
+      // raw 形如 /th?id=OHR.Xxx_ZH-CN..._1920x1080.jpg&rf=...&pid=hp
+      // 只保留 id 参数，再补上竖屏尺寸与裁切参数（c=4 为居中裁切）
+      final String idPart = raw.split('&').first;
+      return 'https://www.bing.com$idPart'
+          '&w=${size.w}&h=${size.h}&c=4&rs=1';
+    } catch (e) {
+      debugPrint('Bing 竖屏壁纸获取失败: $e');
+      return null;
+    }
   }
 
-  /// 预设的 picsum 壁纸池（10 张稳定种子）。
+  /// picsum 随机壁纸（默认**竖屏**尺寸，与设备分辨率一致）。
+  static String picsum({int seed = 0, int? w, int? h}) {
+    final ({int w, int h}) size = portraitSize();
+    return 'https://picsum.photos/seed/$seed/${w ?? size.w}/${h ?? size.h}';
+  }
+
+  /// 预设的 picsum 壁纸池（10 张稳定种子，竖屏）。
   static List<String> get picsumPool =>
       List.generate(10, (i) => picsum(seed: 1000 + i));
 }
@@ -699,8 +772,7 @@ Color colorFromInt(int? value) =>
     value == null ? const Color(0xFFF9F9F9) : Color(value);
 
 /// 工具：判断字符串是否是 http(s) URL。
-bool isHttpUrl(String s) =>
-    s.startsWith('http://') || s.startsWith('https://');
+bool isHttpUrl(String s) => s.startsWith('http://') || s.startsWith('https://');
 
 /// 工具：生成随机种子（保留以防未来需要）。
 int randomSeed() => math.Random().nextInt(1 << 32);

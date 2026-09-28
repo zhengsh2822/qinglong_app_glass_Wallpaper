@@ -59,8 +59,7 @@ class _WallpaperSettingPageState extends ConsumerState<WallpaperSettingPage> {
               _buildTypeSection(cfg),
               if (cfg.type == WallpaperType.gradient)
                 _buildGradientSection(cfg),
-              if (cfg.type == WallpaperType.solid)
-                _buildSolidColorSection(cfg),
+              if (cfg.type == WallpaperType.solid) _buildSolidColorSection(cfg),
               if (cfg.type == WallpaperType.local) _buildLocalSection(cfg),
               if (cfg.type == WallpaperType.network) _buildNetworkSection(cfg),
               _buildBlurSection(cfg),
@@ -101,13 +100,14 @@ class _WallpaperSettingPageState extends ConsumerState<WallpaperSettingPage> {
               icon: icon,
               title: label,
               showChevron: false,
-              trailing: cfg.type == type
-                  ? Icon(
-                      CupertinoIcons.check_mark,
-                      size: 18,
-                      color: ref.watch(themeProvider).primaryColor,
-                    )
-                  : null,
+              trailing:
+                  cfg.type == type
+                      ? Icon(
+                        CupertinoIcons.check_mark,
+                        size: 18,
+                        color: ref.watch(themeProvider).primaryColor,
+                      )
+                      : null,
               onTap: () => WallpaperService.instance.setType(type),
             ),
         ],
@@ -158,20 +158,22 @@ class _WallpaperSettingPageState extends ConsumerState<WallpaperSettingPage> {
           gradient: gradient,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: selected
-                ? ref.watch(themeProvider).primaryColor
-                : Colors.transparent,
+            color:
+                selected
+                    ? ref.watch(themeProvider).primaryColor
+                    : Colors.transparent,
             width: 2.5,
           ),
         ),
         alignment: Alignment.center,
-        child: selected
-            ? const Icon(
-                CupertinoIcons.check_mark,
-                color: Colors.white,
-                size: 20,
-              )
-            : null,
+        child:
+            selected
+                ? const Icon(
+                  CupertinoIcons.check_mark,
+                  color: Colors.white,
+                  size: 20,
+                )
+                : null,
       ),
     );
   }
@@ -221,20 +223,22 @@ class _WallpaperSettingPageState extends ConsumerState<WallpaperSettingPage> {
           color: color,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: selected
-                ? ref.watch(themeProvider).primaryColor
-                : AppleColors.cardBorder,
+            color:
+                selected
+                    ? ref.watch(themeProvider).primaryColor
+                    : AppleColors.cardBorder,
             width: 2.5,
           ),
         ),
         alignment: Alignment.center,
-        child: selected
-            ? const Icon(
-                CupertinoIcons.check_mark,
-                color: Colors.white,
-                size: 20,
-              )
-            : null,
+        child:
+            selected
+                ? const Icon(
+                  CupertinoIcons.check_mark,
+                  color: Colors.white,
+                  size: 20,
+                )
+                : null,
       ),
     );
   }
@@ -252,8 +256,7 @@ class _WallpaperSettingPageState extends ConsumerState<WallpaperSettingPage> {
               icon: CupertinoIcons.photo_on_rectangle,
               title: '从相册选择',
               onTap: () async {
-                final path =
-                    await WallpaperService.instance.pickFromGallery();
+                final path = await WallpaperService.instance.pickFromGallery();
                 if (path == null) {
                   '未选择图片'.toast();
                 } else {
@@ -319,10 +322,8 @@ class _WallpaperSettingPageState extends ConsumerState<WallpaperSettingPage> {
                       fontSize: 14,
                     ),
                     decoration: BoxDecoration(
-                      color: ref
-                          .watch(themeProvider)
-                          .themeColor
-                          .settingBgColor(),
+                      color:
+                          ref.watch(themeProvider).themeColor.settingBgColor(),
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
@@ -330,20 +331,24 @@ class _WallpaperSettingPageState extends ConsumerState<WallpaperSettingPage> {
                 const SizedBox(width: 10),
                 CupertinoButton.filled(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  onPressed: svc.isDownloading
-                      ? null
-                      : () {
-                          final url = _urlController.text.trim();
-                          if (!isHttpUrl(url)) {
-                            '请输入合法的图片 URL'.toast();
-                            return;
-                          }
-                          WallpaperService.instance.setNetworkUrl(url);
-                          '已设置网络壁纸'.toast();
-                        },
-                  child: svc.isDownloading
-                      ? const CupertinoActivityIndicator(color: Colors.white)
-                      : const Text('确认'),
+                  onPressed:
+                      svc.isDownloading
+                          ? null
+                          : () {
+                            final url = _urlController.text.trim();
+                            if (!isHttpUrl(url)) {
+                              '请输入合法的图片 URL'.toast();
+                              return;
+                            }
+                            WallpaperService.instance.setNetworkUrl(url);
+                            '已设置网络壁纸'.toast();
+                          },
+                  child:
+                      svc.isDownloading
+                          ? const CupertinoActivityIndicator(
+                            color: Colors.white,
+                          )
+                          : const Text('确认'),
                 ),
               ],
             ),
@@ -363,15 +368,34 @@ class _WallpaperSettingPageState extends ConsumerState<WallpaperSettingPage> {
               children: [
                 _buildPresetNetworkChip(
                   label: 'Bing 每日',
-                  onTap: () => WallpaperService.instance
-                      .setNetworkUrl(NetworkWallpaperSources.bingDaily().first),
+                  // Bing 官方竖屏裁切要先取当日图 id（一次 JSON 请求），
+                  // 失败则回退到 picsum 竖屏，避免点了没反应
+                  onTap: () async {
+                    final String? url =
+                        await NetworkWallpaperSources.bingPortrait();
+                    if (url == null) {
+                      final String fallback =
+                          NetworkWallpaperSources.picsum(seed: 2000);
+                      WallpaperService.instance.setNetworkUrl(fallback);
+                      _urlController.text = fallback;
+                      'Bing 获取失败，已改用 picsum 竖屏'.toast();
+                      return;
+                    }
+                    WallpaperService.instance.setNetworkUrl(url);
+                    // 回填输入框：预设点完也能看到/复制真实 URL
+                    // （旧版不回填，输入框一直停在旧地址上，容易误判当前壁纸源）
+                    _urlController.text = url;
+                  },
                 ),
                 for (int i = 0; i < 4; i++)
                   _buildPresetNetworkChip(
                     label: 'picsum ${i + 1}',
-                    onTap: () => WallpaperService.instance.setNetworkUrl(
-                      NetworkWallpaperSources.picsum(seed: 1000 + i),
-                    ),
+                    onTap: () {
+                      final String url =
+                          NetworkWallpaperSources.picsum(seed: 1000 + i);
+                      WallpaperService.instance.setNetworkUrl(url);
+                      _urlController.text = url;
+                    },
                   ),
               ],
             ),
@@ -384,18 +408,20 @@ class _WallpaperSettingPageState extends ConsumerState<WallpaperSettingPage> {
                   width: double.infinity,
                   height: 160,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    height: 160,
-                    color: AppleColors.bgTertiary,
-                    alignment: Alignment.center,
-                    child: Text(
-                      '图片加载失败',
-                      style: TextStyle(
-                        color: ref.watch(themeProvider).themeColor.descColor(),
-                        fontSize: 13,
+                  errorBuilder:
+                      (_, __, ___) => Container(
+                        height: 160,
+                        color: AppleColors.bgTertiary,
+                        alignment: Alignment.center,
+                        child: Text(
+                          '图片加载失败',
+                          style: TextStyle(
+                            color:
+                                ref.watch(themeProvider).themeColor.descColor(),
+                            fontSize: 13,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
                 ),
               ),
             ],
@@ -411,14 +437,16 @@ class _WallpaperSettingPageState extends ConsumerState<WallpaperSettingPage> {
   }) {
     return GestureDetector(
       onTap: onTap,
+      // 必须显式 opaque：GestureDetector 默认 deferToChild，命中区只有子节点
+      // （Text）本身，胶囊的 padding 区域点了没反应，实测中心点按不动
+      behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: ref.watch(themeProvider).primaryColor.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color:
-                ref.watch(themeProvider).primaryColor.withValues(alpha: 0.4),
+            color: ref.watch(themeProvider).primaryColor.withValues(alpha: 0.4),
           ),
         ),
         child: Text(

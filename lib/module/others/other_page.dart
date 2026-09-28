@@ -22,8 +22,10 @@ import 'package:qinglong_app/module/in_app_purchase_page.dart';
 import 'package:qinglong_app/module/others/backup_page.dart';
 import 'package:qinglong_app/module/others/blur_settings_page.dart';
 import 'package:qinglong_app/module/others/change_account_page.dart';
+import 'package:qinglong_app/module/others/client_ip_page.dart';
 import 'package:qinglong_app/module/others/dependencies/dependency_setting_page.dart';
 import 'package:qinglong_app/module/others/sort_account_page.dart';
+import 'package:qinglong_app/module/others/storage_retention_page.dart';
 import 'package:qinglong_app/module/others/text_size_page.dart';
 import 'package:qinglong_app/module/others/update_password_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
@@ -598,113 +600,139 @@ class OtherPageState extends ConsumerState<OtherPage>
             ),
           ),
           const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildFeatureButton(
-                title: "任务日志",
-                icon: CupertinoIcons.square_stack_3d_down_right,
-                onTap: () {
-                  Navigator.of(context).pushNamed(Routes.routeTaskLog);
-                },
-              ),
-              _buildFeatureButton(
-                title: "登录日志",
-                icon: CupertinoIcons.text_badge_checkmark,
-                onTap: () {
-                  if (SingleAccountPageState.ofUserInfo(
-                    context,
-                  ).useSecretLogined) {
-                    "使用client_id方式登录无法获取登录日志".toast();
-                  } else {
-                    Navigator.of(context).pushNamed(Routes.routeLoginLog);
-                  }
-                },
-              ),
-              _buildFeatureButton(title: "应用设置", icon: CupertinoIcons.gear_alt, onTap: () {
-                Navigator.of(context).push(
-                  WallpaperPageRoute(
-                    builder: (context) => const AppKeyPage(),
-                  ),
-                );
-              }),
-              _buildFeatureButton(title: "通知设置", icon: CupertinoIcons.envelope, onTap: () {
-                Navigator.of(context).push(
-                  WallpaperPageRoute(
-                    builder: (context) => const PushSettingPage(),
-                  ),
-                );
-              }),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildFeatureButton(title: "修改密码", icon: CupertinoIcons.lock_shield, onTap: () {
+          _buildFeatureGridRow([
+            _buildFeatureButton(
+              title: "任务日志",
+              icon: CupertinoIcons.square_stack_3d_down_right,
+              onTap: () {
+                Navigator.of(context).pushNamed(Routes.routeTaskLog);
+              },
+            ),
+            _buildFeatureButton(
+              title: "登录日志",
+              icon: CupertinoIcons.text_badge_checkmark,
+              onTap: () {
                 if (SingleAccountPageState.ofUserInfo(
                   context,
                 ).useSecretLogined) {
-                  "使用client_id方式登录无法修改密码".toast();
+                  "使用client_id方式登录无法获取登录日志".toast();
                 } else {
-                  Navigator.of(context).push(
-                    WallpaperPageRoute(
-                      builder: (context) => const UpdatePasswordPage(),
-                    ),
-                  );
+                  Navigator.of(context).pushNamed(Routes.routeLoginLog);
                 }
-              }),
-              _buildFeatureButton(
-                title: "日志设置",
-                icon: CupertinoIcons.gobackward_30,
-                onTap: () {
-                  _delLog(context);
-                },
-              ),
-              _buildFeatureButton(
-                title: "系统设置",
-                icon: CupertinoIcons.shield_lefthalf_fill,
-                onTap: () {
-                  Navigator.of(context).pushNamed(Routes.routeSetting);
-                },
-              ),
-              _buildFeatureButton(title: "关于软件", icon: CupertinoIcons.info_circle, onTap: () {
-                Navigator.of(context).pushNamed(Routes.routeAbout);
-              }),
-            ],
-          ),
+              },
+            ),
+            _buildFeatureButton(title: "应用设置", icon: CupertinoIcons.gear_alt, onTap: () {
+              Navigator.of(context).push(
+                WallpaperPageRoute(
+                  builder: (context) => const AppKeyPage(),
+                ),
+              );
+            }),
+            _buildFeatureButton(title: "通知设置", icon: CupertinoIcons.envelope, onTap: () {
+              Navigator.of(context).push(
+                WallpaperPageRoute(
+                  builder: (context) => const PushSettingPage(),
+                ),
+              );
+            }),
+          ]),
           const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildFeatureButton(title: "壁纸设置", icon: CupertinoIcons.photo, onTap: () {
-                Navigator.of(context).pushNamed(Routes.routeWallpaperSetting);
-              }),
-              _buildFeatureButton(title: "模糊调节", icon: CupertinoIcons.circle_grid_3x3, onTap: () {
+          _buildFeatureGridRow([
+            _buildFeatureButton(title: "修改密码", icon: CupertinoIcons.lock_shield, onTap: () {
+              if (SingleAccountPageState.ofUserInfo(
+                context,
+              ).useSecretLogined) {
+                "使用client_id方式登录无法修改密码".toast();
+              } else {
                 Navigator.of(context).push(
                   WallpaperPageRoute(
-                    builder: (context) => const BlurSettingsPage(),
+                    builder: (context) => const UpdatePasswordPage(),
                   ),
                 );
-              }),
-              _buildFeatureButton(title: "依赖设置", icon: CupertinoIcons.cube_box, onTap: () {
-                Navigator.of(context).push(
-                  WallpaperPageRoute(
-                    builder: (context) => const DependencySettingPage(),
-                  ),
-                );
-              }),
-              _buildFeatureButton(title: "备份恢复", icon: CupertinoIcons.cloud_upload, onTap: () {
-                Navigator.of(context).push(
-                  WallpaperPageRoute(
-                    builder: (context) => const BackupPage(),
-                  ),
-                );
-              }),
-            ],
-          ),
+              }
+            }),
+            _buildFeatureButton(
+              title: "日志设置",
+              icon: CupertinoIcons.gobackward_30,
+              onTap: () {
+                _delLog(context);
+              },
+            ),
+            _buildFeatureButton(
+              title: "系统设置",
+              icon: CupertinoIcons.shield_lefthalf_fill,
+              onTap: () {
+                Navigator.of(context).pushNamed(Routes.routeSetting);
+              },
+            ),
+            _buildFeatureButton(title: "关于软件", icon: CupertinoIcons.info_circle, onTap: () {
+              Navigator.of(context).pushNamed(Routes.routeAbout);
+            }),
+          ]),
+          const SizedBox(height: 10),
+          _buildFeatureGridRow([
+            _buildFeatureButton(title: "壁纸设置", icon: CupertinoIcons.photo, onTap: () {
+              Navigator.of(context).pushNamed(Routes.routeWallpaperSetting);
+            }),
+            _buildFeatureButton(title: "模糊调节", icon: CupertinoIcons.circle_grid_3x3, onTap: () {
+              Navigator.of(context).push(
+                WallpaperPageRoute(
+                  builder: (context) => const BlurSettingsPage(),
+                ),
+              );
+            }),
+            _buildFeatureButton(title: "依赖设置", icon: CupertinoIcons.cube_box, onTap: () {
+              Navigator.of(context).push(
+                WallpaperPageRoute(
+                  builder: (context) => const DependencySettingPage(),
+                ),
+              );
+            }),
+            _buildFeatureButton(title: "备份恢复", icon: CupertinoIcons.cloud_upload, onTap: () {
+              Navigator.of(context).push(
+                WallpaperPageRoute(
+                  builder: (context) => const BackupPage(),
+                ),
+              );
+            }),
+          ]),
+          const SizedBox(height: 10),
+          _buildFeatureGridRow([
+            _buildFeatureButton(title: "IP 设置", icon: CupertinoIcons.arrow_left_right_circle, onTap: () {
+              Navigator.of(context).push(
+                WallpaperPageRoute(
+                  builder: (context) => const ClientIpPage(),
+                ),
+              );
+            }),
+            _buildFeatureButton(title: "存储清理", icon: CupertinoIcons.trash, onTap: () {
+              Navigator.of(context).push(
+                WallpaperPageRoute(
+                  builder: (context) => const StorageRetentionPage(),
+                ),
+              );
+            }),
+          ]),
         ],
       ),
+    );
+  }
+
+  /// 基础功能 4 列网格行：每行固定 4 个等宽列，各入口在列内居中；
+  /// 一行不足 4 个时左右补空位（居中停放），与上一行各列对齐。
+  Widget _buildFeatureGridRow(List<Widget> buttons) {
+    const int columns = 4;
+    final int empty = columns - buttons.length;
+    final int leading = empty > 0 ? empty ~/ 2 : 0;
+    final int trailing = empty - leading;
+    return Row(
+      children: [
+        for (int i = 0; i < leading; i++)
+          const Expanded(child: SizedBox.shrink()),
+        for (final button in buttons) Expanded(child: Center(child: button)),
+        for (int i = 0; i < trailing; i++)
+          const Expanded(child: SizedBox.shrink()),
+      ],
     );
   }
 

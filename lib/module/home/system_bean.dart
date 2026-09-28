@@ -193,6 +193,40 @@ class SystemBean {
     }
   }
 
+  // 2.22.0 及以上：文件读取路由 /configs/:file、/logs/:file 已下线（业务码 410），
+  // 必须改用 /configs/detail?path= 与 /logs/detail?file=；
+  // 日志接口（/logs/detail、/crons/:id/log、/subscriptions/:id/log）改为分块读取，
+  // 默认只返回尾部 256KB，并返回 offset/nextOffset/total/truncated 供分页续读
+  bool isUpperVersion2_22_0() {
+    try {
+      List<String>? version1 = version?.split("\.");
+
+      String f = version1?[0] ?? "2";
+      String s = version1?[1] ?? "10";
+      String t = version1?[2] ?? "0";
+
+      if (f.length == 1) {
+        f = "0$f";
+      }
+      if (s.length == 1) {
+        s = "0$s";
+      }
+      if (t.length == 1) {
+        t = "0$t";
+      }
+
+      String tempSum = "$f$s$t";
+
+      if ((int.tryParse(tempSum) ?? 1) >= 022200) {
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     data['version'] = this.version;
