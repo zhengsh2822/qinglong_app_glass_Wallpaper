@@ -16,12 +16,21 @@ class CupertinoSheer extends ConsumerWidget {
   final String title;
   final GestureTapCallback onTap;
 
-  const CupertinoSheer({Key? key, required this.title, required this.onTap})
-    : super(key: key);
+  /// 危险项（删除等）：文字红色系
+  final bool danger;
+
+  const CupertinoSheer({
+    Key? key,
+    required this.title,
+    required this.onTap,
+    this.danger = false,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context, ref) {
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
+    // 弹层操作项文案跟随全局字体粗细（与列表卡片统一）
+    final FontWeight fw = FontWeight(ref.watch(textWeightProvider));
     if (isCyber) {
       return Material(
         color: Colors.transparent,
@@ -36,9 +45,10 @@ class CupertinoSheer extends ConsumerWidget {
               child: Text(
                 title,
                 style: TextStyle(
-                  color: CyberColors.titleWhite,
+                  color: danger ? CyberColors.neonRed : CyberColors.titleWhite,
                   fontSize: 16,
                   fontFamily: 'MiSans',
+                  fontWeight: fw,
                 ),
               ),
             ),
@@ -60,8 +70,12 @@ class CupertinoSheer extends ConsumerWidget {
             child: Text(
               title,
               style: TextStyle(
-                color: ref.watch(themeProvider).themeColor.titleColor(),
+                color:
+                    danger
+                        ? const Color(0xFFFF3B30)
+                        : ref.watch(themeProvider).themeColor.titleColor(),
                 fontSize: 16,
+                fontWeight: fw,
               ),
             ),
           ),

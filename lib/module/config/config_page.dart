@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/base_state_widget.dart';
 import 'package:qinglong_app/base/http/http.dart';
@@ -15,6 +16,7 @@ import 'package:qinglong_app/base/ui/empty_widget.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/module/config/add_config_page.dart';
+import 'package:qinglong_app/module/config/config_actions.dart';
 import 'package:qinglong_app/module/config/config_bean.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 import 'package:qinglong_app/utils/utils.dart';
@@ -92,6 +94,25 @@ class ConfigPageState extends ConsumerState<ConfigPage>
     }
   }
 
+  /// 重新拉取配置文件列表（删除成功后刷新；列表页 keepAlive 需主动刷新）
+  void refreshConfigList() {
+    ref
+        .read(
+          SingleAccountPageState.ofConfigProvider(context)(
+            getProviderName(context),
+          ).notifier,
+        )
+        .loadData(context, false);
+  }
+
+  /// 长按配置文件卡片 → 更多操作弹层（编辑/分享/下载/删除）
+  ///
+  /// 自带文件不显示删除项，仅自建文件可删；删除成功后刷新列表。
+  void _showActions(BuildContext context, ConfigBean bean) {
+    HapticFeedback.mediumImpact();
+    showConfigActions(context, bean: bean, onDeleted: refreshConfigList);
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -143,10 +164,15 @@ class ConfigPageState extends ConsumerState<ConfigPage>
           for (int i = 0; i < model.list.length; i++) {
             ConfigBean value = model.list[i];
 
+            // 兜底删除用的锚点目录（青龙配置目录下的隐藏辅助目录）不展示给用户
+            if (value.title == kConfigDeleteAnchor) continue;
+
             if (value.title?.toLowerCase() == "config.sh") {
               list.add(
                 GestureDetector(
                   behavior: HitTestBehavior.opaque,
+                  // 长按 → 配置文件更多操作（编辑/分享/下载/删除）
+                  onLongPress: () => _showActions(context, value),
                   onDoubleTap: () {
                     Navigator.of(context)
                         .pushNamed(
@@ -162,11 +188,17 @@ class ConfigPageState extends ConsumerState<ConfigPage>
                           });
                         });
                   },
-                  child: ConfigCell(bean: value),
+                  child: ConfigCell(bean: value, onDeleted: refreshConfigList),
                 ),
               );
             } else {
-              list.add(ConfigCell(bean: value));
+              list.add(
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onLongPress: () => _showActions(context, value),
+                  child: ConfigCell(bean: value, onDeleted: refreshConfigList),
+                ),
+              );
             }
           }
 
@@ -213,7 +245,11 @@ class ConfigPageState extends ConsumerState<ConfigPage>
 class ConfigCell extends ConsumerWidget {
   final ConfigBean bean;
 
-  const ConfigCell({Key? key, required this.bean}) : super(key: key);
+  /// 详情页里删除成功返回 true 时回调（用于刷新列表）
+  final VoidCallback? onDeleted;
+
+  const ConfigCell({Key? key, required this.bean, this.onDeleted})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context, ref) {
@@ -250,7 +286,12 @@ class ConfigCell extends ConsumerWidget {
       onTap: () {
         Navigator.of(
           context,
-        ).pushNamed(Routes.routeConfigDetail, arguments: {"bean": bean});
+        ).pushNamed(Routes.routeConfigDetail, arguments: {"bean": bean}).then((
+          value,
+        ) {
+          // 详情页里删除成功会 pop(true)：回到列表时同步刷新
+          if (value == true) onDeleted?.call();
+        });
       },
       child: SizedBox(
         width: MediaQuery.of(context).size.width,

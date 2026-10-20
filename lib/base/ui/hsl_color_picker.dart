@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:qinglong_app/base/theme.dart';
 
 /// 可复用的 HSL 颜色选择器（3 条独立滑块）
 ///
@@ -205,9 +207,12 @@ class _SliderRow extends StatelessWidget {
           width: labelWidth,
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              fontWeight: FontWeight.w500,
+              // 弹窗卡片内文案跟随全局字体粗细
+              fontWeight: FontWeight(
+                ProviderScope.containerOf(context).read(textWeightProvider),
+              ),
             ),
           ),
         ),

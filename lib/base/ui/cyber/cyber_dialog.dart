@@ -1,8 +1,10 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/sp_const.dart';
+import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
@@ -176,7 +178,10 @@ class CyberGhostButton extends StatelessWidget {
               color: textColor,
               fontSize: 15,
               fontFamily: 'MiSans',
-              fontWeight: primary || danger ? FontWeight.w600 : FontWeight.w500,
+              // 弹窗卡片按钮跟随全局字体粗细
+              fontWeight: FontWeight(
+                ProviderScope.containerOf(context).read(textWeightProvider),
+              ),
             ),
           ),
         ),
@@ -243,7 +248,10 @@ Future<bool?> showEditTaskDialog(
                   color: CyberColors.cyan,
                   fontSize: 17,
                   fontFamily: 'MiSans',
-                  fontWeight: FontWeight.w600,
+                  // 标题跟随全局字体粗细（弹窗卡片统一）
+                  fontWeight: FontWeight(
+                    ProviderScope.containerOf(context).read(textWeightProvider),
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
@@ -352,7 +360,10 @@ Future<bool?> showCyberConfirmDialog(
                 color: danger ? CyberColors.neonRed : CyberColors.cyan,
                 fontSize: 17,
                 fontFamily: 'MiSans',
-                fontWeight: FontWeight.w600,
+                // 标题跟随全局字体粗细（弹窗卡片统一）
+                fontWeight: FontWeight(
+                  ProviderScope.containerOf(context).read(textWeightProvider),
+                ),
               ),
             ),
             const SizedBox(height: 12),

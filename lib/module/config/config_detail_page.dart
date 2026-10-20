@@ -1,11 +1,7 @@
-import 'dart:math';
-
-import 'package:qinglong_app/utils/share_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:qinglong_app/base/cupertino_sheet.dart';
 import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
@@ -13,12 +9,10 @@ import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/highlight/selectable_code_view.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
+import 'package:qinglong_app/module/config/config_actions.dart';
 import 'package:qinglong_app/module/config/config_bean.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/language_utils.dart';
-
-import '../../base/routes.dart';
-import '../../utils/icloud_utils.dart';
 
 class ConfigDetailPage extends ConsumerStatefulWidget {
   final ConfigBean bean;
@@ -59,50 +53,17 @@ class _ConfigDetailPageState extends ConsumerState<ConfigDetailPage>
             padding: EdgeInsets.zero,
             onPressed: () async {
               hideKeyboardFocus();
-              showMoreOperate(context, [
-                CupertinoSheer(
-                  title: "编辑",
-                  onTap: () async {
-                    Navigator.of(context)
-                        .pushNamed(
-                          Routes.routeConfigEdit,
-                          arguments: {
-                            "title": widget.bean.title,
-                            "content": sourceContent,
-                          },
-                        )
-                        .then((value) async {
-                          if (value != null && (value as String).isNotEmpty) {
-                            sourceContent = value;
-                            setState(() {});
-                          }
-                        });
-                  },
-                ),
-                addDivider(),
-                CupertinoSheer(
-                  title: "分享",
-                  onTap: () {
-                    ShareUtils.share(sourceContent ?? "");
-                  },
-                ),
-                addDivider(),
-                CupertinoSheer(
-                  title: "下载",
-                  onTap: () async {
-                    try {
-                      String name =
-                          "${Random().nextInt(40000)}_${widget.bean.title}";
-                      var file = await FileUtil(
-                        0,
-                      ).writeDownloadFile(name, sourceContent ?? "");
-                      "已写入qinglong_app文件夹下,文件名$name".toast2();
-                    } catch (e) {
-                      e.toString().toast();
-                    }
-                  },
-                ),
-              ]);
+              // 操作集与列表页长按共用同一弹层（编辑/分享/下载/删除）
+              showConfigActions(
+                context,
+                bean: widget.bean,
+                content: sourceContent,
+                onContentChanged: (value) {
+                  sourceContent = value;
+                  setState(() {});
+                },
+                onDeleted: () => Navigator.of(context).pop(true),
+              );
             },
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 15),

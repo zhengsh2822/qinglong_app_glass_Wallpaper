@@ -45,10 +45,27 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
 
   @override
   Widget build(BuildContext context) {
-    int count = getIt<MultiAccountUserInfoViewModel>().tokenBeans.length + 1;
-    if (count > MultiAccountUserInfoViewModel.maxAccount) {
-      count = MultiAccountUserInfoViewModel.maxAccount;
+    final viewModel = getIt<MultiAccountUserInfoViewModel>();
+    // 有效账号槽位：host 非空 + 槽位单例已注册（删除账号后槽位会被重置为空）
+    // 注意：tokenBeans 是按"槽位下标"定位的，删除后槽位会留空，
+    // 所以列表展示 index 与槽位 index 必须分开，避免串位。
+    final List<int> usedSlots = [];
+    for (int i = 0; i < viewModel.tokenBeans.length; i++) {
+      if ((viewModel.tokenBeans[i].host ?? "").isEmpty) continue;
+      if (!getIt.isRegistered<UserInfoViewModel>(instanceName: i.toString())) {
+        continue;
+      }
+      usedSlots.add(i);
     }
+    // 第一个空闲槽位 → 唯一的"添加账号"入口；槽位满了就不显示（避免出现两个添加按钮）
+    int? freeSlot;
+    for (int i = 0; i < MultiAccountUserInfoViewModel.maxAccount; i++) {
+      if (!usedSlots.contains(i)) {
+        freeSlot = i;
+        break;
+      }
+    }
+    final int itemCount = usedSlots.length + (freeSlot == null ? 0 : 1);
     final bool isCyber = _isCyber;
     final Widget scaffold = Scaffold(
       backgroundColor: Colors.transparent,
@@ -102,34 +119,27 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemBuilder: (context, index) {
-                      if (index >=
-                              getIt<MultiAccountUserInfoViewModel>()
-                                  .tokenBeans
-                                  .length ||
-                          (getIt<MultiAccountUserInfoViewModel>()
-                                      .tokenBeans
-                                      .length <
-                                  count &&
-                              index == count - 1)) {
-                        return addAccount(context, index);
+                      if (index >= usedSlots.length) {
+                        return addAccount(context, freeSlot!);
                       }
 
-                      var userInfo = getIt<UserInfoViewModel>(
-                        instanceName: index.toString(),
+                      final int slot = usedSlots[index];
+                      final userInfo = getIt<UserInfoViewModel>(
+                        instanceName: slot.toString(),
                       );
                       return GestureDetector(
                         behavior: HitTestBehavior.opaque,
                         onTap: () {
                           context
                               .findAncestorStateOfType<MultiAccountPageState>()
-                              ?.updateIndex(index);
+                              ?.updateIndex(slot);
                           Navigator.of(context).pop();
                         },
-                        child: _buildAccountCard(userInfo, index, isCyber),
+                        child: _buildAccountCard(userInfo, slot, isCyber),
                       );
                     },
                     separatorBuilder: (_, __) => const SizedBox(height: 4),
-                    itemCount: count,
+                    itemCount: itemCount,
                   ),
                 ),
               ],
@@ -253,10 +263,25 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
       danger: true,
     ).then((confirmed) {
       if (confirmed == true) {
-        getIt<MultiAccountUserInfoViewModel>().removeHistoryAccount(model.host);
-        getIt<UserInfoViewModel>(
+        final viewModel = getIt<MultiAccountUserInfoViewModel>();
+        // 仅当没有其它槽位使用同一 host 时才清理历史记录：
+        // 否则会连带删掉同 host 的其它账号历史（本次实机复现：两个槽位同 host）
+        final bool sharedByOtherSlot =
+            viewModel.tokenBeans
+                .asMap()
+                .entries
+                .any((e) => e.key != index && e.value.host == model.host);
+        if (!sharedByOtherSlot) {
+          viewModel.removeHistoryAccount(model.host);
+        }
+        // 槽位单例可能已被清理过，查询前先判断注册状态，避免抛异常
+        if (getIt.isRegistered<UserInfoViewModel>(
           instanceName: index.toString(),
-        ).clearCurrentInfo(index);
+        )) {
+          getIt<UserInfoViewModel>(
+            instanceName: index.toString(),
+          ).clearCurrentInfo(index);
+        }
         setState(() {});
       }
     });

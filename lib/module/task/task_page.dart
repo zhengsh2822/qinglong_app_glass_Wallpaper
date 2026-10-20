@@ -504,7 +504,7 @@ class TaskPageState extends ConsumerState<TaskPage>
                                       tabs: [
                                         TaskViewModel.allStr,
                                         TaskViewModel.runningStr,
-                                        TaskViewModel.neverStr,
+                                        TaskViewModel.idleStr,
                                         TaskViewModel.disableStr,
                                       ],
                                       tabController: _tabController!,

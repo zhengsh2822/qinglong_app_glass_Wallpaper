@@ -290,7 +290,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           isCyber,
           label: '域名',
           controller: _hostController,
-          hint: 'http://1.1.1.1:5700',
+          hint: 'http://1.1.1.1:5700（支持 IPv6）',
         ),
         const SizedBox(height: 16),
         _buildField(
@@ -489,15 +489,22 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ),
                         ),
                 onPressed: () async {
-                  _ensureHttpPrefix();
-                  if (!_hostController.text.startsWith("http://") &&
-                      !_hostController.text.startsWith("https://")) {
-                    "域名必须以http://或者https://开头".toast();
+                  // 规范化面板地址：自动补 http:// 前缀 + 裸 IPv6 自动补方括号
+                  // 如 192.168.31.109:5700 → http://192.168.31.109:5700
+                  //    240e:1a2b::1:5700   → http://[240e:1a2b::1]:5700
+                  final host = Utils.normalizeHost(_hostController.text);
+                  if (host.isEmpty) {
+                    "请输入域名".toast();
                     return;
                   }
-                  SingleAccountPageState.of(
-                    context,
-                  )?.registerHttp(_hostController.text);
+                  if (host != _hostController.text) {
+                    // 回写输入框，保证历史账号/重新注册用的都是规范化后的地址
+                    _hostController.text = host;
+                    _hostController.selection = TextSelection.fromPosition(
+                      TextPosition(offset: host.length),
+                    );
+                  }
+                  SingleAccountPageState.of(context)?.registerHttp(host);
                   SingleAccountPageState.ofHttp(context)?.pushedLoginPage =
                       false;
                   Utils.hideKeyBoard(context);
@@ -612,7 +619,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           "历史账号",
                           style: TextStyle(
                             fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                            // 弹窗卡片标题跟随全局字体粗细
+                            fontWeight: FontWeight(ref.read(textWeightProvider)),
                             color:
                                 isCyber
                                     ? CyberColors.cyan

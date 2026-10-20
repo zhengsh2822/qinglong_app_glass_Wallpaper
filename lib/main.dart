@@ -109,7 +109,12 @@ void main() async {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text("报错了:${flutterErrorDetail.exceptionAsString()}", maxLines: 5),
+                    // 显示异常本体：FlutterErrorDetails.toString() 只会输出
+                    // "Instance of 'FlutterErrorDetails'"，用户截图无法定位问题
+                    Text(
+                      "报错了:${flutterErrorDetail.exceptionAsString()}",
+                      maxLines: 6,
+                    ),
                     const SizedBox(height: 5),
                     const Text(
                       "请尝试右滑退出页面,或者重启App,如果打开App之后就报错,一直无法进入首页正常操作,请双击这段文字,清空所有本地配置数据(不会删除本地备份的数据文件),恢复App原始状态,注意,此操作不可逆",

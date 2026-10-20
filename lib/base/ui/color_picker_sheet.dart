@@ -70,7 +70,8 @@ class _ColorPickerSheetState extends ConsumerState<ColorPickerSheet> {
                   widget.title,
                   style: TextStyle(
                     fontSize: 18,
-                    fontWeight: FontWeight.w600,
+                    // 弹窗卡片标题跟随全局字体粗细
+                    fontWeight: FontWeight(ref.watch(textWeightProvider)),
                     color: titleColor,
                   ),
                 ),

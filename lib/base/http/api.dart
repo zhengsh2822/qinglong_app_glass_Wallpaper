@@ -943,6 +943,26 @@ class Api {
     );
   }
 
+  /// 配置文件"另存为"（origin → dest），用于曲线删除：
+  /// 青龙没有删除配置文件接口，但 POST /scripts 的另存为分支会在写入新文件前
+  /// `rmPath(origin)`，因此把 dest 指向配置目录下已存在的锚点目录，即可只留下
+  /// "删除 origin"的效果（写目录必然失败，不影响删除结果）。
+  Future<HttpResponse<NullResponse>> moveScriptBySaveAs(
+    String origin,
+    String dest,
+  ) async {
+    return await getIt<Http>(instanceName: index.toString()).post<NullResponse>(
+      getIt<Url>(instanceName: index.toString()).addScript,
+      {
+        "filename": dest,
+        "originFilename": origin,
+        "content": "",
+        // 空 path 会被面板还原为 scripts 目录，配合 ../config 相对路径定位配置目录
+        "path": "",
+      },
+    );
+  }
+
   Future<HttpResponse<NullResponse>> delDependency(
     List<String?>? sIds,
     List<int?>? ids,

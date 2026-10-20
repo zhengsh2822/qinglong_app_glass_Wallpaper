@@ -13,7 +13,8 @@ Map<int, int> sort = {0: 0, 5: 1, 3: 2, 1: 3, 4: 4};
 class TaskViewModel extends BaseViewModel {
   static const String allStr = "全部";
   static const String runningStr = "运行中";
-  static const String neverStr = "未使用";
+  /// 空闲中：与青龙网页端「状态」筛选一致（CrontabStatus.idle）
+  static const String idleStr = "空闲中";
   static const String notScriptStr = "拉库";
   static const String disableStr = "已禁用";
 
@@ -187,8 +188,13 @@ class TaskViewModel extends BaseViewModel {
     notScripts.clear();
     disabled.clear();
     for (final item in list) {
+      // 青龙 status 语义：0 运行中 / 1 空闲中 / 2 已禁用 / 3 队列中
       if (item.status == 0) running.add(item);
-      if (item.lastRunningTime == null) neverRunning.add(item);
+      // 「空闲中」= 青龙网页端的「空闲中」（status == 1）
+      // 原实现按 lastRunningTime == null 判断，但青龙对未运行任务的 last_running_time
+      // 返回 0（永不为 null），导致该 tab 历史上始终为空、看起来没有功能。
+      // 已禁用任务由「已禁用」tab 单独承载，这里排除，避免两边重复出现。
+      if (item.status == 1 && item.isDisabled != 1) neverRunning.add(item);
       if (item.command != null &&
           (item.command!.startsWith("ql repo") ||
               item.command!.startsWith("ql raw"))) {
