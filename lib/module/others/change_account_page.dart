@@ -6,27 +6,40 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/multi_account_userinfo_viewmodel.dart';
+import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
+import 'package:qinglong_app/base/ui/container_transform_route.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
+import 'package:qinglong_app/base/ui/shared_page_entrance.dart';
+import 'package:qinglong_app/base/ui/wallpaper_background.dart';
 import 'package:qinglong_app/base/userinfo_viewmodel.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 
 import '../../main.dart';
+import '../login/login_page.dart';
 
 class ChangeAccountPage extends ConsumerStatefulWidget {
-  const ChangeAccountPage({Key? key}) : super(key: key);
+  /// 共享容器转场传入的动画；为 null 时保持原行为（零时长整页打开）。
+  /// 非空时页面不再自绘 CyberBackground，背景由转场容器提供。
+  final Animation<double>? animation;
+
+  const ChangeAccountPage({Key? key, this.animation}) : super(key: key);
 
   @override
   _ChangeAccountPageState createState() => _ChangeAccountPageState();
 }
 
 class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
+  /// 添加账号卡片（共享转场源）
+  final GlobalKey _addAccountKey = GlobalKey();
+  bool _addAccountOpening = false;
+
   @override
   void initState() {
     super.initState();
@@ -67,6 +80,26 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
     }
     final int itemCount = usedSlots.length + (freeSlot == null ? 0 : 1);
     final bool isCyber = _isCyber;
+    final Animation<double>? entrance = widget.animation;
+
+    /// 共享转场时按区间做透明度 + 轻微位移的错峰入场；
+    /// 普通入口（animation 为空）保持原样，不额外包裹。
+    Widget stagger(
+      Widget child, {
+      required double start,
+      required double end,
+      double offsetY = 0,
+    }) {
+      if (entrance == null) return child;
+      return _AccountPageStagger(
+        animation: entrance,
+        start: start,
+        end: end,
+        offsetY: offsetY,
+        child: child,
+      );
+    }
+
     final Widget scaffold = Scaffold(
       backgroundColor: Colors.transparent,
       body: AnnotatedRegion<SystemUiOverlayStyle>(
@@ -82,34 +115,44 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
               children: [
                 Align(
                   alignment: Alignment.topLeft,
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.of(context).pop();
-                    },
-                    behavior: HitTestBehavior.opaque,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 30,
-                        vertical: kToolbarHeight,
-                      ),
-                      child: Icon(
-                        CupertinoIcons.clear_thick,
-                        size: 24,
-                        color: isCyber ? CyberColors.cyan : null,
+                  child: stagger(
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).pop();
+                      },
+                      behavior: HitTestBehavior.opaque,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 30,
+                          vertical: kToolbarHeight,
+                        ),
+                        child: Icon(
+                          CupertinoIcons.clear_thick,
+                          size: 24,
+                          color: isCyber ? CyberColors.cyan : null,
+                        ),
                       ),
                     ),
+                    start: 0.40,
+                    end: 0.68,
+                    offsetY: 8,
                   ),
                 ),
                 const SizedBox(height: 10),
-                Text(
-                  "轻触账号以切换身份使用",
-                  style: TextStyle(
-                    color:
-                        isCyber
-                            ? Colors.blueGrey
-                            : ref.watch(themeProvider).themeColor.descColor(),
-                    fontSize: 13,
+                stagger(
+                  Text(
+                    "轻触账号以切换身份使用",
+                    style: TextStyle(
+                      color:
+                          isCyber
+                              ? Colors.blueGrey
+                              : ref.watch(themeProvider).themeColor.descColor(),
+                      fontSize: 13,
+                    ),
                   ),
+                  start: 0.45,
+                  end: 0.73,
+                  offsetY: 10,
                 ),
                 const SizedBox(height: 10),
                 Padding(
@@ -119,23 +162,32 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemBuilder: (context, index) {
+                      Widget item;
                       if (index >= usedSlots.length) {
-                        return addAccount(context, freeSlot!);
+                        item = addAccount(context, freeSlot!);
+                      } else {
+                        final int slot = usedSlots[index];
+                        final userInfo = getIt<UserInfoViewModel>(
+                          instanceName: slot.toString(),
+                        );
+                        item = GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () {
+                            context
+                                .findAncestorStateOfType<
+                                  MultiAccountPageState
+                                >()
+                                ?.updateIndex(slot);
+                            Navigator.of(context).pop();
+                          },
+                          child: _buildAccountCard(userInfo, slot, isCyber),
+                        );
                       }
-
-                      final int slot = usedSlots[index];
-                      final userInfo = getIt<UserInfoViewModel>(
-                        instanceName: slot.toString(),
-                      );
-                      return GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () {
-                          context
-                              .findAncestorStateOfType<MultiAccountPageState>()
-                              ?.updateIndex(slot);
-                          Navigator.of(context).pop();
-                        },
-                        child: _buildAccountCard(userInfo, slot, isCyber),
+                      return stagger(
+                        item,
+                        start: 0.50 + index * 0.05,
+                        end: 0.78 + index * 0.05,
+                        offsetY: 16,
                       );
                     },
                     separatorBuilder: (_, __) => const SizedBox(height: 4),
@@ -148,7 +200,9 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
         ),
       ),
     );
-    if (isCyber) {
+    // 共享容器转场自带整页底色，不能再叠加 CyberBackground；
+    // 其它入口（animation 为空）保持原赛博背景。
+    if (isCyber && entrance == null) {
       return CyberBackground(child: scaffold);
     }
     return scaffold;
@@ -361,61 +415,119 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
     );
   }
 
+  /// 添加账号：从卡片共享展开到登录页（同导航器，返回时收回卡片）
+  void _openAddAccountPage(int index, Color accentColor) {
+    final RenderBox? box =
+        _addAccountKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) {
+      // 兜底：保持原行为
+      context
+          .findAncestorStateOfType<MultiAccountPageState>()
+          ?.updateIndex(index);
+      Navigator.of(context).pop();
+      return;
+    }
+
+    final Rect rect = box.localToGlobal(Offset.zero) & box.size;
+    final double sigma = SpUtil.getDouble(spCardBlurSigma, defValue: 4);
+
+    HapticFeedback.lightImpact();
+    setState(() => _addAccountOpening = true);
+
+    Navigator.of(context)
+        .push(
+          ContainerTransformRoute(
+            sourceRect: rect,
+            sourceChild: _buildAddAccountContent(accentColor),
+            background: const WallpaperBackground(cacheBlur: true),
+            sourceBlurSigma: sigma,
+            sourceHighlightOpacity: 0,
+            pageBackground: const Color(0xFF080A0D),
+            pageBuilder:
+                (context, animation) => AccountIndexScope(
+                  index: index,
+                  child: SharedPageEntrance(
+                    animation: animation,
+                    child: LoginPage(
+                      fromAddNewAccount: true,
+                      targetAccountIndex: index,
+                    ),
+                  ),
+                ),
+          ),
+        )
+        .whenComplete(() {
+          if (mounted) {
+            setState(() => _addAccountOpening = false);
+          }
+        });
+  }
+
   /// 添加账号按钮（赛博/非赛博统一布局）
   Widget addAccount(BuildContext context, int index) {
     final bool isCyber = _isCyber;
     final accentColor =
         isCyber ? CyberColors.cyan : ref.watch(themeProvider).primaryColor;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () {
-        context.findAncestorStateOfType<MultiAccountPageState>()?.updateIndex(
-          index,
-        );
-        Navigator.of(context).pop();
-      },
-      child:
-          isCyber
-              ? Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                child: OptimizedFrostedGlass(
-                  sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
-                  borderRadius: BorderRadius.circular(18),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.transparent,
+    return Opacity(
+      opacity: _addAccountOpening ? 0 : 1,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => _openAddAccountPage(index, accentColor),
+        child:
+            isCyber
+                ? Container(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 6,
+                  ),
+                  child: KeyedSubtree(
+                    key: _addAccountKey,
+                    child: OptimizedFrostedGlass(
+                      sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: CyberColors.cardStroke,
-                        width: 1,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: CyberColors.cardStroke,
+                            width: 1,
+                          ),
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(18),
+                          child: _buildAddAccountContent(accentColor),
+                        ),
                       ),
                     ),
-                    child: Material(
-                      color: Colors.transparent,
+                  ),
+                )
+                : Container(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 6,
+                  ),
+                  child: KeyedSubtree(
+                    key: _addAccountKey,
+                    child: OptimizedFrostedGlass(
+                      sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
                       borderRadius: BorderRadius.circular(18),
-                      child: _buildAddAccountContent(accentColor),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: CyberColors.cardStroke,
+                            width: 1,
+                          ),
+                        ),
+                        child: _buildAddAccountContent(accentColor),
+                      ),
                     ),
                   ),
                 ),
-              )
-              : Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                child: OptimizedFrostedGlass(
-                  sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
-                  borderRadius: BorderRadius.circular(18),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.transparent,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: CyberColors.cardStroke,
-                        width: 1,
-                      ),
-                    ),
-                    child: _buildAddAccountContent(accentColor),
-                  ),
-                ),
-              ),
+      ),
     );
   }
 
@@ -441,6 +553,46 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
           Text("添加账号", style: TextStyle(color: accentColor, fontSize: 15)),
         ],
       ),
+    );
+  }
+}
+
+/// 共享容器转场下的错峰入场：透明度 + 轻微上移。
+/// 反向播放时区间自动倒放，元素先退场，容器再收回卡片。
+class _AccountPageStagger extends StatelessWidget {
+  const _AccountPageStagger({
+    required this.animation,
+    required this.start,
+    required this.end,
+    required this.offsetY,
+    required this.child,
+  });
+
+  final Animation<double> animation;
+  final double start;
+  final double end;
+  final double offsetY;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: animation,
+      child: child,
+      builder: (context, child) {
+        final double progress = Interval(
+          start,
+          end,
+          curve: Curves.easeOutCubic,
+        ).transform(animation.value);
+        return Opacity(
+          opacity: progress.clamp(0.0, 1.0),
+          child: Transform.translate(
+            offset: Offset(0, offsetY * (1 - progress)),
+            child: child,
+          ),
+        );
+      },
     );
   }
 }

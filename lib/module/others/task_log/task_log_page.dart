@@ -23,6 +23,7 @@ import 'package:qinglong_app/module/others/task_log/task_log_bean.dart';
 import 'package:qinglong_app/module/task/intime_log/intime_history_log_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
+import 'package:qinglong_app/utils/ql_debug_log.dart';
 
 import '../../../main.dart';
 import '../../home/system_bean.dart';
@@ -41,7 +42,10 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
     with LazyLoadState<TaskLogPage> {
   List<TaskLogBean> list = [];
 
-  TextEditingController searchText = TextEditingController();
+  // 初始筛选文本在 initState 写入构造参数，保证首帧渲染即是筛选后的列表，
+  // 避免「先展示全部日志、预填搜索词后再筛掉」的闪变。
+  late final TextEditingController searchText;
+
   Timer? _searchDebounce;
 
   ScrollController controller = ScrollController();
@@ -59,6 +63,11 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
   @override
   void initState() {
     super.initState();
+    searchText = TextEditingController(text: widget.searchText);
+    QlDebugLog.write(
+      'QLLOG TaskLog initState search="${widget.searchText}" '
+      'controllerText="${searchText.text}"',
+    );
     controller.addListener(floatingButtonVisibility);
     searchText.addListener(() {
       _searchDebounce?.cancel();
@@ -93,6 +102,20 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
   @override
   Widget build(BuildContext context) {
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
+    if (list.isNotEmpty) {
+      final visible =
+          list
+              .where(
+                (e) =>
+                    searchText.text.isEmpty ||
+                    (e.name ?? "").contains(searchText.text),
+              )
+              .length;
+      QlDebugLog.write(
+        'QLLOG TaskLog build total=${list.length} visible=$visible '
+        'search="${searchText.text}"',
+      );
+    }
     final scaffold = GestureDetector(
       behavior: HitTestBehavior.opaque,
       onPanDown: (_) {
@@ -120,9 +143,9 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
         ),
         body: GlassPageBackground(
           child:
-            list.isEmpty
-                ? const Center(child: LoadingWidget())
-                : FloatingSearchBarArea(
+              list.isEmpty
+                  ? const Center(child: LoadingWidget())
+                  : FloatingSearchBarArea(
                     controller: searchText,
                     listView: SlidableAutoCloseBehavior(
                       child: ListView.builder(
@@ -136,21 +159,24 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                         keyboardDismissBehavior:
                             ScrollViewKeyboardDismissBehavior.onDrag,
                         itemBuilder: (context, index) {
-                            TaskLogBean item = list[index];
+                          TaskLogBean item = list[index];
 
-                            if (searchText.text.isNotEmpty &&
-                                !(item.name?.contains(searchText.text) ??
-                                    false)) {
-                              return const SizedBox.shrink();
-                            }
+                          if (searchText.text.isNotEmpty &&
+                              !(item.name?.contains(searchText.text) ??
+                                  false)) {
+                            return const SizedBox.shrink();
+                          }
 
-                            if ((item.isDir ?? false)) {
-                              if (isCyber) {
-                                return Container(
-                                  margin: const EdgeInsets.fromLTRB(
-                                    12, 0, 12, 12,
-                                  ),
-                                  child: CyberSlidable(
+                          if ((item.isDir ?? false)) {
+                            if (isCyber) {
+                              return Container(
+                                margin: const EdgeInsets.fromLTRB(
+                                  12,
+                                  0,
+                                  12,
+                                  12,
+                                ),
+                                child: CyberSlidable(
                                   slidableKey: ValueKey(item.name ?? ""),
                                   endActions: [
                                     CyberSlideAction(
@@ -217,75 +243,40 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                     child: Container(
                                       decoration: BoxDecoration(
                                         color: Colors.transparent,
-                                        borderRadius: BorderRadius.circular(
-                                          18,
-                                        ),
+                                        borderRadius: BorderRadius.circular(18),
                                         border: Border.all(
                                           color: CyberColors.cardStroke,
                                           width: 1,
                                         ),
                                       ),
                                       child: ExpansionTile(
-                                    title: Text(
-                                      item.name ?? "",
-                                      style: TextStyle(
-                                        color:
-                                            ref
-                                                .watch(themeProvider)
-                                                .themeColor
-                                                .titleColor(),
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                    children:
-                                        (item.files?.isNotEmpty ?? false)
-                                            ? item.files!
-                                                .map(
-                                                  (e) => ListTile(
-                                                    onTap: () {
-                                                      Navigator.of(
-                                                        context,
-                                                      ).push(
-                                                        WallpaperPageRoute(
-                                                          blurSigma: 6,
-                                                          blurTintColor: CyberColors.bg.withOpacity(0.50),
-                                                          builder:
-                                                              (
-                                                                context,
-                                                              ) => InTimeHistoryLogPage(
-                                                                path:
-                                                                    item.name ??
-                                                                    "",
-                                                                title: e,
-                                                              ),
-                                                        ),
-                                                      );
-                                                    },
-                                                    title: Text(
-                                                      e,
-                                                      style: TextStyle(
-                                                        color:
-                                                            ref
-                                                                .watch(
-                                                                  themeProvider,
-                                                                )
-                                                                .themeColor
-                                                                .titleColor(),
-                                                        fontSize: 14,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                )
-                                                .toList()
-                                            : (item.children ?? [])
-                                                .map(
-                                                  (e) => ListTile(
-                                                    onTap: () {
-                                                      Navigator.of(context)
-                                                          .push(
+                                        title: Text(
+                                          item.name ?? "",
+                                          style: TextStyle(
+                                            color:
+                                                ref
+                                                    .watch(themeProvider)
+                                                    .themeColor
+                                                    .titleColor(),
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                        children:
+                                            (item.files?.isNotEmpty ?? false)
+                                                ? item.files!
+                                                    .map(
+                                                      (e) => ListTile(
+                                                        onTap: () {
+                                                          Navigator.of(
+                                                            context,
+                                                          ).push(
                                                             WallpaperPageRoute(
                                                               blurSigma: 6,
-                                                              blurTintColor: CyberColors.bg.withOpacity(0.50),
+                                                              blurTintColor:
+                                                                  CyberColors.bg
+                                                                      .withOpacity(
+                                                                        0.50,
+                                                                      ),
                                                               builder:
                                                                   (
                                                                     context,
@@ -293,59 +284,102 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                                                     path:
                                                                         item.name ??
                                                                         "",
-                                                                    title:
-                                                                        e.title ??
-                                                                        "",
+                                                                    title: e,
                                                                   ),
                                                             ),
-                                                          )
-                                                          .then((value) {
-                                                            if (value != null &&
-                                                                value == true) {
-                                                              loadData();
-                                                            }
-                                                          });
-                                                    },
-                                                    title: Text(
-                                                      e.title ?? "",
-                                                      style: TextStyle(
-                                                        color:
-                                                            ref
-                                                                .watch(
-                                                                  themeProvider,
-                                                                )
-                                                                .themeColor
-                                                                .titleColor(),
-                                                        fontSize: 14,
+                                                          );
+                                                        },
+                                                        title: Text(
+                                                          e,
+                                                          style: TextStyle(
+                                                            color:
+                                                                ref
+                                                                    .watch(
+                                                                      themeProvider,
+                                                                    )
+                                                                    .themeColor
+                                                                    .titleColor(),
+                                                            fontSize: 14,
+                                                          ),
+                                                        ),
                                                       ),
-                                                    ),
-                                                  ),
-                                                )
-                                              .toList(),
+                                                    )
+                                                    .toList()
+                                                : (item.children ?? [])
+                                                    .map(
+                                                      (e) => ListTile(
+                                                        onTap: () {
+                                                          Navigator.of(context)
+                                                              .push(
+                                                                WallpaperPageRoute(
+                                                                  blurSigma: 6,
+                                                                  blurTintColor:
+                                                                      CyberColors
+                                                                          .bg
+                                                                          .withOpacity(
+                                                                            0.50,
+                                                                          ),
+                                                                  builder:
+                                                                      (
+                                                                        context,
+                                                                      ) => InTimeHistoryLogPage(
+                                                                        path:
+                                                                            item.name ??
+                                                                            "",
+                                                                        title:
+                                                                            e.title ??
+                                                                            "",
+                                                                      ),
+                                                                ),
+                                                              )
+                                                              .then((value) {
+                                                                if (value !=
+                                                                        null &&
+                                                                    value ==
+                                                                        true) {
+                                                                  loadData();
+                                                                }
+                                                              });
+                                                        },
+                                                        title: Text(
+                                                          e.title ?? "",
+                                                          style: TextStyle(
+                                                            color:
+                                                                ref
+                                                                    .watch(
+                                                                      themeProvider,
+                                                                    )
+                                                                    .themeColor
+                                                                    .titleColor(),
+                                                            fontSize: 14,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    )
+                                                    .toList(),
+                                      ),
+                                    ),
                                   ),
+                                ),
+                              );
+                            }
+                            return Container(
+                              margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                              decoration: BoxDecoration(
+                                color: Colors.transparent,
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(
+                                  color: CyberColors.cardStroke,
+                                  width: 1,
                                 ),
                               ),
-                            ),
-                          );
-                              }
-                              return Container(
-                                margin: const EdgeInsets.fromLTRB(
-                                  12, 0, 12, 12,
+                              child: OptimizedFrostedGlass(
+                                sigma: SpUtil.getDouble(
+                                  spCardBlurSigma,
+                                  defValue: 4,
                                 ),
-                                decoration: BoxDecoration(
-                                  color: Colors.transparent,
-                                  borderRadius: BorderRadius.circular(18),
-                                  border: Border.all(
-                                    color: CyberColors.cardStroke, width: 1,
-                                  ),
-                                ),
-                                child: OptimizedFrostedGlass(
-                                  sigma: SpUtil.getDouble(
-                                    spCardBlurSigma,
-                                    defValue: 4,
-                                  ),
-                                  borderRadius: BorderRadius.circular(18),
-                                  child: Slidable(
+                                borderRadius: BorderRadius.circular(18),
+                                child: Slidable(
                                   key: ValueKey(item.name ?? ""),
                                   endActionPane: ActionPane(
                                     motion: const ScrollMotion(),
@@ -360,7 +394,9 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                             context: context,
                                             useRootNavigator: false,
                                             builder:
-                                                (context) => CupertinoAlertDialog(
+                                                (
+                                                  context,
+                                                ) => CupertinoAlertDialog(
                                                   title: const Text("确认删除"),
                                                   content: const Text(
                                                     "确定删除这个文件夹吗",
@@ -414,111 +450,124 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                     ],
                                   ),
                                   child: ExpansionTile(
-                                  title: Text(
-                                    item.name ?? "",
-                                    style: TextStyle(
-                                      color:
-                                          ref
-                                              .watch(themeProvider)
-                                              .themeColor
-                                              .titleColor(),
-                                      fontSize: 16,
+                                    title: Text(
+                                      item.name ?? "",
+                                      style: TextStyle(
+                                        color:
+                                            ref
+                                                .watch(themeProvider)
+                                                .themeColor
+                                                .titleColor(),
+                                        fontSize: 16,
+                                      ),
                                     ),
-                                  ),
-                                  children:
-                                      (item.files?.isNotEmpty ?? false)
-                                          ? item.files!
-                                              .map(
-                                                (e) => ListTile(
-                                                  onTap: () {
-                                                    Navigator.of(context).push(
-                                                      WallpaperPageRoute(
-                                                        blurSigma: 6,
-                                                        blurTintColor: CyberColors.bg.withOpacity(0.50),
-                                                        builder:
-                                                            (
-                                                              context,
-                                                            ) => InTimeHistoryLogPage(
-                                                              path:
-                                                                  item.name ??
-                                                                  "",
-                                                              title: e,
-                                                            ),
+                                    children:
+                                        (item.files?.isNotEmpty ?? false)
+                                            ? item.files!
+                                                .map(
+                                                  (e) => ListTile(
+                                                    onTap: () {
+                                                      Navigator.of(
+                                                        context,
+                                                      ).push(
+                                                        WallpaperPageRoute(
+                                                          blurSigma: 6,
+                                                          blurTintColor:
+                                                              CyberColors.bg
+                                                                  .withOpacity(
+                                                                    0.50,
+                                                                  ),
+                                                          builder:
+                                                              (
+                                                                context,
+                                                              ) => InTimeHistoryLogPage(
+                                                                path:
+                                                                    item.name ??
+                                                                    "",
+                                                                title: e,
+                                                              ),
+                                                        ),
+                                                      );
+                                                    },
+                                                    title: Text(
+                                                      e,
+                                                      style: TextStyle(
+                                                        color:
+                                                            ref
+                                                                .watch(
+                                                                  themeProvider,
+                                                                )
+                                                                .themeColor
+                                                                .titleColor(),
+                                                        fontSize: 14,
                                                       ),
-                                                    );
-                                                  },
-                                                  title: Text(
-                                                    e,
-                                                    style: TextStyle(
-                                                      color:
-                                                          ref
-                                                              .watch(
-                                                                themeProvider,
-                                                              )
-                                                              .themeColor
-                                                              .titleColor(),
-                                                      fontSize: 14,
                                                     ),
                                                   ),
-                                                ),
-                                              )
-                                              .toList()
-                                          : (item.children ?? [])
-                                              .map(
-                                                (e) => ListTile(
-                                                  onTap: () {
-                                                    Navigator.of(context)
-                                                        .push(
-                                                          WallpaperPageRoute(
-                                                            blurSigma: 6,
-                                                            blurTintColor: CyberColors.bg.withOpacity(0.50),
-                                                            builder:
-                                                                (
-                                                                  context,
-                                                                ) => InTimeHistoryLogPage(
-                                                                  path:
-                                                                      item.name ??
-                                                                      "",
-                                                                  title:
-                                                                      e.title ??
-                                                                      "",
-                                                                ),
-                                                          ),
-                                                        )
-                                                        .then((value) {
-                                                          if (value != null &&
-                                                              value == true) {
-                                                            loadData();
-                                                          }
-                                                        });
-                                                  },
-                                                  title: Text(
-                                                    e.title ?? "",
-                                                    style: TextStyle(
-                                                      color:
-                                                          ref
-                                                              .watch(
-                                                                themeProvider,
-                                                              )
-                                                              .themeColor
-                                                              .titleColor(),
-                                                      fontSize: 14,
+                                                )
+                                                .toList()
+                                            : (item.children ?? [])
+                                                .map(
+                                                  (e) => ListTile(
+                                                    onTap: () {
+                                                      Navigator.of(context)
+                                                          .push(
+                                                            WallpaperPageRoute(
+                                                              blurSigma: 6,
+                                                              blurTintColor:
+                                                                  CyberColors.bg
+                                                                      .withOpacity(
+                                                                        0.50,
+                                                                      ),
+                                                              builder:
+                                                                  (
+                                                                    context,
+                                                                  ) => InTimeHistoryLogPage(
+                                                                    path:
+                                                                        item.name ??
+                                                                        "",
+                                                                    title:
+                                                                        e.title ??
+                                                                        "",
+                                                                  ),
+                                                            ),
+                                                          )
+                                                          .then((value) {
+                                                            if (value != null &&
+                                                                value == true) {
+                                                              loadData();
+                                                            }
+                                                          });
+                                                    },
+                                                    title: Text(
+                                                      e.title ?? "",
+                                                      style: TextStyle(
+                                                        color:
+                                                            ref
+                                                                .watch(
+                                                                  themeProvider,
+                                                                )
+                                                                .themeColor
+                                                                .titleColor(),
+                                                        fontSize: 14,
+                                                      ),
                                                     ),
                                                   ),
-                                                ),
-                                              )
-                                              .toList(),
-                                ),
+                                                )
+                                                .toList(),
+                                  ),
                                 ),
                               ),
-                              );
-                            } else {
-                              if (isCyber) {
-                                return Container(
-                                  margin: const EdgeInsets.fromLTRB(
-                                    12, 0, 12, 12,
-                                  ),
-                                  child: CyberSlidable(
+                            );
+                          } else {
+                            if (isCyber) {
+                              return Container(
+                                margin: const EdgeInsets.fromLTRB(
+                                  12,
+                                  0,
+                                  12,
+                                  12,
+                                ),
+                                child: CyberSlidable(
                                   slidableKey: ValueKey(item.name ?? ""),
                                   endActions: [
                                     CyberSlideAction(
@@ -585,68 +634,67 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                     child: Container(
                                       decoration: BoxDecoration(
                                         color: Colors.transparent,
-                                        borderRadius: BorderRadius.circular(
-                                          18,
-                                        ),
+                                        borderRadius: BorderRadius.circular(18),
                                         border: Border.all(
                                           color: CyberColors.cardStroke,
                                           width: 1,
                                         ),
                                       ),
                                       child: ListTile(
-                                    onTap: () {
-                                      if (item.isDir ?? false) {
-                                        "该文件夹为空".toast();
-                                        return;
-                                      }
+                                        onTap: () {
+                                          if (item.isDir ?? false) {
+                                            "该文件夹为空".toast();
+                                            return;
+                                          }
 
-                                      Navigator.of(context).push(
-                                        WallpaperPageRoute(
-                                          blurSigma: 6,
-                                          blurTintColor: CyberColors.bg.withOpacity(0.50),
-                                          builder:
-                                              (context) => InTimeHistoryLogPage(
-                                                path: "",
-                                                title: item.name ?? "",
-                                              ),
+                                          Navigator.of(context).push(
+                                            WallpaperPageRoute(
+                                              blurSigma: 6,
+                                              blurTintColor: CyberColors.bg
+                                                  .withOpacity(0.50),
+                                              builder:
+                                                  (context) =>
+                                                      InTimeHistoryLogPage(
+                                                        path: "",
+                                                        title: item.name ?? "",
+                                                      ),
+                                            ),
+                                          );
+                                        },
+                                        title: Text(
+                                          item.name ?? "",
+                                          style: TextStyle(
+                                            color:
+                                                ref
+                                                    .watch(themeProvider)
+                                                    .themeColor
+                                                    .titleColor(),
+                                            fontSize: 16,
+                                          ),
                                         ),
-                                      );
-                                    },
-                                    title: Text(
-                                      item.name ?? "",
-                                      style: TextStyle(
-                                        color:
-                                            ref
-                                                .watch(themeProvider)
-                                                .themeColor
-                                                .titleColor(),
-                                        fontSize: 16,
                                       ),
                                     ),
                                   ),
                                 ),
+                              );
+                            }
+                            return Container(
+                              margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                              decoration: BoxDecoration(
+                                color: Colors.transparent,
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(
+                                  color: CyberColors.cardStroke,
+                                  width: 1,
+                                ),
                               ),
-                            ),
-                          );
-                              }
-                              return Container(
-                                margin: const EdgeInsets.fromLTRB(
-                                  12, 0, 12, 12,
+                              child: OptimizedFrostedGlass(
+                                sigma: SpUtil.getDouble(
+                                  spCardBlurSigma,
+                                  defValue: 4,
                                 ),
-                                decoration: BoxDecoration(
-                                  color: Colors.transparent,
-                                  borderRadius: BorderRadius.circular(18),
-                                  border: Border.all(
-                                    color: CyberColors.cardStroke, width: 1,
-                                  ),
-                                ),
-                                child: OptimizedFrostedGlass(
-                                  sigma: SpUtil.getDouble(
-                                    spCardBlurSigma,
-                                    defValue: 4,
-                                  ),
-                                  borderRadius: BorderRadius.circular(18),
-                                  child: Slidable(
+                                borderRadius: BorderRadius.circular(18),
+                                child: Slidable(
                                   key: ValueKey(item.name ?? ""),
                                   endActionPane: ActionPane(
                                     motion: const ScrollMotion(),
@@ -661,7 +709,9 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                             context: context,
                                             useRootNavigator: false,
                                             builder:
-                                                (context) => CupertinoAlertDialog(
+                                                (
+                                                  context,
+                                                ) => CupertinoAlertDialog(
                                                   title: const Text("确认删除"),
                                                   content: const Text(
                                                     "确定删除这个文件吗",
@@ -715,45 +765,46 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                     ],
                                   ),
                                   child: ListTile(
-                                  onTap: () {
-                                    if (item.isDir ?? false) {
-                                      "该文件夹为空".toast();
-                                      return;
-                                    }
+                                    onTap: () {
+                                      if (item.isDir ?? false) {
+                                        "该文件夹为空".toast();
+                                        return;
+                                      }
 
-                                    Navigator.of(context).push(
-                                      WallpaperPageRoute(
-                                        blurSigma: 6,
-                                        blurTintColor: CyberColors.bg.withOpacity(0.50),
-                                        builder:
-                                            (context) => InTimeHistoryLogPage(
-                                              path: "",
-                                              title: item.name ?? "",
-                                            ),
+                                      Navigator.of(context).push(
+                                        WallpaperPageRoute(
+                                          blurSigma: 6,
+                                          blurTintColor: CyberColors.bg
+                                              .withOpacity(0.50),
+                                          builder:
+                                              (context) => InTimeHistoryLogPage(
+                                                path: "",
+                                                title: item.name ?? "",
+                                              ),
+                                        ),
+                                      );
+                                    },
+                                    title: Text(
+                                      item.name ?? "",
+                                      style: TextStyle(
+                                        color:
+                                            ref
+                                                .watch(themeProvider)
+                                                .themeColor
+                                                .titleColor(),
+                                        fontSize: 16,
                                       ),
-                                    );
-                                  },
-                                  title: Text(
-                                    item.name ?? "",
-                                    style: TextStyle(
-                                      color:
-                                          ref
-                                              .watch(themeProvider)
-                                              .themeColor
-                                              .titleColor(),
-                                      fontSize: 16,
                                     ),
                                   ),
                                 ),
-                                ),
                               ),
-                              );
-                            }
-                          },
-                          itemCount: list.length,
-                        ),
+                            );
+                          }
+                        },
+                        itemCount: list.length,
+                      ),
                     ),
-                ),
+                  ),
         ),
       ),
     );
@@ -765,6 +816,9 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
   Future<void> loadData() async {
     if (_loading) return;
     _loading = true;
+    QlDebugLog.write(
+      'QLLOG TaskLog loadData start search="${searchText.text}"',
+    );
     HttpResponse<List<TaskLogBean>> response =
         await SingleAccountPageState.ofApi(context).taskLog();
 
@@ -774,11 +828,10 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
       }
       list.clear();
       list.addAll(response.bean ?? []);
-      if (widget.searchText != null) {
-        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-          searchText.text = widget.searchText!;
-        });
-      }
+      QlDebugLog.write(
+        'QLLOG TaskLog loadData done total=${list.length} '
+        'search="${searchText.text}"',
+      );
       setState(() {});
     } else {
       response.message?.toast();
@@ -796,6 +849,7 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
 
   @override
   void onLazyLoad() {
+    QlDebugLog.write('QLLOG TaskLog onLazyLoad fired list=${list.length}');
     loadData();
   }
 

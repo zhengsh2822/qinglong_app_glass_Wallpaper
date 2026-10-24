@@ -26,11 +26,13 @@ import 'package:qinglong_app/base/ui/add_select_all_button.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 import 'package:qinglong_app/module/env/add_env_page.dart';
 import 'package:qinglong_app/module/env/env_bean.dart';
+import 'package:qinglong_app/module/env/env_detail_page.dart';
 import 'package:qinglong_app/module/env/env_viewmodel.dart';
 import 'package:qinglong_app/module/task/task_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/utils.dart';
 
+import '../../base/ui/card_transition_source.dart';
 import '../../base/ui/enable_widget.dart';
 import 'package:qinglong_app/base/ui/wallpaper_page_route.dart';
 
@@ -287,13 +289,9 @@ class EnvPageState extends ConsumerState<EnvPage>
                   checkedIds.length ==
                   getListByType(_tabController?.index ?? 0).where((value) {
                     if (searchText.text.isEmpty ||
-                        (value.name?.contains(
-                              searchText.text.toLowerCase(),
-                            ) ??
+                        (value.name?.contains(searchText.text.toLowerCase()) ??
                             false) ||
-                        (value.value?.contains(
-                              searchText.text.toLowerCase(),
-                            ) ??
+                        (value.value?.contains(searchText.text.toLowerCase()) ??
                             false) ||
                         (value.remarks?.contains(
                               searchText.text.toLowerCase(),
@@ -519,15 +517,16 @@ class EnvPageState extends ConsumerState<EnvPage>
     }
     _editModeOverlay = AnimatedEditModeOverlay(
       context: context,
-      backgroundColorBuilder: (ref) =>
-          ref
-              .read(themeProvider)
-              .currentTheme
-              .bottomNavigationBarTheme
-              .backgroundColor
-              ?.withOpacity(1) ??
-          Theme.of(context).bottomNavigationBarTheme.backgroundColor ??
-          Colors.black,
+      backgroundColorBuilder:
+          (ref) =>
+              ref
+                  .read(themeProvider)
+                  .currentTheme
+                  .bottomNavigationBarTheme
+                  .backgroundColor
+                  ?.withOpacity(1) ??
+              Theme.of(context).bottomNavigationBarTheme.backgroundColor ??
+              Colors.black,
       builder: (BuildContext context) {
         return SizedBox(
           height: kBottomNavigationBarHeight,
@@ -717,15 +716,9 @@ class EnvItemCell extends StatelessWidget {
     // 环境变量名称字重跟随全局粗细调节
     final FontWeight globalFw = FontWeight(ref.watch(textWeightProvider));
     final Widget cardContent = InkWell(
-      onTap: () {
-        if (editMode) {
-          checkedCallback(bean.sId ?? "");
-        } else {
-          Navigator.of(
-            context,
-          ).pushNamed(Routes.routeEnvDetail, arguments: bean);
-        }
-      },
+      // 非编辑模式由外层 CardTransitionSource 接管点击（内层 onTap
+      // 为 null 不参与手势仲裁），编辑模式保留勾选行为
+      onTap: editMode ? () => checkedCallback(bean.sId ?? "") : null,
       child: Row(
         children: [
           AnimatedSize(
@@ -995,7 +988,14 @@ class EnvItemCell extends StatelessWidget {
               },
             ),
           ],
-          child: _buildCardChild(context, isCyber, cardContent),
+          // 卡片共享展开：点击卡片 → 卡片隐藏 → 容器从卡片矩形展开详情页
+          child: CardTransitionSource(
+            child: _buildCardChild(context, isCyber, cardContent),
+            sourceBuilder: (ctx) => cardContent,
+            pageBuilder: (context) => EnvDetailPage(bean),
+            blurSigma: 6,
+            blurTintColor: CyberColors.bg.withOpacity(0.50),
+          ),
         ),
       );
     }
@@ -1012,8 +1012,8 @@ class EnvItemCell extends StatelessWidget {
         sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
         borderRadius: BorderRadius.circular(AppleColors.radiusCard),
         child: Slidable(
-            enabled: !editMode,
-            key: ValueKey(bean.sId),
+          enabled: !editMode,
+          key: ValueKey(bean.sId),
           // 右滑：startActionPane（卡片左侧复制按钮）
           startActionPane: ActionPane(
             motion: const ScrollMotion(),
@@ -1083,7 +1083,14 @@ class EnvItemCell extends StatelessWidget {
               ),
             ],
           ),
-          child: _buildCardChild(context, isCyber, cardContent),
+          // 卡片共享展开：点击卡片 → 卡片隐藏 → 容器从卡片矩形展开详情页
+          child: CardTransitionSource(
+            child: _buildCardChild(context, isCyber, cardContent),
+            sourceBuilder: (ctx) => cardContent,
+            pageBuilder: (context) => EnvDetailPage(bean),
+            blurSigma: 6,
+            blurTintColor: CyberColors.bg.withOpacity(0.50),
+          ),
         ),
       ),
     );
@@ -1103,10 +1110,7 @@ class EnvItemCell extends StatelessWidget {
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(18),
           // 统一青色描边：浅色/深色通用，提升卡片边缘清晰度
-          border: Border.all(
-            color: CyberColors.cardStroke,
-            width: 1,
-          ),
+          border: Border.all(color: CyberColors.cardStroke, width: 1),
         ),
         child: Material(
           color: Colors.transparent,
@@ -1277,6 +1281,7 @@ class EnvRecordListView extends ConsumerStatefulWidget {
   final ValueChanged<String> changed;
   final SortState nameSort;
   final SortState timeSort;
+
   /// 是否可长按拖拽排序（导航栏排序激活时为 false，避免与显示顺序冲突）
   final bool draggable;
 
@@ -1348,31 +1353,32 @@ class _EnvRecordListViewState extends ConsumerState<EnvRecordListView>
       // 排序激活时禁用拖拽（buildDefaultDragHandles=false + onReorder 空），
       // 避免拖拽基于原始 list 与显示顺序错位
       buildDefaultDragHandles: widget.draggable,
-      onReorder: widget.draggable
-          ? (int oldIndex, int newIndex) {
-              if (widget.searchText.isNotEmpty) {
-                "请先清空搜索关键词".toast();
-                return;
-              }
-
-              setState(() {
-                //交换数据
-                if (newIndex > oldIndex) {
-                  newIndex -= 1;
+      onReorder:
+          widget.draggable
+              ? (int oldIndex, int newIndex) {
+                if (widget.searchText.isNotEmpty) {
+                  "请先清空搜索关键词".toast();
+                  return;
                 }
-                final EnvBean item = widget.list.removeAt(oldIndex);
-                widget.list.insert(newIndex, item);
 
-                ref
-                    .read(
-                      SingleAccountPageState.ofEnvProvider(context)(
-                        getProviderName(context),
-                      ).notifier,
-                    )
-                    .update(context, item.sId ?? "", newIndex, oldIndex);
-              });
-            }
-          : (_, __) {},
+                setState(() {
+                  //交换数据
+                  if (newIndex > oldIndex) {
+                    newIndex -= 1;
+                  }
+                  final EnvBean item = widget.list.removeAt(oldIndex);
+                  widget.list.insert(newIndex, item);
+
+                  ref
+                      .read(
+                        SingleAccountPageState.ofEnvProvider(context)(
+                          getProviderName(context),
+                        ).notifier,
+                      )
+                      .update(context, item.sId ?? "", newIndex, oldIndex);
+                });
+              }
+              : (_, __) {},
       children: children,
     );
   }

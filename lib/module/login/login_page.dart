@@ -10,6 +10,7 @@ import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/account_page_transition.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
@@ -31,7 +32,15 @@ import 'package:qinglong_app/base/ui/wallpaper_page_route.dart';
 class LoginPage extends ConsumerStatefulWidget {
   final bool fromAddNewAccount;
 
-  const LoginPage({Key? key, this.fromAddNewAccount = false}) : super(key: key);
+  /// 添加账号流程的目标空槽位。
+  /// 非空时本页以该槽位的 UserInfo/Http 登录；成功后切到该槽位首页。
+  final int? targetAccountIndex;
+
+  const LoginPage({
+    Key? key,
+    this.fromAddNewAccount = false,
+    this.targetAccountIndex,
+  }) : super(key: key);
 
   @override
   _LoginPageState createState() => _LoginPageState();
@@ -45,6 +54,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final TextEditingController _cIdController = TextEditingController();
   final TextEditingController _cSecretController = TextEditingController();
   GlobalKey<FlipCardState> cardKey = GlobalKey<FlipCardState>();
+
+  /// 顶部“账号登录”标题：共享转场源
+  final GlobalKey _accountTitleKey = GlobalKey();
+  bool _loginTitleOpening = false;
+  TextStyle? _headerTitleStyle;
 
   bool rememberPassword = false;
 
@@ -209,8 +223,21 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   /// 标题
   Widget _buildHeader(bool isCyber) {
+    final TextStyle titleStyle = TextStyle(
+      fontSize: 26,
+      fontWeight: FontWeight.bold,
+      color:
+          isCyber
+              ? CyberColors.titleWhite
+              : ref.watch(themeProvider).themeColor.title2Color(),
+      fontFamily: 'MiSans',
+    );
+    _headerTitleStyle = titleStyle;
+
     return GestureDetector(
       onTap: () {
+        // 添加账号流程停留在当前账号页之上，不允许再从标题进入账号切换
+        if (widget.targetAccountIndex != null) return;
         if (SpUtil.getInt(spVIP, defValue: typeNormal) == typeNormal) {
           Navigator.of(context).push(
             WallpaperPageRoute(
@@ -218,21 +245,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             ),
           );
           return;
-        } else {
-          if (SpUtil.getBool(spSingleInstance, defValue: false)) {
-            Navigator.pop(context);
-            return;
-          }
-          Navigator.of(context).push(
-            PageRouteBuilder(
-              pageBuilder:
-                  (context, animation1, animation2) =>
-                      const ChangeAccountPage(),
-              transitionDuration: Duration.zero,
-              reverseTransitionDuration: Duration.zero,
-            ),
-          );
         }
+        if (SpUtil.getBool(spSingleInstance, defValue: false)) {
+          Navigator.pop(context);
+          return;
+        }
+        _openAccountPageFromHeader();
       },
       child: Row(
         children: [
@@ -249,21 +267,18 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 size: 26,
               ),
             ),
-            visible: SpUtil.getBool(spSingleInstance, defValue: false),
+            visible:
+                SpUtil.getBool(spSingleInstance, defValue: false) ||
+                widget.targetAccountIndex != null,
           ),
           Expanded(
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Text(
-                "账号登录",
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color:
-                      isCyber
-                          ? CyberColors.titleWhite
-                          : ref.watch(themeProvider).themeColor.title2Color(),
-                  fontFamily: 'MiSans',
+              child: KeyedSubtree(
+                key: _accountTitleKey,
+                child: Opacity(
+                  opacity: _loginTitleOpening ? 0 : 1,
+                  child: Text("账号登录", style: titleStyle),
                 ),
               ),
             ),
@@ -278,6 +293,56 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         ],
       ),
     );
+  }
+
+  /// 登录页顶部标题 → 账号切换页（共享转场，标题与空白区域统一触发）
+  void _openAccountPageFromHeader() {
+    if (_loginTitleOpening) return;
+    final RenderBox? box =
+        _accountTitleKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) {
+      Navigator.of(context).push(
+        PageRouteBuilder(
+          pageBuilder:
+              (context, animation1, animation2) => const ChangeAccountPage(),
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
+        ),
+      );
+      return;
+    }
+
+    final Rect textRect = box.localToGlobal(Offset.zero) & box.size;
+    // 标题盒子本身贴文字，圆角会切到首字；向外扩 8px 并同步内边距，
+    // 保证首帧文字位置不变，同时给圆角留出空间。
+    final Rect rect = textRect.inflate(8);
+    final TextStyle style =
+        _headerTitleStyle ??
+        TextStyle(
+          fontSize: 26,
+          fontWeight: FontWeight.bold,
+          color: CyberColors.titleWhite,
+          fontFamily: 'MiSans',
+        );
+
+    HapticFeedback.lightImpact();
+    setState(() => _loginTitleOpening = true);
+
+    pushAccountPageFromTitle(
+      context: context,
+      sourceRect: rect,
+      sourceChild: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Text("账号登录", style: style),
+        ),
+      ),
+    ).whenComplete(() {
+      if (mounted) {
+        setState(() => _loginTitleOpening = false);
+      }
+    });
   }
 
   /// 表单字段
@@ -504,7 +569,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       TextPosition(offset: host.length),
                     );
                   }
-                  SingleAccountPageState.of(context)?.registerHttp(host);
+                  SingleAccountPageState.registerHttpFor(context, host);
                   SingleAccountPageState.ofHttp(context)?.pushedLoginPage =
                       false;
                   Utils.hideKeyBoard(context);
@@ -830,12 +895,33 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   void dealLoginResponse(int response) {
     if (response == LoginHelper.success) {
-      Navigator.of(context).pushReplacementNamed(Routes.routeHomePage);
+      if (widget.targetAccountIndex != null) {
+        _finishAddAccount(widget.targetAccountIndex!);
+      } else {
+        Navigator.of(context).pushReplacementNamed(Routes.routeHomePage);
+      }
     } else if (response == LoginHelper.failed) {
       loginFailed();
     } else {
       twoFact();
     }
+  }
+
+  /// 添加账号成功：把目标空槽位切到首页并设为当前账号。
+  ///
+  /// 当前添加页与账号切换页都位于旧槽位导航栈，切换后旧槽位被 IndexedStack
+  /// 隐藏，再清理其路由栈；用户看到的是新账号首页。
+  void _finishAddAccount(int targetIndex) {
+    final String name = targetIndex.toString();
+    if (getIt.isRegistered<GlobalKey<NavigatorState>>(instanceName: name)) {
+      getIt<GlobalKey<NavigatorState>>(
+        instanceName: name,
+      ).currentState?.pushReplacementNamed(Routes.routeHomePage);
+    }
+    context
+        .findAncestorStateOfType<MultiAccountPageState>()
+        ?.updateIndex(targetIndex);
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   void loginFailed() {

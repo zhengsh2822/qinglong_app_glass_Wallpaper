@@ -27,11 +27,13 @@ import 'package:qinglong_app/base/ui/add_select_all_button.dart';
 import 'package:qinglong_app/module/task/add_task_page.dart';
 import 'package:qinglong_app/module/task/intime_log/intime_log_page.dart';
 import 'package:qinglong_app/module/task/task_bean.dart';
+import 'package:qinglong_app/module/task/task_detail/task_detail_page.dart';
 import 'package:qinglong_app/module/task/task_viewmodel.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 import 'package:qinglong_app/utils/utils.dart';
 
+import '../../base/ui/card_transition_source.dart';
 import '../../base/ui/notify.dart';
 import '../../main.dart';
 import 'package:qinglong_app/base/ui/wallpaper_page_route.dart';
@@ -51,7 +53,11 @@ class TaskPage extends ConsumerStatefulWidget {
 }
 
 class TaskPageState extends ConsumerState<TaskPage>
-    with TickerProviderStateMixin, WidgetsBindingObserver, AutomaticKeepAliveClientMixin, PauseableTimerMixin<TaskPage> {
+    with
+        TickerProviderStateMixin,
+        WidgetsBindingObserver,
+        AutomaticKeepAliveClientMixin,
+        PauseableTimerMixin<TaskPage> {
   @override
   bool get wantKeepAlive => true;
 
@@ -291,39 +297,39 @@ class TaskPageState extends ConsumerState<TaskPage>
             ],
           ),
           body: BaseStateWidget<TaskViewModel>(
-              builder: (ref, model, child) {
-                return IconTheme(
-                  data: const IconThemeData(size: 25),
-                  child: NestedScrollView(
-                    controller: _scrollController,
-                    headerSliverBuilder: (
-                      BuildContext context,
-                      bool innerBoxIsScrolled,
-                    ) {
-                      return [_buildAppBar(ref, model)];
+            builder: (ref, model, child) {
+              return IconTheme(
+                data: const IconThemeData(size: 25),
+                child: NestedScrollView(
+                  controller: _scrollController,
+                  headerSliverBuilder: (
+                    BuildContext context,
+                    bool innerBoxIsScrolled,
+                  ) {
+                    return [_buildAppBar(ref, model)];
+                  },
+                  body: RefreshIndicator(
+                    key: refreshKey,
+                    color: Theme.of(context).primaryColor,
+                    notificationPredicate: (_) => true,
+                    onRefresh: () async {
+                      return await model.loadData(context, false);
                     },
-                    body: RefreshIndicator(
-                      key: refreshKey,
-                      color: Theme.of(context).primaryColor,
-                      notificationPredicate: (_) => true,
-                      onRefresh: () async {
-                        return await model.loadData(context, false);
-                      },
-                      child: SlidableAutoCloseBehavior(
-                        key: ValueKey('task_slidable_${_slidableResetKey}'),
-                        child: body(model, model.notScripts, ref, true),
-                      ),
+                    child: SlidableAutoCloseBehavior(
+                      key: ValueKey('task_slidable_${_slidableResetKey}'),
+                      child: body(model, model.notScripts, ref, true),
                     ),
                   ),
-                );
-              },
-              model: SingleAccountPageState.ofTaskProvider(context)(
-                getProviderName(context),
-              ),
-              onReady: (viewModel) {
-                viewModel.loadData(context);
-              },
+                ),
+              );
+            },
+            model: SingleAccountPageState.ofTaskProvider(context)(
+              getProviderName(context),
             ),
+            onReady: (viewModel) {
+              viewModel.loadData(context);
+            },
+          ),
         ),
       );
     }
@@ -477,79 +483,79 @@ class TaskPageState extends ConsumerState<TaskPage>
           ],
         ),
         body: () {
-            final Widget taskBody =
-                widget.loading
-                    ? const Center(child: LoadingWidget())
-                    : BaseStateWidget<TaskViewModel>(
-                      builder: (ref, model, child) {
-                        return IconTheme(
-                          data: const IconThemeData(size: 25),
-                          child: NestedScrollView(
-                            controller: _scrollController,
-                            headerSliverBuilder: (
-                              BuildContext context,
-                              bool innerBoxIsScrolled,
-                            ) {
-                              return [
-                                _buildAppBar(ref, model),
-                                SliverOverlapAbsorber(
-                                  handle:
-                                      NestedScrollView.sliverOverlapAbsorberHandleFor(
-                                        context,
-                                      ),
-                                  sliver: SliverPersistentHeader(
-                                    pinned: true,
-                                    floating: false,
-                                    delegate: GlassSegmentedTabDelegate(
-                                      tabs: [
-                                        TaskViewModel.allStr,
-                                        TaskViewModel.runningStr,
-                                        TaskViewModel.idleStr,
-                                        TaskViewModel.disableStr,
-                                      ],
-                                      tabController: _tabController!,
-                                      editMode: editMode,
+          final Widget taskBody =
+              widget.loading
+                  ? const Center(child: LoadingWidget())
+                  : BaseStateWidget<TaskViewModel>(
+                    builder: (ref, model, child) {
+                      return IconTheme(
+                        data: const IconThemeData(size: 25),
+                        child: NestedScrollView(
+                          controller: _scrollController,
+                          headerSliverBuilder: (
+                            BuildContext context,
+                            bool innerBoxIsScrolled,
+                          ) {
+                            return [
+                              _buildAppBar(ref, model),
+                              SliverOverlapAbsorber(
+                                handle:
+                                    NestedScrollView.sliverOverlapAbsorberHandleFor(
+                                      context,
                                     ),
+                                sliver: SliverPersistentHeader(
+                                  pinned: true,
+                                  floating: false,
+                                  delegate: GlassSegmentedTabDelegate(
+                                    tabs: [
+                                      TaskViewModel.allStr,
+                                      TaskViewModel.runningStr,
+                                      TaskViewModel.idleStr,
+                                      TaskViewModel.disableStr,
+                                    ],
+                                    tabController: _tabController!,
+                                    editMode: editMode,
                                   ),
                                 ),
-                              ];
+                              ),
+                            ];
+                          },
+                          body: RefreshIndicator(
+                            key: refreshKey,
+                            edgeOffset: 15,
+                            color: Theme.of(context).primaryColor,
+                            notificationPredicate: (_) => true,
+                            onRefresh: () async {
+                              return await model.loadData(context, false);
                             },
-                            body: RefreshIndicator(
-                              key: refreshKey,
-                              edgeOffset: 15,
-                              color: Theme.of(context).primaryColor,
-                              notificationPredicate: (_) => true,
-                              onRefresh: () async {
-                                return await model.loadData(context, false);
-                              },
-                              child: SlidableAutoCloseBehavior(
-                                key: ValueKey(
-                                  'task_tab_slidable_${_slidableResetKey}',
-                                ),
-                                child: TabBarView(
-                                  controller: _tabController,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  children: [
-                                    body(model, model.list, ref, true),
-                                    body(model, model.running, ref, false),
-                                    body(model, model.neverRunning, ref, false),
-                                    body(model, model.disabled, ref, false),
-                                  ],
-                                ),
+                            child: SlidableAutoCloseBehavior(
+                              key: ValueKey(
+                                'task_tab_slidable_${_slidableResetKey}',
+                              ),
+                              child: TabBarView(
+                                controller: _tabController,
+                                physics: const NeverScrollableScrollPhysics(),
+                                children: [
+                                  body(model, model.list, ref, true),
+                                  body(model, model.running, ref, false),
+                                  body(model, model.neverRunning, ref, false),
+                                  body(model, model.disabled, ref, false),
+                                ],
                               ),
                             ),
                           ),
-                        );
-                      },
-                      model: SingleAccountPageState.ofTaskProvider(context)(
-                        getProviderName(context),
-                      ),
-                      onReady: (viewModel) {
-                        viewModel.loadData(context);
-                      },
-                    );
-            return isCyber ? CyberBackground(child: taskBody) : taskBody;
-          }(),
+                        ),
+                      );
+                    },
+                    model: SingleAccountPageState.ofTaskProvider(context)(
+                      getProviderName(context),
+                    ),
+                    onReady: (viewModel) {
+                      viewModel.loadData(context);
+                    },
+                  );
+          return isCyber ? CyberBackground(child: taskBody) : taskBody;
+        }(),
       ),
     );
   }
@@ -620,15 +626,16 @@ class TaskPageState extends ConsumerState<TaskPage>
     }
     _editModeOverlay = AnimatedEditModeOverlay(
       context: context,
-      backgroundColorBuilder: (ref) =>
-          ref
-              .read(themeProvider)
-              .currentTheme
-              .bottomNavigationBarTheme
-              .backgroundColor
-              ?.withOpacity(1) ??
-          Theme.of(context).bottomNavigationBarTheme.backgroundColor ??
-          Colors.black,
+      backgroundColorBuilder:
+          (ref) =>
+              ref
+                  .read(themeProvider)
+                  .currentTheme
+                  .bottomNavigationBarTheme
+                  .backgroundColor
+                  ?.withOpacity(1) ??
+              Theme.of(context).bottomNavigationBarTheme.backgroundColor ??
+              Colors.black,
       builder: (BuildContext context) {
         return SizedBox(
           height: kBottomNavigationBarHeight,
@@ -951,9 +958,12 @@ class _ListBodyState extends ConsumerState<ListBodyWidget>
     super.build(context);
     final lowerSearch = widget.searchText.toLowerCase();
     // 预过滤列表，避免为不匹配项构建 SizedBox.shrink 浪费资源
-    final filteredList = lowerSearch.isEmpty
-        ? widget.list
-        : widget.list.where((item) => _matchSearch(item, lowerSearch)).toList();
+    final filteredList =
+        lowerSearch.isEmpty
+            ? widget.list
+            : widget.list
+                .where((item) => _matchSearch(item, lowerSearch))
+                .toList();
     return ListView.separated(
       padding: EdgeInsets.only(
         bottom: kBottomNavigationBarHeight + 50,
@@ -1098,7 +1108,14 @@ class TaskItemCell extends StatelessWidget {
               },
             ),
           ],
-          child: _buildCardChild(context),
+          // 卡片共享展开：点击卡片 → 卡片隐藏 → 容器从卡片矩形展开详情页
+          child: CardTransitionSource(
+            child: _buildCardChild(context),
+            sourceBuilder: (ctx) => _buildCardContent(context),
+            pageBuilder: (context) => TaskDetailPage(bean),
+            blurSigma: 6,
+            blurTintColor: CyberColors.bg.withOpacity(0.50),
+          ),
         ),
       );
     }
@@ -1111,8 +1128,8 @@ class TaskItemCell extends StatelessWidget {
         sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
         borderRadius: BorderRadius.circular(AppleColors.radiusCard),
         child: Slidable(
-            enabled: !editMode,
-            key: ValueKey(bean.sId),
+          enabled: !editMode,
+          key: ValueKey(bean.sId),
           endActionPane: ActionPane(
             motion: const ScrollMotion(),
             // 4 按钮：等分 Pane 宽度（screen × 0.7 = 252px ≈ 4×60+12）
@@ -1220,7 +1237,14 @@ class TaskItemCell extends StatelessWidget {
               ),
             ],
           ),
-          child: _buildCardChild(context),
+          // 卡片共享展开：点击卡片 → 卡片隐藏 → 容器从卡片矩形展开详情页
+          child: CardTransitionSource(
+            child: _buildCardChild(context),
+            sourceBuilder: (ctx) => _buildCardContent(context),
+            pageBuilder: (context) => TaskDetailPage(bean),
+            blurSigma: 6,
+            blurTintColor: CyberColors.bg.withOpacity(0.50),
+          ),
         ),
       ),
     );
@@ -1249,15 +1273,9 @@ class TaskItemCell extends StatelessWidget {
           borderRadius: BorderRadius.circular(18),
           child: InkWell(
             borderRadius: BorderRadius.circular(18),
-            onTap: () {
-              if (editMode) {
-                checkedCallback(bean.sId ?? "");
-              } else {
-                Navigator.of(
-                  context,
-                ).pushNamed(Routes.routeTaskDetail, arguments: bean);
-              }
-            },
+            // 非编辑模式由外层 CardTransitionSource 接管点击（内层 onTap
+            // 为 null 不参与手势仲裁），编辑模式保留勾选行为
+            onTap: editMode ? () => checkedCallback(bean.sId ?? "") : null,
             child: _buildCardContent(context),
           ),
         ),
@@ -1274,27 +1292,30 @@ class TaskItemCell extends StatelessWidget {
     final bool isDisabled = (bean.isDisabled ?? 0) == 1;
     final bool isRunning = !isDisabled && (bean.status ?? 1) == 0;
     final Color sc = _stateColor(isRunning, isDisabled);
-    final Color accent = isCyber
-        ? CyberColors.cyan
-        : ref.watch(themeProvider).primaryColor;
+    final Color accent =
+        isCyber ? CyberColors.cyan : ref.watch(themeProvider).primaryColor;
     // 字重跟随全局粗细调节（四档 400/500/600/700）
     final FontWeight fw = FontWeight(ref.watch(textWeightProvider));
     final ThemeViewModel themeModel = ref.watch(themeProvider);
 
     // 禁用卡片：整体灰显（纯灰色系，无紫调）
-    final Color nameColor = isDisabled
-        ? (dark ? const Color(0xFF6E6E74) : const Color(0xFFB0B0B8))
-        : themeModel.themeColor.titleColor();
-    final Color timeColor = isDisabled
-        ? (dark ? const Color(0xFF55555B) : const Color(0xFF9A9AA0))
-        : themeModel.themeColor.descColor();
+    final Color nameColor =
+        isDisabled
+            ? (dark ? const Color(0xFF6E6E74) : const Color(0xFFB0B0B8))
+            : themeModel.themeColor.titleColor();
+    final Color timeColor =
+        isDisabled
+            ? (dark ? const Color(0xFF55555B) : const Color(0xFF9A9AA0))
+            : themeModel.themeColor.descColor();
     // 定时规则：始终保留青色强调
-    final Color cronColor = isDisabled
-        ? (dark ? const Color(0xFF55555B) : const Color(0xFFB0B0B8))
-        : CyberColors.cyan.withValues(alpha: 0.9);
-    final Color commandColor = isDisabled
-        ? (dark ? const Color(0xFF55555C) : const Color(0xFFC4C4CC))
-        : themeModel.themeColor.descColor();
+    final Color cronColor =
+        isDisabled
+            ? (dark ? const Color(0xFF55555B) : const Color(0xFFB0B0B8))
+            : CyberColors.cyan.withValues(alpha: 0.9);
+    final Color commandColor =
+        isDisabled
+            ? (dark ? const Color(0xFF55555C) : const Color(0xFFC4C4CC))
+            : themeModel.themeColor.descColor();
 
     final String timeText =
         (bean.lastExecutionTime == null || bean.lastExecutionTime == 0)
@@ -1345,14 +1366,15 @@ class TaskItemCell extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: sc,
                     borderRadius: BorderRadius.circular(2),
-                    boxShadow: isRunning
-                        ? [
-                            BoxShadow(
-                              color: sc.withValues(alpha: 0.6),
-                              blurRadius: 6,
-                            ),
-                          ]
-                        : [],
+                    boxShadow:
+                        isRunning
+                            ? [
+                              BoxShadow(
+                                color: sc.withValues(alpha: 0.6),
+                                blurRadius: 6,
+                              ),
+                            ]
+                            : [],
                   ),
                 ),
                 // 中间内容
@@ -1391,14 +1413,15 @@ class TaskItemCell extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: sc,
                               shape: BoxShape.circle,
-                              boxShadow: isRunning
-                                  ? [
-                                      BoxShadow(
-                                        color: sc.withValues(alpha: 0.7),
-                                        blurRadius: 5,
-                                      ),
-                                    ]
-                                  : [],
+                              boxShadow:
+                                  isRunning
+                                      ? [
+                                        BoxShadow(
+                                          color: sc.withValues(alpha: 0.7),
+                                          blurRadius: 5,
+                                        ),
+                                      ]
+                                      : [],
                             ),
                           ),
                         ],
@@ -1430,10 +1453,7 @@ class TaskItemCell extends StatelessWidget {
                               bean.schedule ?? "",
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: cronColor,
-                              ),
+                              style: TextStyle(fontSize: 12, color: cronColor),
                             ),
                           ),
                         ],
@@ -1476,9 +1496,8 @@ class TaskItemCell extends StatelessWidget {
 
   /// 状态色：运行中主色 / 待机灰 / 禁用红（禁用保持红色，待机纯灰无紫调）
   Color _stateColor(bool isRunning, bool isDisabled) {
-    final Color accent = isCyber
-        ? CyberColors.cyan
-        : ref.watch(themeProvider).primaryColor;
+    final Color accent =
+        isCyber ? CyberColors.cyan : ref.watch(themeProvider).primaryColor;
     if (isDisabled) {
       return isCyber ? CyberColors.neonRed : const Color(0xFFFF3B30);
     }
@@ -1506,26 +1525,28 @@ class TaskItemCell extends StatelessWidget {
   }) {
     final bool dark = isCyber;
     final bool inactive = isDisabled || editMode;
-    final Color c = inactive
-        ? (dark ? const Color(0xFF55555B) : const Color(0xFFB0B0B8))
-        : (isRunning ? const Color(0xFFFF3D00) : accent);
+    final Color c =
+        inactive
+            ? (dark ? const Color(0xFF55555B) : const Color(0xFFB0B0B8))
+            : (isRunning ? const Color(0xFFFF3D00) : accent);
     final IconData icon = isRunning ? Icons.stop : Icons.play_arrow;
     final String label = isRunning ? '停止' : '运行';
 
     return GestureDetector(
-      onTap: inactive
-          ? null
-          : () {
-              if (isRunning) {
-                stopCron(context, ref);
-              } else {
-                startCron(
-                  context,
-                  ref,
-                  SpUtil.getBool(spAutoShowLog, defValue: true),
-                );
-              }
-            },
+      onTap:
+          inactive
+              ? null
+              : () {
+                if (isRunning) {
+                  stopCron(context, ref);
+                } else {
+                  startCron(
+                    context,
+                    ref,
+                    SpUtil.getBool(spAutoShowLog, defValue: true),
+                  );
+                }
+              },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
@@ -1647,4 +1668,3 @@ class TaskItemCell extends StatelessWidget {
         .delCron(context1, [bean.sId!]);
   }
 }
-

@@ -37,6 +37,29 @@ class SingleAccountPage extends StatefulWidget {
   State<SingleAccountPage> createState() => SingleAccountPageState();
 }
 
+/// 账号槽位上下文重定向。
+///
+/// 用于「添加账号」这类场景：页面仍留在当前导航栈（保证共享转场可以收回
+/// 到添加账号卡片），但登录相关的 UserInfo / Http / Api 需要以**空槽位**
+/// 的身份解析。子树内所有 SingleAccountPageState 静态辅助方法都会优先读取
+/// 本作用域的 index，不改变页面自身的 SingleAccountPageState。
+class AccountIndexScope extends InheritedWidget {
+  const AccountIndexScope({
+    super.key,
+    required this.index,
+    required super.child,
+  });
+
+  final int index;
+
+  static int? maybeOf(BuildContext context) =>
+      context.findAncestorWidgetOfExactType<AccountIndexScope>()?.index;
+
+  @override
+  bool updateShouldNotify(AccountIndexScope oldWidget) =>
+      oldWidget.index != index;
+}
+
 class SingleAccountPageState extends State<SingleAccountPage> {
   late int index;
 
@@ -110,28 +133,52 @@ class SingleAccountPageState extends State<SingleAccountPage> {
     return context.findAncestorStateOfType<SingleAccountPageState>();
   }
 
+  /// 当前上下文解析到的账号槽位下标（优先使用 AccountIndexScope 重定向）。
+  static int? _slotIndex(BuildContext context) {
+    final override = AccountIndexScope.maybeOf(context);
+    if (override != null) return override;
+    return context.findAncestorStateOfType<SingleAccountPageState>()?.index;
+  }
+
+  static int ofIndex(BuildContext context) => _slotIndex(context) ?? 0;
+
   static UserInfoViewModel ofUserInfo(BuildContext context) {
-    int? index = context.findAncestorStateOfType<SingleAccountPageState>()?.index;
+    final index = _slotIndex(context);
 
     if (index == null) return UserInfoViewModel();
+    if (!getIt.isRegistered<UserInfoViewModel>(instanceName: index.toString())) {
+      return UserInfoViewModel();
+    }
 
     return getIt<UserInfoViewModel>(instanceName: index.toString());
   }
 
   static Http? ofHttp(BuildContext context) {
-    int? index = context.findAncestorStateOfType<SingleAccountPageState>()?.index;
+    final index = _slotIndex(context);
 
     if (index == null) return null;
+    if (!getIt.isRegistered<Http>(instanceName: index.toString())) return null;
 
     return getIt<Http>(instanceName: index.toString());
   }
 
   static Api ofApi(BuildContext context) {
-    int? index = context.findAncestorStateOfType<SingleAccountPageState>()?.index;
+    final index = _slotIndex(context);
 
     if (index == null) return Api(0);
 
     return Api(index);
+  }
+
+  /// 以当前上下文解析到的槽位为目标注册 Http。
+  /// 添加账号页配合 AccountIndexScope 使用，可写入空槽位而不在当前账号上登录。
+  static void registerHttpFor(BuildContext context, String host) {
+    final int index = ofIndex(context);
+    final String name = index.toString();
+    if (getIt.isRegistered<Http>(instanceName: name)) {
+      getIt.unregister<Http>(instanceName: name);
+    }
+    getIt.registerSingleton(Http(host, index), instanceName: name);
   }
 
   GlobalKey<NavigatorState> navigator = GlobalKey();

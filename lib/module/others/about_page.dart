@@ -315,7 +315,7 @@ class _AboutPageState extends ConsumerState<AboutPage>
                             try {
                               await launchUrl(
                                 Uri.tryParse(
-                                  "https://github.com/zhengsh2822/qinglong_app_glass_Wallpaper",
+                                  "https://github.com/zhengsh2822/qinglong_app_glass_Wallpaper/releases",
                                 )!,
                               );
                             } catch (e) {
@@ -595,9 +595,7 @@ class _AboutPageState extends ConsumerState<AboutPage>
           }
         }
       }
-      publishedAt ??= DateTime.tryParse(
-        data['published_at']?.toString() ?? '',
-      );
+      publishedAt ??= DateTime.tryParse(data['published_at']?.toString() ?? '');
       if (publishedAt == null) {
         // 主动提醒模式下静默（不 toast），避免每次启动打扰
         if (!autoRemind) "获取更新信息失败".toast();
@@ -621,18 +619,15 @@ class _AboutPageState extends ConsumerState<AboutPage>
       // 构建时注入的本地构建时间戳 LOCAL_BUILD_TIME（epoch，0 表示未注入不参与比较）
       // 兼容秒/毫秒两种单位：毫秒时间戳为 13 位（≥1e11），秒为 10 位（<1e11），
       // 若传入的是秒则自动放大 1000 倍，避免与 GitHub updated_at 毫秒对比失效
-      final localBuildRaw = int.tryParse(
-            const String.fromEnvironment('LOCAL_BUILD_TIME'),
-          ) ??
-          0;
-      final int localBuildAt = localBuildRaw > 0 && localBuildRaw < 100000000000
-          ? localBuildRaw * 1000
-          : localBuildRaw;
+      final localBuildRaw =
+          int.tryParse(const String.fromEnvironment('LOCAL_BUILD_TIME')) ?? 0;
+      final int localBuildAt =
+          localBuildRaw > 0 && localBuildRaw < 100000000000
+              ? localBuildRaw * 1000
+              : localBuildRaw;
       // 构建时注入的本地安装包序号 LOCAL_BUILD_NO（0 表示未注入不参与比较）
-      final int localBuildNo = int.tryParse(
-            const String.fromEnvironment('LOCAL_BUILD_NO'),
-          ) ??
-          0;
+      final int localBuildNo =
+          int.tryParse(const String.fromEnvironment('LOCAL_BUILD_NO')) ?? 0;
       // 序号可比（GitHub 与本地均带序号）时以序号为准：
       // GitHub 序号必须严格大于本地构建序号才算新版，等于即本地已装上该包
       //（解决"先本地构建安装、后上传 GitHub"场景的误报，也保证装上新包后不再提示）
@@ -640,8 +635,7 @@ class _AboutPageState extends ConsumerState<AboutPage>
       final bool newByNo = canCompareNo && githubNo > localBuildNo;
       // 时间基准：仅在序号无法比较（GitHub 或本地无序号）时兜底
       final bool newByTime =
-          !canCompareNo &&
-          (localBuildAt == 0 || latestEpoch > localBuildAt);
+          !canCompareNo && (localBuildAt == 0 || latestEpoch > localBuildAt);
       if (!newByTime && !newByNo) {
         // 主动提醒模式下静默（不 toast），避免每次启动打扰
         if (!autoRemind) "已是最新安装包".toast();
@@ -664,9 +658,10 @@ class _AboutPageState extends ConsumerState<AboutPage>
           SpUtil.putInt(spGithubLastRemindNo, githubNo);
         }
       }
-      final name = (data['name']?.toString().isNotEmpty ?? false)
-          ? data['name'].toString()
-          : (data['tag_name']?.toString() ?? '新版本');
+      final name =
+          (data['name']?.toString().isNotEmpty ?? false)
+              ? data['name'].toString()
+              : (data['tag_name']?.toString() ?? '新版本');
       final body = (data['body']?.toString() ?? '').trim();
       final local = releaseTime.toLocal();
       final timeStr =
@@ -700,23 +695,24 @@ class _AboutPageState extends ConsumerState<AboutPage>
       showCupertinoDialog(
         context: context,
         useRootNavigator: false,
-        builder: (childContext) => CupertinoAlertDialog(
-          title: const Text("发现新版安装包"),
-          content: Text(content, textAlign: TextAlign.left),
-          actions: [
-            CupertinoDialogAction(
-              child: const Text("稍后"),
-              onPressed: () => Navigator.pop(childContext),
+        builder:
+            (childContext) => CupertinoAlertDialog(
+              title: const Text("发现新版安装包"),
+              content: Text(content, textAlign: TextAlign.left),
+              actions: [
+                CupertinoDialogAction(
+                  child: const Text("稍后"),
+                  onPressed: () => Navigator.pop(childContext),
+                ),
+                CupertinoDialogAction(
+                  child: const Text("获取安装包"),
+                  onPressed: () {
+                    Navigator.pop(childContext);
+                    openGithub();
+                  },
+                ),
+              ],
             ),
-            CupertinoDialogAction(
-              child: const Text("获取安装包"),
-              onPressed: () {
-                Navigator.pop(childContext);
-                openGithub();
-              },
-            ),
-          ],
-        ),
       );
     } catch (e) {
       // 主动提醒模式下网络异常静默，不 toast

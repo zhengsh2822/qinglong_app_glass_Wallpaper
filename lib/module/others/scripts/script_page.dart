@@ -24,6 +24,7 @@ import '../../../base/ui/tree/tree_view.dart';
 import '../../../base/ui/tree/tree_view_controller.dart';
 import '../../../main.dart';
 import '../../home/system_bean.dart';
+import 'package:qinglong_app/base/ui/content_entrance.dart';
 import 'package:qinglong_app/base/ui/wallpaper_page_route.dart';
 
 class ScriptPage extends ConsumerStatefulWidget {
@@ -154,21 +155,23 @@ class _ScriptPageState extends ConsumerState<ScriptPage>
           ],
         ),
         body: GlassPageBackground(
+          // 内容首现柔和进场：数据到位后淡入+上移，不再直接闪现
           child:
-            list.isEmpty
-                ? const Center(child: LoadingWidget())
-                : FloatingSearchBarArea(
-                    controller: searchText,
-                    listView: RefreshIndicator(
-                      color: Theme.of(context).primaryColor,
-                      onRefresh: () async {
-                        await loadData();
-                        return Future.value();
-                      },
-                      child: TreeView(
-                        // ⑨ 悬浮搜索框：顶部间距 64 放在列表内部（滚动时被内容填充，无背景色块）
-                        padding: const EdgeInsets.only(top: 64),
-                        controller: _treeViewController,
+              list.isEmpty
+                  ? const Center(child: LoadingWidget())
+                  : ContentEntrance(
+                    child: FloatingSearchBarArea(
+                      controller: searchText,
+                      listView: RefreshIndicator(
+                        color: Theme.of(context).primaryColor,
+                        onRefresh: () async {
+                          await loadData();
+                          return Future.value();
+                        },
+                        child: TreeView(
+                          // ⑨ 悬浮搜索框：顶部间距 64 放在列表内部（滚动时被内容填充，无背景色块）
+                          padding: const EdgeInsets.only(top: 64),
+                          controller: _treeViewController,
                           onExpansionChanged: (key, state) {
                             ScriptData? node = _treeViewController.getNode(key);
                             if (node != null) {
@@ -249,6 +252,7 @@ class _ScriptPageState extends ConsumerState<ScriptPage>
                                 });
                           },
                         ),
+                      ),
                     ),
                   ),
         ),

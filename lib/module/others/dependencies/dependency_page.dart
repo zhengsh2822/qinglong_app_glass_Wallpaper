@@ -10,6 +10,7 @@ import 'package:qinglong_app/base/base_state_widget.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/card_transition_source.dart';
 import 'package:qinglong_app/base/ui/glass_segmented_tab.dart';
 import 'package:qinglong_app/base/ui/animated_edit_mode_overlay.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
@@ -18,7 +19,7 @@ import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/add_select_all_button.dart';
-import 'package:qinglong_app/base/ui/lazy_first_screen.dart';
+import 'package:qinglong_app/base/ui/content_entrance.dart';
 import 'package:qinglong_app/base/ui/slidable_close_notifier.dart';
 import 'package:qinglong_app/base/ui/enable_widget.dart';
 import 'package:qinglong_app/base/ui/running_widget.dart';
@@ -167,9 +168,9 @@ class DependcyPageState extends ConsumerState<DependencyPage>
                   checkedIds.length ==
                   ref
                       .read(
-                        SingleAccountPageState.ofDependencyProvider(
-                          context,
-                        )(getProviderName(context)).notifier,
+                        SingleAccountPageState.ofDependencyProvider(context)(
+                          getProviderName(context),
+                        ).notifier,
                       )
                       .getListByType(_tabController!.index)
                       .length,
@@ -278,96 +279,102 @@ class DependcyPageState extends ConsumerState<DependencyPage>
             getProviderName(context),
           ),
           builder: (context1, model, child) {
-            return NotificationListener<ScrollNotification>(
-              onNotification: (detail) {
-                if (detail is ScrollUpdateNotification && detail.depth == 2) {
-                  double y = detail.metrics.pixels;
-                  if (y > MediaQuery.of(context).size.height / 2) {
-                    if (buttonshow != true) {
-                      setState(() {
-                        buttonshow = true;
-                      });
-                    }
-                  } else {
-                    if (buttonshow != false) {
-                      setState(() {
-                        buttonshow = false;
-                      });
+            // LOADING→CONTENT 切换时内容柔和进场（首次挂载播放一次）。
+            // 纯淡入：同订阅管理，毛玻璃列表整体位移会导致 BackdropFilter
+            // 逐帧重采样（生硬掉帧），位置不动只做透明度过渡。
+            return ContentEntrance(
+              offsetY: 0,
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (detail) {
+                  if (detail is ScrollUpdateNotification && detail.depth == 2) {
+                    double y = detail.metrics.pixels;
+                    if (y > MediaQuery.of(context).size.height / 2) {
+                      if (buttonshow != true) {
+                        setState(() {
+                          buttonshow = true;
+                        });
+                      }
+                    } else {
+                      if (buttonshow != false) {
+                        setState(() {
+                          buttonshow = false;
+                        });
+                      }
                     }
                   }
-                }
-                return true;
-              },
-              child: NestedScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                controller: controller,
-                headerSliverBuilder: (
-                  BuildContext context,
-                  bool innerBoxIsScrolled,
-                ) {
-                  return [
-                    _buildAppBar(context, ref, model),
-                    SliverOverlapAbsorber(
-                      handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
-                        context,
-                      ),
-                      sliver: SliverPersistentHeader(
-                        pinned: true,
-                        floating: false,
-                        delegate: GlassSegmentedTabDelegate(
-                          tabs: [
-                            DependcyPageState.types[0].name,
-                            DependcyPageState.types[1].name,
-                            DependcyPageState.types[2].name,
-                          ],
-                          tabController: _tabController!,
-                          editMode: editMode,
+                  return true;
+                },
+                child: NestedScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  controller: controller,
+                  headerSliverBuilder: (
+                    BuildContext context,
+                    bool innerBoxIsScrolled,
+                  ) {
+                    return [
+                      _buildAppBar(context, ref, model),
+                      SliverOverlapAbsorber(
+                        handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
+                          context,
+                        ),
+                        sliver: SliverPersistentHeader(
+                          pinned: true,
+                          floating: false,
+                          delegate: GlassSegmentedTabDelegate(
+                            tabs: [
+                              DependcyPageState.types[0].name,
+                              DependcyPageState.types[1].name,
+                              DependcyPageState.types[2].name,
+                            ],
+                            tabController: _tabController!,
+                            editMode: editMode,
+                          ),
                         ),
                       ),
-                    ),
-                  ];
-                },
-                body: SlidableAutoCloseBehavior(
-                  key: ValueKey('dep_slidable_${_slidableResetKey}'),
-                  child: RefreshIndicator(
-                    color: Theme.of(context).primaryColor,
-                    notificationPredicate: (_) => true,
-                    onRefresh: () async {
-                      return model.loadData(
-                        context,
-                        types[_tabController!.index].name,
-                      );
-                    },
-                    child: TabBarView(
-                      controller: _tabController,
-                      physics: const NeverScrollableScrollPhysics(),
-                      children:
-                          types.map((e) {
-                            List<DependencyBean> list;
-                            if (e.index == 0) {
-                              list = model.nodeJsList;
-                            } else if (e.index == 1) {
-                              list = model.python3List;
-                            } else {
-                              list = model.linuxList;
-                            }
+                    ];
+                  },
+                  body: SlidableAutoCloseBehavior(
+                    key: ValueKey('dep_slidable_${_slidableResetKey}'),
+                    child: RefreshIndicator(
+                      color: Theme.of(context).primaryColor,
+                      notificationPredicate: (_) => true,
+                      onRefresh: () async {
+                        return model.loadData(
+                          context,
+                          types[_tabController!.index].name,
+                        );
+                      },
+                      child: TabBarView(
+                        controller: _tabController,
+                        physics: const NeverScrollableScrollPhysics(),
+                        children:
+                            types.map((e) {
+                              List<DependencyBean> list;
+                              if (e.index == 0) {
+                                list = model.nodeJsList;
+                              } else if (e.index == 1) {
+                                list = model.python3List;
+                              } else {
+                                list = model.linuxList;
+                              }
 
-                            return DepListView(
-                              list: list,
-                              type: e,
-                              searchText: searchText.text,
-                              editMode: editMode,
-                              checked: checkedIds,
-                              changed: (id) {
-                                if (checkedIds.contains(id)) {
-                                  checkedIds.remove(id);
-                                } else {
-                                  checkedIds.add(id);
-                                }
-                                setState(() {});
-                              },
-                            );
-                          }).toList(),
+                              return DepListView(
+                                list: list,
+                                type: e,
+                                searchText: searchText.text,
+                                editMode: editMode,
+                                checked: checkedIds,
+                                changed: (id) {
+                                  if (checkedIds.contains(id)) {
+                                    checkedIds.remove(id);
+                                  } else {
+                                    checkedIds.add(id);
+                                  }
+                                  setState(() {});
+                                },
+                              );
+                            }).toList(),
+                      ),
                     ),
                   ),
                 ),
@@ -377,12 +384,9 @@ class DependcyPageState extends ConsumerState<DependencyPage>
         ),
       ),
     );
-    return LazyFirstScreen(
-      placeholder: const FirstScreenSkeleton(title: "依赖管理"),
-      // 动画期间显示骨架（~400ms），动画结束后挂载真实内容（含实时毛玻璃）。
-      // 仅作用于本路由，下层路由不受影响。
-      child: isCyber ? CyberBackground(child: scaffold) : scaffold,
-    );
+    // 骨架机制已移除：容器转场 + PageSnapshot 冻结帧下，推入动画期间挂载的
+    // 是页面自身 loading（轻量），重列表在数据到位后才挂载并柔和进场。
+    return isCyber ? CyberBackground(child: scaffold) : scaffold;
   }
 
   void showLog(
@@ -464,15 +468,16 @@ class DependcyPageState extends ConsumerState<DependencyPage>
     }
     _editModeOverlay = AnimatedEditModeOverlay(
       context: context,
-      backgroundColorBuilder: (ref) =>
-          ref
-              .read(themeProvider)
-              .currentTheme
-              .bottomNavigationBarTheme
-              .backgroundColor
-              ?.withOpacity(1) ??
-          Theme.of(context).bottomNavigationBarTheme.backgroundColor ??
-          Colors.black,
+      backgroundColorBuilder:
+          (ref) =>
+              ref
+                  .read(themeProvider)
+                  .currentTheme
+                  .bottomNavigationBarTheme
+                  .backgroundColor
+                  ?.withOpacity(1) ??
+              Theme.of(context).bottomNavigationBarTheme.backgroundColor ??
+              Colors.black,
       builder: (BuildContext context1) {
         return SizedBox(
           height: kBottomNavigationBarHeight,
@@ -758,56 +763,83 @@ class DependencyCell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
-    Widget cardContent = InkWell(
-      onTap: () {
-        if (editMode) {
-          checkedCallback(bean.mustId ?? "");
-        } else {
-          showLog(context, bean.name ?? "", ref, bean.sId, bean.id);
-        }
-      },
-      child: Row(
-        children: [
-          AnimatedSize(
-            duration: const Duration(milliseconds: 250),
-            child: SizedBox(
-              width: editMode ? 40 : 0,
-              height: 40,
-              child: Visibility(
-                visible: editMode,
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 15),
-                  child: Icon(
-                    checked
-                        ? CupertinoIcons.checkmark_alt_circle
-                        : CupertinoIcons.circle,
-                    size: 25,
-                    color:
-                        checked
-                            ? ref.watch(themeProvider).primaryColor
-                            : ref.watch(themeProvider).themeColor.descColor(),
-                  ),
+    // 卡片内容行：真实卡片与共享转场源共用（两处布局必须一致）
+    final Widget depRow = Row(
+      children: [
+        AnimatedSize(
+          duration: const Duration(milliseconds: 250),
+          child: SizedBox(
+            width: editMode ? 40 : 0,
+            height: 40,
+            child: Visibility(
+              visible: editMode,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 15),
+                child: Icon(
+                  checked
+                      ? CupertinoIcons.checkmark_alt_circle
+                      : CupertinoIcons.circle,
+                  size: 25,
+                  color:
+                      checked
+                          ? ref.watch(themeProvider).primaryColor
+                          : ref.watch(themeProvider).themeColor.descColor(),
                 ),
               ),
             ),
           ),
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Material(
-                        color: Colors.transparent,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
+        ),
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Material(
+                      color: Colors.transparent,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Text(
+                          bean.name ?? "",
+                          maxLines: 1,
+                          style: TextStyle(
+                            overflow: TextOverflow.ellipsis,
+                            color:
+                                ref
+                                    .watch(themeProvider)
+                                    .themeColor
+                                    .titleColor(),
+                            fontSize: 17,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    bean.status == 1
+                        ? StatusWidget(
+                          title: "已安装",
+                          color: ref.watch(themeProvider).primaryColor,
+                        )
+                        : (bean.status == 2
+                            ? const StatusWidget(
+                              title: "安装失败",
+                              color: Color(0xffFB5858),
+                            )
+                            : const RunningWidget()),
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Material(
+                          color: Colors.transparent,
                           child: Text(
-                            bean.name ?? "",
+                            (bean.created == null || bean.created == 0)
+                                ? (Utils.formatGMTTime(bean.timestamp ?? ""))
+                                : Utils.formatMessageTime(bean.created!),
                             maxLines: 1,
                             style: TextStyle(
                               overflow: TextOverflow.ellipsis,
@@ -815,137 +847,158 @@ class DependencyCell extends ConsumerWidget {
                                   ref
                                       .watch(themeProvider)
                                       .themeColor
-                                      .titleColor(),
-                              fontSize: 17,
+                                      .descColor(),
+                              fontSize: 12,
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 5),
-                      bean.status == 1
-                          ? StatusWidget(
-                            title: "已安装",
-                            color: ref.watch(themeProvider).primaryColor,
-                          )
-                          : (bean.status == 2
-                              ? const StatusWidget(
-                                title: "安装失败",
-                                color: Color(0xffFB5858),
-                              )
-                              : const RunningWidget()),
-                      Expanded(
-                        child: Align(
-                          alignment: Alignment.centerRight,
-                          child: Material(
-                            color: Colors.transparent,
-                            child: Text(
-                              (bean.created == null || bean.created == 0)
-                                  ? (Utils.formatGMTTime(bean.timestamp ?? ""))
-                                  : Utils.formatMessageTime(bean.created!),
-                              maxLines: 1,
-                              style: TextStyle(
-                                overflow: TextOverflow.ellipsis,
-                                color:
-                                    ref
-                                        .watch(themeProvider)
-                                        .themeColor
-                                        .descColor(),
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
+    );
+
+    Widget cardContent = InkWell(
+      // 非编辑模式由外层 CardTransitionSource 接管点击（内层 onTap
+      // 为 null 不参与手势仲裁），编辑模式保留勾选行为
+      onTap: editMode ? () => checkedCallback(bean.mustId ?? "") : null,
+      child: depRow,
     );
 
     // 统一用 GlassListItemCard 实现毛玻璃效果，替代手写的 BackdropFilter+Container
     // 解决：1.非赛博模式 BackdropFilter 在白色 Container 内部导致模糊层级错误
     //      2.列表项重复 BackdropFilter 导致滚动卡顿（GlassListItemCard 自带 RepaintBoundary）
     //      3.两种模式卡片样式不一致
-    final slidableChild = isCyber
-        ? CyberSlidable(
-            slidableKey: ValueKey(bean.mustId),
-            enabled: !editMode,
-            endActions: [
-              CyberSlideAction(
-                label: '重装',
-                icon: CupertinoIcons.memories,
-                color: const Color(0xFF5D5E70),
-                onTap: () {
-                  reInstall(bean.name ?? "", context, ref, bean.sId, bean.id);
-                },
-              ),
-              CyberSlideAction(
-                label: '日志',
-                icon: CupertinoIcons.text_justifyleft,
-                color: const Color(0xFFA356D6),
-                onTap: () {
-                  showLog(context, bean.name ?? "", ref, bean.sId, bean.id);
-                },
-              ),
-              CyberSlideAction(
-                label: '删除',
-                icon: CupertinoIcons.delete,
-                color: const Color(0xFFFF3D5C),
-                onTap: () {
-                  del(context, ref, bean, bean.sId, bean.id);
-                },
-              ),
-            ],
-            child: cardContent,
-          )
-        : Slidable(
-            key: ValueKey(bean.mustId),
-            enabled: !editMode,
-            endActionPane: ActionPane(
-              motion: const ScrollMotion(),
-              extentRatio: 0.55,
-              children: [
-                AppSlideButton(
-                  context: context,
-                  color: const Color(0xff5D5E70),
-                  icon: CupertinoIcons.memories,
+    final slidableChild =
+        isCyber
+            ? CyberSlidable(
+              slidableKey: ValueKey(bean.mustId),
+              enabled: !editMode,
+              endActions: [
+                CyberSlideAction(
                   label: '重装',
-                  cyberMode: false,
-                  width: double.infinity,
+                  icon: CupertinoIcons.memories,
+                  color: const Color(0xFF5D5E70),
                   onTap: () {
                     reInstall(bean.name ?? "", context, ref, bean.sId, bean.id);
                   },
                 ),
-                AppSlideButton(
-                  context: context,
-                  color: const Color(0xffA356D6),
-                  icon: CupertinoIcons.text_justifyleft,
+                CyberSlideAction(
                   label: '日志',
-                  cyberMode: false,
-                  width: double.infinity,
+                  icon: CupertinoIcons.text_justifyleft,
+                  color: const Color(0xFFA356D6),
                   onTap: () {
                     showLog(context, bean.name ?? "", ref, bean.sId, bean.id);
                   },
                 ),
-                AppSlideButton(
-                  context: context,
-                  color: const Color(0xffEA4D3E),
-                  icon: CupertinoIcons.delete,
+                CyberSlideAction(
                   label: '删除',
-                  cyberMode: false,
-                  width: double.infinity,
+                  icon: CupertinoIcons.delete,
+                  color: const Color(0xFFFF3D5C),
                   onTap: () {
                     del(context, ref, bean, bean.sId, bean.id);
                   },
                 ),
               ],
-            ),
-            child: cardContent,
-          );
+              // 卡片共享展开：点击卡片 → 卡片隐藏 → 容器从卡片矩形展开日志页
+              child: CardTransitionSource(
+                child: cardContent,
+                sourceBuilder: (ctx) => depRow,
+                pageBuilder:
+                    (context) => InTimeDepLogPage(
+                      bean.sId ?? bean.id.toString(),
+                      true,
+                      bean.name ?? "",
+                    ),
+                blurSigma: 6,
+                blurTintColor: CyberColors.bg.withOpacity(0.50),
+                onResult: (value) async {
+                  await ref
+                      .read(
+                        SingleAccountPageState.ofDependencyProvider(context)(
+                          getProviderName(context),
+                        ),
+                      )
+                      .loadData(context, type.name.toLowerCase());
+                },
+              ),
+            )
+            : Slidable(
+              key: ValueKey(bean.mustId),
+              enabled: !editMode,
+              endActionPane: ActionPane(
+                motion: const ScrollMotion(),
+                extentRatio: 0.55,
+                children: [
+                  AppSlideButton(
+                    context: context,
+                    color: const Color(0xff5D5E70),
+                    icon: CupertinoIcons.memories,
+                    label: '重装',
+                    cyberMode: false,
+                    width: double.infinity,
+                    onTap: () {
+                      reInstall(
+                        bean.name ?? "",
+                        context,
+                        ref,
+                        bean.sId,
+                        bean.id,
+                      );
+                    },
+                  ),
+                  AppSlideButton(
+                    context: context,
+                    color: const Color(0xffA356D6),
+                    icon: CupertinoIcons.text_justifyleft,
+                    label: '日志',
+                    cyberMode: false,
+                    width: double.infinity,
+                    onTap: () {
+                      showLog(context, bean.name ?? "", ref, bean.sId, bean.id);
+                    },
+                  ),
+                  AppSlideButton(
+                    context: context,
+                    color: const Color(0xffEA4D3E),
+                    icon: CupertinoIcons.delete,
+                    label: '删除',
+                    cyberMode: false,
+                    width: double.infinity,
+                    onTap: () {
+                      del(context, ref, bean, bean.sId, bean.id);
+                    },
+                  ),
+                ],
+              ),
+              // 卡片共享展开：点击卡片 → 卡片隐藏 → 容器从卡片矩形展开日志页
+              child: CardTransitionSource(
+                child: cardContent,
+                sourceBuilder: (ctx) => depRow,
+                pageBuilder:
+                    (context) => InTimeDepLogPage(
+                      bean.sId ?? bean.id.toString(),
+                      true,
+                      bean.name ?? "",
+                    ),
+                blurSigma: 6,
+                blurTintColor: CyberColors.bg.withOpacity(0.50),
+                onResult: (value) async {
+                  await ref
+                      .read(
+                        SingleAccountPageState.ofDependencyProvider(context)(
+                          getProviderName(context),
+                        ),
+                      )
+                      .loadData(context, type.name.toLowerCase());
+                },
+              ),
+            );
 
     return GlassListItemCard(
       sigma: 8,
@@ -1073,4 +1126,3 @@ class DependencyCell extends ConsumerWidget {
     );
   }
 }
-

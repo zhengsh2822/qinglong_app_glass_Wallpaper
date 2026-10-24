@@ -11,6 +11,7 @@ import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/content_entrance.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
@@ -129,7 +130,13 @@ class _AppKeyPageState extends ConsumerState<AppKeyPage> {
       ),
       body: BaseStateWidget<AppKeyViewModel>(
         builder: (ref, model, child) {
-          return body(model, getListByType(model), ref);
+          // LOADING → CONTENT 切换时内容柔和进场（首次挂载播放一次）。
+          // 纯淡入：列表为毛玻璃卡片，整体位移会迫使 BackdropFilter 逐帧
+          // 重采样模糊（进场掉帧），与订阅/依赖管理页同配方。
+          return ContentEntrance(
+            offsetY: 0,
+            child: body(model, getListByType(model), ref),
+          );
         },
         model: SingleAccountPageState.ofAppKeyProvider(context)(
           getProviderName(context),
@@ -164,8 +171,7 @@ class _AppKeyPageState extends ConsumerState<AppKeyPage> {
               padding: const EdgeInsets.only(top: 64, bottom: 80),
               controller: controller,
               physics: const AlwaysScrollableScrollPhysics(),
-              keyboardDismissBehavior:
-                  ScrollViewKeyboardDismissBehavior.onDrag,
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               itemBuilder: (context, index) {
                 Map<String, dynamic> item = list[index];
                 if (searchText.text.isEmpty ||
@@ -290,10 +296,7 @@ class AppKeyItemCell extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: CyberColors.cardStroke,
-            width: 1,
-          ),
+          border: Border.all(color: CyberColors.cardStroke, width: 1),
         ),
         child: Material(
           color: Colors.transparent,
@@ -342,9 +345,10 @@ class AppKeyItemCell extends StatelessWidget {
             Wrap(
               runSpacing: 6,
               spacing: 6,
-              children: AppKeyViewModel.getScopeNames(
-                (bean["scopes"] as List<dynamic>?),
-              ).map((e) => TagChip(label: e)).toList(),
+              children:
+                  AppKeyViewModel.getScopeNames(
+                    (bean["scopes"] as List<dynamic>?),
+                  ).map((e) => TagChip(label: e)).toList(),
             ),
           ],
         ),

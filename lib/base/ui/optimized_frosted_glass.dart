@@ -18,10 +18,10 @@ import 'package:qinglong_app/utils/sp_utils.dart';
 /// 5. 滚动缓存（[enableScrollCache]）：列表滚动时截取模糊结果缓存为静态图，
 ///    滚动过程中用缓存图替代实时模糊，滚动停止恢复实时模糊，截图用 0.5 pixelRatio 降采样
 ///
-/// ## 路由动画期间的整页快照
-/// 路由 push/pop 动画期间不靠卡片自身快照（开销大），由
-/// [PageSnapshot]（路由级）整页截一张图显示，详见
-/// lib/base/ui/page_snapshot.dart。本组件无需再单独处理路由动画。
+/// ## 路由动画期间
+/// 路由 push/pop 动画期间页面实时渲染（PageSnapshot 快照机制已移除：
+/// 离屏位图无法携带 BackdropFilter 模糊，且页面层透明度包裹会破坏
+/// 毛玻璃采样）。本组件无需单独处理路由动画。
 ///
 /// 注意：项目硬约束——卡片背景色默认必须全透明（[tintColor] 传
 /// [Colors.transparent]），仅保留 BackdropFilter 高斯模糊，让全局壁纸透出。
@@ -85,9 +85,13 @@ class _OptimizedFrostedGlassState extends ConsumerState<OptimizedFrostedGlass> {
   void _setupScrollListener() {
     final scrollable = Scrollable.maybeOf(context);
     if (scrollable != _scrollable) {
-      _scrollable?.position.isScrollingNotifier.removeListener(_onScrollingChanged);
+      _scrollable?.position.isScrollingNotifier.removeListener(
+        _onScrollingChanged,
+      );
       _scrollable = scrollable;
-      _scrollable?.position.isScrollingNotifier.addListener(_onScrollingChanged);
+      _scrollable?.position.isScrollingNotifier.addListener(
+        _onScrollingChanged,
+      );
     }
   }
 
@@ -137,7 +141,9 @@ class _OptimizedFrostedGlassState extends ConsumerState<OptimizedFrostedGlass> {
 
   @override
   void dispose() {
-    _scrollable?.position.isScrollingNotifier.removeListener(_onScrollingChanged);
+    _scrollable?.position.isScrollingNotifier.removeListener(
+      _onScrollingChanged,
+    );
     _cachedImage?.dispose();
     super.dispose();
   }
@@ -216,8 +222,10 @@ bool isCardSolidMode() {
 /// 卡片纯色背景：颜色可自定义（[spCardSolidColor]），未设置时浅色主题白底 /
 /// 深色主题黑底；整体 × [spCardSolidOpacity] 不透明度。
 Color cardSolidColor({required bool isDark}) {
-  final opacity =
-      SpUtil.getDouble(spCardSolidOpacity, defValue: 0.45).clamp(0.0, 1.0);
+  final opacity = SpUtil.getDouble(
+    spCardSolidOpacity,
+    defValue: 0.45,
+  ).clamp(0.0, 1.0);
   // 用户自定义颜色（适配不同壁纸），-1 表示未设置 → 随主题自动白/黑
   final custom = SpUtil.getInt(spCardSolidColor, defValue: -1);
   final Color base =

@@ -95,7 +95,7 @@ class LoginHelper {
     // 复位登录页跳转标志，允许下次 token 过期时再次触发静默刷新 / 跳转
     SingleAccountPageState.ofHttp(context)?.resetExitLoginFlag();
     SingleAccountPageState.ofUserInfo(context).updateToken(
-      SingleAccountPageState.of(context)?.index ?? 0,
+      SingleAccountPageState.ofIndex(context),
       host,
       response.bean?.token ?? "",
       false,

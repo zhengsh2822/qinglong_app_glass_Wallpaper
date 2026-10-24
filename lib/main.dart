@@ -19,8 +19,10 @@ import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/animated_indexed_switch.dart';
 import 'package:qinglong_app/base/ui/keyboard_dismiss_observer.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
+import 'package:qinglong_app/base/ui/page_tap_origin.dart';
 import 'package:qinglong_app/base/ui/wallpaper_background.dart';
 import 'package:qinglong_app/utils/extension.dart';
+import 'package:qinglong_app/utils/ql_debug_log.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 import 'package:qinglong_app/module/home/home_page.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -34,6 +36,8 @@ var logger = Logger();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // 调试日志（debug 构建）：错误钩子 + 文件通道（设备 logcat 被 MIUI 禁用）
+  QlDebugLog.init();
   // 预编译液态玻璃 shader：首页底部导航 / 顶部 tab 的 LiquidGlassLens 首次
   // 渲染即走完整 shader 路径，避免首帧走 frosted fallback（无折射、无外圈
   // 高光 —— "顶部 tab 外圈高光丢失"的根源之一）。
@@ -141,6 +145,7 @@ class QlApp extends ConsumerStatefulWidget {
 
 class QlAppState extends ConsumerState<QlApp> with WidgetsBindingObserver {
   double textScaleFactor = 1;
+
   /// 全局字体粗细（默认 w400，随 spTextFontWeight 四档调节）
   FontWeight textFontWeight = FontWeight.w400;
 
@@ -175,7 +180,11 @@ class QlAppState extends ConsumerState<QlApp> with WidgetsBindingObserver {
     const preloadText =
         '青龙面板任务脚本订阅依赖环境变量配置系统设置登录账号密码通知推送备份恢复关于仪表盘京东助手悬浮时间扫描字体大小文件排序修改历史记录运行停止启用禁用删除编辑搜索确认取消返回保存0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
     SchedulerBinding.instance.addPostFrameCallback((_) {
-      for (final weight in [FontWeight.w400, FontWeight.w500, FontWeight.w600]) {
+      for (final weight in [
+        FontWeight.w400,
+        FontWeight.w500,
+        FontWeight.w600,
+      ]) {
         final painter = TextPainter(
           text: TextSpan(
             text: preloadText,
@@ -244,10 +253,12 @@ class QlAppState extends ConsumerState<QlApp> with WidgetsBindingObserver {
     return theme.copyWith(
       textTheme: weighted(tt),
       appBarTheme: theme.appBarTheme.copyWith(
-        titleTextStyle:
-            theme.appBarTheme.titleTextStyle?.copyWith(fontWeight: fw),
-        toolbarTextStyle:
-            theme.appBarTheme.toolbarTextStyle?.copyWith(fontWeight: fw),
+        titleTextStyle: theme.appBarTheme.titleTextStyle?.copyWith(
+          fontWeight: fw,
+        ),
+        toolbarTextStyle: theme.appBarTheme.toolbarTextStyle?.copyWith(
+          fontWeight: fw,
+        ),
       ),
       tabBarTheme: theme.tabBarTheme.copyWith(
         labelStyle: theme.tabBarTheme.labelStyle?.copyWith(fontWeight: fw),
@@ -291,25 +302,27 @@ class QlAppState extends ConsumerState<QlApp> with WidgetsBindingObserver {
             color: Colors.white,
           );
           final mediaQuery = MediaQuery.of(context);
-          return MediaQuery(
-            data: mediaQuery.copyWith(
-              textScaler: TextScaler.linear(textScaleFactor),
-              viewInsets:
-                  mediaQuery.viewInsets == EdgeInsets.zero
-                      ? mediaQuery.viewInsets
-                      : EdgeInsets.zero,
-            ),
-            child: ScrollConfiguration(
-              behavior: const ScrollPhysicsConfig(),
-              child: AnimatedTheme(
-                data: theme,
-                duration: const Duration(milliseconds: 800),
-                curve: Curves.easeInOutCubic,
-                child: Stack(
-                  children: [
-                    const Positioned.fill(child: WallpaperBackground()),
-                    if (child != null) child,
-                  ],
+          return PageTapScope(
+            child: MediaQuery(
+              data: mediaQuery.copyWith(
+                textScaler: TextScaler.linear(textScaleFactor),
+                viewInsets:
+                    mediaQuery.viewInsets == EdgeInsets.zero
+                        ? mediaQuery.viewInsets
+                        : EdgeInsets.zero,
+              ),
+              child: ScrollConfiguration(
+                behavior: const ScrollPhysicsConfig(),
+                child: AnimatedTheme(
+                  data: theme,
+                  duration: const Duration(milliseconds: 800),
+                  curve: Curves.easeInOutCubic,
+                  child: Stack(
+                    children: [
+                      const Positioned.fill(child: WallpaperBackground()),
+                      if (child != null) child,
+                    ],
+                  ),
                 ),
               ),
             ),

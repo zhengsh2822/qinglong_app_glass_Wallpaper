@@ -11,6 +11,7 @@ import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/card_transition_source.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/empty_widget.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
@@ -18,6 +19,7 @@ import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/module/config/add_config_page.dart';
 import 'package:qinglong_app/module/config/config_actions.dart';
 import 'package:qinglong_app/module/config/config_bean.dart';
+import 'package:qinglong_app/module/config/config_detail_page.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 import 'package:qinglong_app/utils/utils.dart';
 
@@ -33,7 +35,10 @@ class ConfigPage extends ConsumerStatefulWidget {
 }
 
 class ConfigPageState extends ConsumerState<ConfigPage>
-    with SingleTickerProviderStateMixin, WidgetsBindingObserver, AutomaticKeepAliveClientMixin {
+    with
+        SingleTickerProviderStateMixin,
+        WidgetsBindingObserver,
+        AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
   BuildContext? childContext;
@@ -282,28 +287,19 @@ class ConfigCell extends ConsumerWidget {
       ),
     );
 
-    return InkWell(
-      onTap: () {
-        Navigator.of(
-          context,
-        ).pushNamed(Routes.routeConfigDetail, arguments: {"bean": bean}).then((
-          value,
-        ) {
-          // 详情页里删除成功会 pop(true)：回到列表时同步刷新
-          if (value == true) onDeleted?.call();
-        });
-      },
-      child: SizedBox(
-        width: MediaQuery.of(context).size.width,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              margin: EdgeInsets.symmetric(
-                horizontal: isCyber ? 12 : AppleColors.spaceMd,
-                vertical: 6,
-              ),
+    return SizedBox(
+      width: MediaQuery.of(context).size.width,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            margin: EdgeInsets.symmetric(
+              horizontal: isCyber ? 12 : AppleColors.spaceMd,
+              vertical: 6,
+            ),
+            // 卡片共享展开：点击卡片 → 卡片隐藏 → 容器从卡片矩形展开详情页
+            child: CardTransitionSource(
               child: OptimizedFrostedGlass(
                 sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
                 borderRadius: BorderRadius.circular(AppleColors.radiusCard),
@@ -312,24 +308,27 @@ class ConfigCell extends ConsumerWidget {
                     color: Colors.transparent,
                     borderRadius: BorderRadius.circular(AppleColors.radiusCard),
                     // 单层描边：统一明显青色描边（cardStroke）
-                    border: Border.all(
-                      color: CyberColors.cardStroke,
-                      width: 1,
-                    ),
+                    border: Border.all(color: CyberColors.cardStroke, width: 1),
                   ),
                   child: Material(
                     color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(
-                      AppleColors.radiusCard,
-                    ),
+                    borderRadius: BorderRadius.circular(AppleColors.radiusCard),
                     child: configContent,
                   ),
                 ),
               ),
+              sourceBuilder: (ctx) => configContent,
+              pageBuilder: (context) => ConfigDetailPage(bean: bean),
+              blurSigma: 6,
+              blurTintColor: CyberColors.bg.withOpacity(0.50),
+              onResult: (value) {
+                // 详情页里删除成功会 pop(true)：回到列表时同步刷新
+                if (value == true) onDeleted?.call();
+              },
             ),
-            isCyber ? const SizedBox.shrink() : const SizedBox.shrink(),
-          ],
-        ),
+          ),
+          isCyber ? const SizedBox.shrink() : const SizedBox.shrink(),
+        ],
       ),
     );
   }

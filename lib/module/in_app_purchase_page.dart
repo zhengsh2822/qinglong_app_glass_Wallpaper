@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
-import 'package:qinglong_app/base/ui/lazy_first_screen.dart';
 
 class InAppPurchasePage extends ConsumerStatefulWidget {
   final bool fromDirectly;
@@ -18,12 +17,10 @@ class InAppPurchasePage extends ConsumerStatefulWidget {
 class _InAppPurchasePageState extends ConsumerState<InAppPurchasePage> {
   @override
   Widget build(BuildContext context) {
-    return LazyFirstScreen(
-      placeholder: const FirstScreenSkeleton(title: "APP功能介绍"),
-      // 动画期间显示骨架（~400ms），动画结束后挂载真实内容（含实时毛玻璃）。
-      // 仅作用于本路由，下层路由不受影响。
-      child: Scaffold(
-        appBar: QlAppBar(title: "APP功能介绍", canBack: true),
+    // 骨架机制已移除：容器转场 + PageSnapshot 冻结帧下，静态内容页在推入
+    // 动画期间由快照承载，无掉帧风险；内容从首帧起就在，无需占位。
+    return Scaffold(
+      appBar: QlAppBar(title: "APP功能介绍", canBack: true),
       body: SingleChildScrollView(
         primary: true,
         child: Padding(
@@ -75,7 +72,6 @@ class _InAppPurchasePageState extends ConsumerState<InAppPurchasePage> {
             ],
           ),
         ),
-      ),
       ),
     );
   }

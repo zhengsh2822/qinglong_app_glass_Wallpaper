@@ -15,8 +15,10 @@ import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/userinfo_viewmodel.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
+import 'package:qinglong_app/base/ui/container_transform_route.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
+import 'package:qinglong_app/base/ui/wallpaper_background.dart';
 import 'package:qinglong_app/base/ui/wallpaper_page_route.dart';
 import 'package:qinglong_app/module/in_app_purchase_page.dart';
 import 'package:qinglong_app/module/others/backup_page.dart';
@@ -75,6 +77,18 @@ class OtherPageState extends ConsumerState<OtherPage>
 
   final ScrollController _scrollController = ScrollController();
   GlobalKey<RefreshIndicatorState> refreshKey = GlobalKey();
+
+  /// 顶部账号卡片的共享转场源（仅头像/名称区域触发）
+  final GlobalKey _userHeaderKey = GlobalKey();
+  bool _accountOpening = false;
+
+  /// 顶部卡片当前主题色缓存：转场源内容在点击回调里构建，
+  /// 不能在该时机调用 ref.watch，故在 build 中缓存。
+  bool _headerIsCyber = true;
+  Color _headerTitleColor = CyberColors.titleWhite;
+  Color _headerDescColor = CyberColors.descColor;
+  Color _featurePrimaryColor = CyberColors.cyan;
+  Color _featureTitleColor = CyberColors.titleWhite;
 
   Future<void> move2Top() async {
     if (_scrollController.offset !=
@@ -149,7 +163,16 @@ class OtherPageState extends ConsumerState<OtherPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final _ = ref.watch(themeProvider);
+    final themeState = ref.watch(themeProvider);
+    _headerIsCyber = themeState.themeMode == modeCyber;
+    _headerTitleColor =
+        _headerIsCyber
+            ? CyberColors.titleWhite
+            : themeState.themeColor.titleColor();
+    _headerDescColor =
+        _headerIsCyber ? CyberColors.descColor : AppleColors.textSecondary;
+    _featurePrimaryColor = themeState.primaryColor;
+    _featureTitleColor = themeState.themeColor.titleColor();
     // 功能按钮字重跟随全局设置（我的页各功能入口统一）
     _featureFw = FontWeight(ref.watch(textWeightProvider));
     Widget body = RefreshIndicator(
@@ -202,209 +225,244 @@ class OtherPageState extends ConsumerState<OtherPage>
     );
   }
 
-  /// 顶部用户信息区：透明毛玻璃卡片
-  Widget _buildUserHeader() {
-    final bool isCyber = ref.watch(themeProvider).themeMode == modeCyber;
-    return GlassCard(
-      margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
-      sigma: 10,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(15, 20, 15, 15),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () {
-                if (SpUtil.getInt(spVIP, defValue: typeNormal) ==
-                    typeNormal) {
-                  Navigator.of(context).push(
-                    WallpaperPageRoute(
-                      builder:
-                          (context) => const InAppPurchasePage(
-                            fromDirectly: true,
-                          ),
-                    ),
-                  );
-                  return;
-                } else {
-                  if (SpUtil.getBool(
-                    spSingleInstance,
-                    defValue: false,
-                  )) {
-                    return;
-                  }
-                  Navigator.of(context).push(
-                    PageRouteBuilder(
-                      pageBuilder:
-                          (context, animation1, animation2) =>
-                              const ChangeAccountPage(),
-                      transitionDuration: Duration.zero,
-                      reverseTransitionDuration: Duration.zero,
-                    ),
-                  );
-                }
-              },
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child:
-                        (userIcon != null && userIcon!.isNotEmpty)
-                            ? Image.network(
-                              userIcon!,
-                              width: 60,
-                              height: 60,
-                              cacheWidth: 120,
-                              cacheHeight: 120,
-                              errorBuilder: (_, __, ___) {
-                                return Image.asset(
-                                  getImageByVIPLogo(),
-                                  width: 60,
-                                  height: 60,
-                                );
-                              },
-                            )
-                            : Image.asset(
-                              getImageByVIPLogo(),
-                              width: 60,
-                              height: 60,
-                            ),
-                  ),
-                  const SizedBox(width: 15),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 5),
-                        GestureDetector(
-                          onLongPress: () => _editAlias(),
-                          child: Text(
-                            (SingleAccountPageState.ofUserInfo(
-                                          context,
-                                        ).alias ==
-                                        null ||
-                                    SingleAccountPageState.ofUserInfo(
-                                      context,
-                                    ).alias!.isEmpty)
-                                ? userName
-                                : SingleAccountPageState.ofUserInfo(
-                                  context,
-                                ).alias!,
-                            maxLines: 1,
-                            style: TextStyle(
-                              color:
-                                  isCyber
-                                      ? CyberColors.titleWhite
-                                      : ref
-                                          .watch(themeProvider)
-                                          .themeColor
-                                          .titleColor(),
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 5),
-                        Obx(
-                          () => GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: () {
-                              if (poetData.isEmpty) return;
-                              // 与官方一致：点击随机更换诗句，而非跳转详情页
-                              loadPoet();
-                            },
-                            child: Text(
-                              desc.value,
-                              style: TextStyle(
-                                color:
-                                    isCyber
-                                        ? CyberColors.descColor
-                                        : AppleColors.textSecondary,
-                                fontSize: isCyber ? 12 : 13,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+  /// 顶部头像/名称区域 → 切换账号页（共享容器转场）
+  ///
+  /// 仅该区域触发；下方仪表盘/订阅/脚本/依赖保持主项目原有 onTap，
+  /// 不并入账号页触发区，避免误触。
+  void _openAccountPageFromHeader() {
+    if (SpUtil.getInt(spVIP, defValue: typeNormal) == typeNormal) {
+      Navigator.of(context).push(
+        WallpaperPageRoute(
+          builder: (context) => const InAppPurchasePage(fromDirectly: true),
+        ),
+      );
+      return;
+    }
+    if (SpUtil.getBool(spSingleInstance, defValue: false)) {
+      return;
+    }
+
+    final RenderBox? box =
+        _userHeaderKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) {
+      // 布局未完成时保持原行为，避免点击失效
+      Navigator.of(context).push(
+        PageRouteBuilder(
+          pageBuilder:
+              (context, animation1, animation2) => const ChangeAccountPage(),
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
+        ),
+      );
+      return;
+    }
+
+    final Rect rect = box.localToGlobal(Offset.zero) & box.size;
+    final Widget sourceChild = _buildUserHeaderContent();
+
+    HapticFeedback.lightImpact();
+    setState(() => _accountOpening = true);
+
+    Navigator.of(context)
+        .push(
+          ContainerTransformRoute(
+            sourceRect: rect,
+            sourceChild: sourceChild,
+            // 壁纸版：展开容器内必须带壁纸框架，不能回落成纯色底
+            background: const WallpaperBackground(cacheBlur: true),
+            sourceBlurSigma: SpUtil.getDouble(
+              spCardBlurSigma,
+              defValue: 10,
             ),
-            const SizedBox(height: 15),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            pageBackground: const Color(0xFF080A0D),
+            pageBuilder:
+                (context, animation) =>
+                    ChangeAccountPage(animation: animation),
+          ),
+        )
+        .whenComplete(() {
+          if (mounted) {
+            setState(() => _accountOpening = false);
+          }
+        });
+  }
+
+  /// 顶部用户信息区：透明毛玻璃卡片
+  /// 全卡作为转场视觉源；点击入口只在头像/名称区域。
+  Widget _buildUserHeader() {
+    return Opacity(
+      opacity: _accountOpening ? 0 : 1,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
+        child: KeyedSubtree(
+          key: _userHeaderKey,
+          child: GlassCard(
+            sigma: 10,
+            child: _buildUserHeaderContent(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 顶部账号卡片内容（同时作为共享转场的源内容，两处必须一致）。
+  Widget _buildUserHeaderContent() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(15, 20, 15, 15),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: _openAccountPageFromHeader,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildFeatureButton(
-                  title: "仪表盘",
-                  imagePath: "assets/images/icon_c.png",
-                  iconSize: 28,
-                  fontSize: 15,
-                  onTap: () {
-                    Navigator.of(context).pushNamed(Routes.routeDashboard);
-                  },
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child:
+                      (userIcon != null && userIcon!.isNotEmpty)
+                          ? Image.network(
+                            userIcon!,
+                            width: 60,
+                            height: 60,
+                            cacheWidth: 120,
+                            cacheHeight: 120,
+                            errorBuilder: (_, __, ___) {
+                              return Image.asset(
+                                getImageByVIPLogo(),
+                                width: 60,
+                                height: 60,
+                              );
+                            },
+                          )
+                          : Image.asset(
+                            getImageByVIPLogo(),
+                            width: 60,
+                            height: 60,
+                          ),
                 ),
-                _buildFeatureButton(
-                  title:
-                      getIt<SystemBean>(
-                            instanceName:
-                                (SingleAccountPageState.of(
-                                          context,
-                                        )?.index ??
-                                        0)
-                                    .toString(),
-                          ).isUpperVersion2_13_0()
-                          ? "订阅管理"
-                          : "拉库管理",
-                  imagePath: "assets/images/icon_subsctibe.png",
-                  iconSize: 28,
-                  fontSize: 15,
-                  onTap: () {
-                    if (getIt<SystemBean>(
-                      instanceName:
-                          (SingleAccountPageState.of(
+                const SizedBox(width: 15),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 5),
+                      GestureDetector(
+                        onLongPress: () => _editAlias(),
+                        child: Text(
+                          (SingleAccountPageState.ofUserInfo(context).alias ==
+                                      null ||
+                                  SingleAccountPageState.ofUserInfo(
                                     context,
-                                  )?.index ??
-                                  0)
-                              .toString(),
-                    ).isUpperVersion2_13_0()) {
-                      Navigator.of(context).pushNamed(Routes.routeSubscribeList);
-                    } else {
-                      Navigator.of(context).push(
-                        WallpaperPageRoute(
-                          builder:
-                              (context) => const TaskPage(
-                                onlyShowPullRepo: true,
-                              ),
+                                  ).alias!.isEmpty)
+                              ? userName
+                              : SingleAccountPageState.ofUserInfo(
+                                context,
+                              ).alias!,
+                          maxLines: 1,
+                          style: TextStyle(
+                            color: _headerTitleColor,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      );
-                    }
-                  },
-                ),
-                _buildFeatureButton(
-                  title: "脚本管理",
-                  imagePath: "assets/images/icon_s.png",
-                  iconSize: 28,
-                  fontSize: 15,
-                  onTap: () {
-                    Navigator.of(context).pushNamed(Routes.routeScript);
-                  },
-                ),
-                _buildFeatureButton(
-                  title: "依赖管理",
-                  imagePath: "assets/images/icon_d.png",
-                  iconSize: 28,
-                  fontSize: 15,
-                  onTap: () {
-                    Navigator.of(context).pushNamed(Routes.routeDependency);
-                  },
+                      ),
+                      const SizedBox(height: 5),
+                      Obx(
+                        () => GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () {
+                            if (poetData.isEmpty) return;
+                            // 与官方一致：点击随机更换诗句，而非跳转详情页
+                            loadPoet();
+                          },
+                          child: Text(
+                            desc.value,
+                            style: TextStyle(
+                              color: _headerDescColor,
+                              fontSize: _headerIsCyber ? 12 : 13,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 15),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildFeatureButton(
+                title: "仪表盘",
+                imagePath: "assets/images/icon_c.png",
+                iconSize: 28,
+                fontSize: 15,
+                onTap: () {
+                  Navigator.of(context).pushNamed(Routes.routeDashboard);
+                },
+              ),
+              _buildFeatureButton(
+                title:
+                    getIt<SystemBean>(
+                          instanceName:
+                              (SingleAccountPageState.of(
+                                        context,
+                                      )?.index ??
+                                      0)
+                                  .toString(),
+                        ).isUpperVersion2_13_0()
+                        ? "订阅管理"
+                        : "拉库管理",
+                imagePath: "assets/images/icon_subsctibe.png",
+                iconSize: 28,
+                fontSize: 15,
+                onTap: () {
+                  if (getIt<SystemBean>(
+                    instanceName:
+                        (SingleAccountPageState.of(
+                                  context,
+                                )?.index ??
+                                0)
+                            .toString(),
+                  ).isUpperVersion2_13_0()) {
+                    Navigator.of(context).pushNamed(Routes.routeSubscribeList);
+                  } else {
+                    Navigator.of(context).push(
+                      WallpaperPageRoute(
+                        builder:
+                            (context) => const TaskPage(
+                              onlyShowPullRepo: true,
+                            ),
+                      ),
+                    );
+                  }
+                },
+              ),
+              _buildFeatureButton(
+                title: "脚本管理",
+                imagePath: "assets/images/icon_s.png",
+                iconSize: 28,
+                fontSize: 15,
+                onTap: () {
+                  Navigator.of(context).pushNamed(Routes.routeScript);
+                },
+              ),
+              _buildFeatureButton(
+                title: "依赖管理",
+                imagePath: "assets/images/icon_d.png",
+                iconSize: 28,
+                fontSize: 15,
+                onTap: () {
+                  Navigator.of(context).pushNamed(Routes.routeDependency);
+                },
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -782,7 +840,6 @@ class OtherPageState extends ConsumerState<OtherPage>
     double iconSize = 24,
     double fontSize = 16,
   }) {
-    final theme = ref.watch(themeProvider);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 2),
       child: CupertinoButton(
@@ -796,7 +853,7 @@ class OtherPageState extends ConsumerState<OtherPage>
               if (imagePath != null)
                 Image.asset(imagePath, width: iconSize, height: iconSize, fit: BoxFit.contain)
               else
-                Icon(icon, color: theme.primaryColor, size: iconSize),
+                Icon(icon, color: _featurePrimaryColor, size: iconSize),
               const SizedBox(height: 5),
               Text(
                 title,
@@ -809,7 +866,7 @@ class OtherPageState extends ConsumerState<OtherPage>
                   fontFamily: 'MiSans',
                   fontSize: fontSize,
                   fontWeight: _featureFw,
-                  color: theme.themeColor.titleColor(),
+                  color: _featureTitleColor,
                 ),
               ),
             ],

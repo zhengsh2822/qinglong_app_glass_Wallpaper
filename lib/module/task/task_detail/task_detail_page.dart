@@ -29,13 +29,15 @@ class TaskDetailPage extends ConsumerStatefulWidget {
   final TaskBean taskBean;
   final bool hideAppbar;
 
-  const TaskDetailPage(this.taskBean, {Key? key, this.hideAppbar = false}) : super(key: key);
+  const TaskDetailPage(this.taskBean, {Key? key, this.hideAppbar = false})
+    : super(key: key);
 
   @override
   _TaskDetailPageState createState() => _TaskDetailPageState();
 }
 
-class _TaskDetailPageState extends ConsumerState<TaskDetailPage> with LazyLoadState<TaskDetailPage> {
+class _TaskDetailPageState extends ConsumerState<TaskDetailPage>
+    with LazyLoadState<TaskDetailPage> {
   bool isPin = false;
   bool isLoading = true;
 
@@ -79,9 +81,7 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> with LazyLoadSt
     Widget body;
 
     if (isLoading) {
-      body = const Center(
-        child: LoadingWidget(),
-      );
+      body = const Center(child: LoadingWidget());
     } else {
       body = Material(
         color: Colors.transparent,
@@ -92,14 +92,8 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> with LazyLoadSt
             child: Column(
               children: [
                 Container(
-                  margin: const EdgeInsets.only(
-                    left: 15,
-                    bottom: 15,
-                  ),
-                  padding: const EdgeInsets.only(
-                    top: 10,
-                    bottom: 10,
-                  ),
+                  margin: const EdgeInsets.only(left: 15, bottom: 15),
+                  padding: const EdgeInsets.only(top: 10, bottom: 10),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,49 +111,76 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> with LazyLoadSt
                         desc: widget.taskBean.command ?? "",
                       ),
                       Visibility(
-                        visible: widget.taskBean.command != null && widget.taskBean.command!.isNotEmpty && widget.taskBean.command!.startsWith("task "),
+                        visible:
+                            widget.taskBean.command != null &&
+                            widget.taskBean.command!.isNotEmpty &&
+                            widget.taskBean.command!.startsWith("task "),
                         child: TaskDetailCell(
                           title: "脚本",
                           suffixIcon: Icon(
                             CupertinoIcons.right_chevron,
                             size: 16,
-                            color: ref.watch(themeProvider).themeColor.descColor(),
+                            color:
+                                ref.watch(themeProvider).themeColor.descColor(),
                           ),
-                          desc: widget.taskBean.command?.replaceAll("task ", "") ?? "-",
+                          desc:
+                              widget.taskBean.command?.replaceAll(
+                                "task ",
+                                "",
+                              ) ??
+                              "-",
                           taped: () {
-                            if (widget.taskBean.command == null || widget.taskBean.command!.isEmpty) return;
-                            if (!(widget.taskBean.command?.startsWith("task ") ?? true)) return;
+                            if (widget.taskBean.command == null ||
+                                widget.taskBean.command!.isEmpty)
+                              return;
+                            if (!(widget.taskBean.command?.startsWith(
+                                  "task ",
+                                ) ??
+                                true))
+                              return;
 
-                            String path = widget.taskBean.command?.replaceAll("task ", "").trim() ?? "";
+                            String path =
+                                widget.taskBean.command
+                                    ?.replaceAll("task ", "")
+                                    .trim() ??
+                                "";
 
                             if (!path.contains("/")) {
-                              Navigator.of(context).pushNamed(Routes.routeScriptDetail, arguments: {
-                                "title": path.trim(),
-                                "path": "",
-                              });
+                              Navigator.of(context).pushNamed(
+                                Routes.routeScriptDetail,
+                                arguments: {"title": path.trim(), "path": ""},
+                              );
                             } else {
                               List<String> paths = path.split("/");
                               String title = paths.last;
-                              String dirPath = paths.sublist(0, paths.length - 1).join("/");
-                              Navigator.of(context).pushNamed(Routes.routeScriptDetail, arguments: {
-                                "title": title,
-                                "path": dirPath,
-                              });
+                              String dirPath = paths
+                                  .sublist(0, paths.length - 1)
+                                  .join("/");
+                              Navigator.of(context).pushNamed(
+                                Routes.routeScriptDetail,
+                                arguments: {"title": title, "path": dirPath},
+                              );
                             }
                           },
                         ),
                       ),
                       TaskDetailCell(
                         title: "创建时间",
-                        desc: widget.taskBean.created == null
-                            ? Utils.formatTime2(widget.taskBean.createdAt)
-                            : Utils.formatMessageTime(widget.taskBean.created ?? 0),
+                        desc:
+                            widget.taskBean.created == null
+                                ? Utils.formatTime2(widget.taskBean.createdAt)
+                                : Utils.formatMessageTime(
+                                  widget.taskBean.created ?? 0,
+                                ),
                       ),
                       TaskDetailCell(
                         title: "更新时间",
-                        desc: widget.taskBean.updatedAt == null
-                            ? Utils.formatGMTTime(widget.taskBean.timestamp ?? "")
-                            : Utils.formatTime2(widget.taskBean.updatedAt),
+                        desc:
+                            widget.taskBean.updatedAt == null
+                                ? Utils.formatGMTTime(
+                                  widget.taskBean.timestamp ?? "",
+                                )
+                                : Utils.formatTime2(widget.taskBean.updatedAt),
                       ),
                       TaskDetailCell(
                         title: "任务定时",
@@ -173,11 +194,16 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> with LazyLoadSt
                       }),
                       TaskDetailCell(
                         title: "最后运行时间",
-                        desc: Utils.formatMessageTime(widget.taskBean.lastExecutionTime ?? 0),
+                        desc: Utils.formatMessageTime(
+                          widget.taskBean.lastExecutionTime ?? 0,
+                        ),
                       ),
                       TaskDetailCell(
                         title: "最后运行时间",
-                        desc: widget.taskBean.lastRunningTime == null ? "-" : "${widget.taskBean.lastRunningTime ?? "-"}",
+                        desc:
+                            widget.taskBean.lastRunningTime == null
+                                ? "-"
+                                : "${widget.taskBean.lastRunningTime ?? "-"}",
                       ),
                       TaskDetailCell(
                         title: "最新日志",
@@ -185,26 +211,43 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> with LazyLoadSt
                         suffixIcon: Icon(
                           CupertinoIcons.right_chevron,
                           size: 16,
-                          color: ref.watch(themeProvider).themeColor.descColor(),
+                          color:
+                              ref.watch(themeProvider).themeColor.descColor(),
                         ),
                         taped: () {
                           showLog();
                         },
                       ),
                       Visibility(
-                        visible: widget.taskBean.command != null && widget.taskBean.command!.isNotEmpty && widget.taskBean.command!.startsWith("task "),
+                        visible:
+                            widget.taskBean.command != null &&
+                            widget.taskBean.command!.isNotEmpty &&
+                            widget.taskBean.command!.startsWith("task "),
                         child: TaskDetailCell(
                           title: "日志历史",
                           suffixIcon: Icon(
                             CupertinoIcons.right_chevron,
                             size: 16,
-                            color: ref.watch(themeProvider).themeColor.descColor(),
+                            color:
+                                ref.watch(themeProvider).themeColor.descColor(),
                           ),
-                          desc: widget.taskBean.command?.replaceAll("task ", "").replaceAll("/", "_").split(".")[0] ?? "-",
+                          desc:
+                              widget.taskBean.command
+                                  ?.replaceAll("task ", "")
+                                  .replaceAll("/", "_")
+                                  .split(".")[0] ??
+                              "-",
                           taped: () {
                             Navigator.of(context).pushNamed(
                               Routes.routeTaskLog,
-                              arguments: {"search": widget.taskBean.command?.replaceAll("task ", "").replaceAll("/", "_").split(".")[0] ?? ""},
+                              arguments: {
+                                "search":
+                                    widget.taskBean.command
+                                        ?.replaceAll("task ", "")
+                                        .replaceAll("/", "_")
+                                        .split(".")[0] ??
+                                    "",
+                              },
                             );
                           },
                         ),
@@ -216,7 +259,8 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> with LazyLoadSt
                           suffixIcon: Icon(
                             CupertinoIcons.right_chevron,
                             size: 16,
-                            color: ref.watch(themeProvider).themeColor.descColor(),
+                            color:
+                                ref.watch(themeProvider).themeColor.descColor(),
                           ),
                           desc: "查看历史运行实例",
                           taped: () {
@@ -224,10 +268,11 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> with LazyLoadSt
                               WallpaperPageRoute(
                                 blurSigma: 6,
                                 blurTintColor: CyberColors.bg.withOpacity(0.50),
-                                builder: (context) => CronInstancesPage(
-                                  cronId: widget.taskBean.sId ?? "",
-                                  cronName: widget.taskBean.name ?? "",
-                                ),
+                                builder:
+                                    (context) => CronInstancesPage(
+                                      cronId: widget.taskBean.sId ?? "",
+                                      cronName: widget.taskBean.name ?? "",
+                                    ),
                               ),
                             );
                           },
@@ -242,29 +287,30 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> with LazyLoadSt
                         desc: widget.taskBean.isDisabled == 1 ? "已禁用" : "已启用",
                       ),
                       Padding(
-                        padding: const EdgeInsets.only(
-                          left: 15,
-                          right: 10,
-                        ),
+                        padding: const EdgeInsets.only(left: 15, right: 10),
                         child: Row(
                           children: [
                             Text(
                               "是否置顶",
                               style: TextStyle(
-                                color: ref.watch(themeProvider).themeColor.titleColor(),
+                                color:
+                                    ref
+                                        .watch(themeProvider)
+                                        .themeColor
+                                        .titleColor(),
                                 fontSize: 16,
                               ),
                             ),
-                            const SizedBox(
-                              width: 30,
-                            ),
+                            const SizedBox(width: 30),
                             const Spacer(),
                             CupertinoSwitch(
-                                activeColor: ref.watch(themeProvider).primaryColor,
-                                value: isPin,
-                                onChanged: (v) {
-                                  pinTask(v);
-                                }),
+                              activeColor:
+                                  ref.watch(themeProvider).primaryColor,
+                              value: isPin,
+                              onChanged: (v) {
+                                pinTask(v);
+                              },
+                            ),
                           ],
                         ),
                       ),
@@ -274,26 +320,20 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> with LazyLoadSt
                 widget.hideAppbar
                     ? const SizedBox.shrink()
                     : SizedBox(
-                        width: MediaQuery.of(context).size.width - 80,
-                        child: CupertinoButton(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 5,
-                            ),
-                            color: AppColors.danger,
-                            child: const Text(
-                              "删除",
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white,
-                              ),
-                            ),
-                            onPressed: () {
-                              delTask(context, ref);
-                            }),
+                      width: MediaQuery.of(context).size.width - 80,
+                      child: CupertinoButton(
+                        padding: const EdgeInsets.symmetric(vertical: 5),
+                        color: AppColors.danger,
+                        child: const Text(
+                          "删除",
+                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        ),
+                        onPressed: () {
+                          delTask(context, ref);
+                        },
                       ),
-                const SizedBox(
-                  height: 15,
-                ),
+                    ),
+                const SizedBox(height: 15),
               ],
             ),
           ),
@@ -313,47 +353,43 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> with LazyLoadSt
             color: Colors.transparent,
             padding: EdgeInsets.zero,
             onPressed: () {
-              showMoreOperate(
-                context,
-                [
-                  CupertinoSheer(
-                    title: widget.taskBean.status! == 1 ? "运行" : "停止运行",
-                    onTap: () async {
-                      if (widget.taskBean.status! == 1) {
-                        await startCron(context, ref);
-                      } else {
-                        await stopCron(context, ref);
-                      }
-                    },
-                  ),
-                  addDivider(),
-                  CupertinoSheer(
-                    title: "编辑",
-                    onTap: () {
-                      Navigator.of(context).push(
-                        WallpaperPageRoute(
-                          builder: (context) => AddTaskPage(
-                            taskBean: widget.taskBean,
-                            hideUploadFile: true,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  addDivider(),
-                  CupertinoSheer(
-                    title: widget.taskBean.isDisabled! == 0 ? "禁用" : "启用",
-                    onTap: () {
-                      enableTask();
-                    },
-                  ),
-                ],
-              );
+              showMoreOperate(context, [
+                CupertinoSheer(
+                  title: widget.taskBean.status! == 1 ? "运行" : "停止运行",
+                  onTap: () async {
+                    if (widget.taskBean.status! == 1) {
+                      await startCron(context, ref);
+                    } else {
+                      await stopCron(context, ref);
+                    }
+                  },
+                ),
+                addDivider(),
+                CupertinoSheer(
+                  title: "编辑",
+                  onTap: () {
+                    Navigator.of(context).push(
+                      WallpaperPageRoute(
+                        builder:
+                            (context) => AddTaskPage(
+                              taskBean: widget.taskBean,
+                              hideUploadFile: true,
+                            ),
+                      ),
+                    );
+                  },
+                ),
+                addDivider(),
+                CupertinoSheer(
+                  title: widget.taskBean.isDisabled! == 0 ? "禁用" : "启用",
+                  onTap: () {
+                    enableTask();
+                  },
+                ),
+              ]);
             },
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 15,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 15),
               child: Center(
                 child: Icon(
                   Icons.more_horiz,
@@ -362,17 +398,21 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> with LazyLoadSt
                 ),
               ),
             ),
-          )
+          ),
         ],
       ),
-      body: GlassPageBackground(
-        child: body,
-      ),
+      body: GlassPageBackground(child: body),
     );
   }
 
   startCron(BuildContext context, WidgetRef ref) async {
-    await ref.read(SingleAccountPageState.ofTaskProvider(context)(getProviderName(context)).notifier).runCrons(context, [widget.taskBean.sId!]);
+    await ref
+        .read(
+          SingleAccountPageState.ofTaskProvider(context)(
+            getProviderName(context),
+          ).notifier,
+        )
+        .runCrons(context, [widget.taskBean.sId!]);
     setState(() {});
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       showLog();
@@ -380,19 +420,37 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> with LazyLoadSt
   }
 
   stopCron(BuildContext context, WidgetRef ref) async {
-    await ref.read(SingleAccountPageState.ofTaskProvider(context)(getProviderName(context)).notifier).stopCrons(context, [widget.taskBean.sId!]);
+    await ref
+        .read(
+          SingleAccountPageState.ofTaskProvider(context)(
+            getProviderName(context),
+          ).notifier,
+        )
+        .stopCrons(context, [widget.taskBean.sId!]);
     setState(() {});
   }
 
   void enableTask() async {
     await ref
-        .read(SingleAccountPageState.ofTaskProvider(context)(getProviderName(context)))
-        .enableTask(context, [widget.taskBean.sId!], widget.taskBean.isDisabled!);
+        .read(
+          SingleAccountPageState.ofTaskProvider(context)(
+            getProviderName(context),
+          ),
+        )
+        .enableTask(context, [
+          widget.taskBean.sId!,
+        ], widget.taskBean.isDisabled!);
     setState(() {});
   }
 
   void pinTask(bool v) async {
-    await ref.read(SingleAccountPageState.ofTaskProvider(context)(getProviderName(context)).notifier).pinTask(
+    await ref
+        .read(
+          SingleAccountPageState.ofTaskProvider(context)(
+            getProviderName(context),
+          ).notifier,
+        )
+        .pinTask(
           context,
           [widget.taskBean.sId!],
           //这里取反
@@ -406,7 +464,8 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> with LazyLoadSt
   bool _supportCronInstances() {
     try {
       return getIt<SystemBean>(
-        instanceName: (SingleAccountPageState.of(context)?.index ?? 0).toString(),
+        instanceName:
+            (SingleAccountPageState.of(context)?.index ?? 0).toString(),
       ).isUpperVersion2_22_0();
     } catch (e) {
       return false;
@@ -417,36 +476,41 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> with LazyLoadSt
     showCupertinoDialog(
       useRootNavigator: false,
       context: context1,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text("确认删除"),
-        content: Text("确认删除定时任务 ${widget.taskBean.name ?? ""} 吗？"),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text(
-              "取消",
-              style: TextStyle(
-                color: AppColors.greyText,
+      builder:
+          (context) => CupertinoAlertDialog(
+            title: const Text("确认删除"),
+            content: Text("确认删除定时任务 ${widget.taskBean.name ?? ""} 吗？"),
+            actions: [
+              CupertinoDialogAction(
+                child: const Text(
+                  "取消",
+                  style: TextStyle(color: AppColors.greyText),
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
               ),
-            ),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-          ),
-          CupertinoDialogAction(
-            child: Text(
-              "确定",
-              style: TextStyle(
-                color: ref.watch(themeProvider).primaryColor,
+              CupertinoDialogAction(
+                child: Text(
+                  "确定",
+                  style: TextStyle(
+                    color: ref.watch(themeProvider).primaryColor,
+                  ),
+                ),
+                onPressed: () async {
+                  Navigator.of(context).pop();
+                  await ref
+                      .read(
+                        SingleAccountPageState.ofTaskProvider(context1)(
+                          getProviderName(context1),
+                        ),
+                      )
+                      .delCron(context1, [widget.taskBean.sId!]);
+                  Navigator.of(context1).pop();
+                },
               ),
-            ),
-            onPressed: () async {
-              Navigator.of(context).pop();
-              await ref.read(SingleAccountPageState.ofTaskProvider(context1)(getProviderName(context1))).delCron(context1, [widget.taskBean.sId!]);
-              Navigator.of(context1).pop();
-            },
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -455,12 +519,13 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> with LazyLoadSt
       WallpaperPageRoute(
         blurSigma: 6,
         blurTintColor: CyberColors.bg.withOpacity(0.50),
-        builder: (context) => InTimeLogPage(
-          widget.taskBean.sId!,
-          true,
-          widget.taskBean.name ?? "",
-          command: widget.taskBean.command,
-        ),
+        builder:
+            (context) => InTimeLogPage(
+              widget.taskBean.sId!,
+              true,
+              widget.taskBean.name ?? "",
+              command: widget.taskBean.command,
+            ),
       ),
     );
   }
@@ -517,27 +582,28 @@ class TaskDetailCell extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(
-            top: 10,
-            left: 15,
-            bottom: 10,
-          ),
-          child: Row(
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: ref.watch(themeProvider).themeColor.titleColor(),
-                  fontSize: 16,
+          padding: const EdgeInsets.only(top: 10, left: 15, bottom: 10),
+          // 整行作为点击区（taped 非空时）：desc 文本的 SelectableText.onTap
+          // 保留（手势仲裁内层优先，文本上点击不会重复触发），行内空白区域
+          // 由这层 GestureDetector 接管，转场来源也与整行一致。
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: taped != null ? () => taped!() : null,
+            child: Row(
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: ref.watch(themeProvider).themeColor.titleColor(),
+                    fontSize: 16,
+                  ),
                 ),
-              ),
-              const SizedBox(
-                width: 30,
-              ),
-              desc != null
-                  ? Expanded(
+                const SizedBox(width: 30),
+                desc != null
+                    ? Expanded(
                       child: Align(
-                        alignment: left ? Alignment.centerLeft : Alignment.centerRight,
+                        alignment:
+                            left ? Alignment.centerLeft : Alignment.centerRight,
                         child: SelectableText(
                           desc!,
                           selectionControls: cupertinoTextSelectionControls,
@@ -549,34 +615,31 @@ class TaskDetailCell extends ConsumerWidget {
                             }
                           },
                           style: TextStyle(
-                            color: ref.watch(themeProvider).themeColor.descColor(),
+                            color:
+                                ref.watch(themeProvider).themeColor.descColor(),
                             fontSize: 16,
                           ),
                         ),
                       ),
                     )
-                  : Expanded(
-                      child: Align(alignment: Alignment.centerRight, child: icon!),
-                    ),
-              suffixIcon == null
-                  ? const SizedBox.shrink()
-                  : Padding(
-                      padding: const EdgeInsets.only(
-                        left: 15,
+                    : Expanded(
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: icon!,
                       ),
+                    ),
+                suffixIcon == null
+                    ? const SizedBox.shrink()
+                    : Padding(
+                      padding: const EdgeInsets.only(left: 15),
                       child: suffixIcon!,
                     ),
-              const SizedBox(
-                width: 15,
-              ),
-            ],
+                const SizedBox(width: 15),
+              ],
+            ),
           ),
         ),
-        hideDivide
-            ? const SizedBox.shrink()
-            : const Divider(
-                indent: 15,
-              ),
+        hideDivide ? const SizedBox.shrink() : const Divider(indent: 15),
       ],
     );
   }

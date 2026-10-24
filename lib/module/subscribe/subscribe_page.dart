@@ -11,11 +11,13 @@ import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/card_transition_source.dart';
+import 'package:qinglong_app/module/subscribe/subscribe_detail_page.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
 import 'package:qinglong_app/base/ui/enable_widget.dart';
-import 'package:qinglong_app/base/ui/lazy_first_screen.dart';
+import 'package:qinglong_app/base/ui/content_entrance.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/base/ui/floating_search_bar_area.dart';
 import 'package:qinglong_app/base/ui/running_widget.dart';
@@ -146,7 +148,13 @@ class _SubscribePageState extends ConsumerState<SubscribePage> {
       ),
       body: BaseStateWidget<SubscribeViewModel>(
         builder: (ref, model, child) {
-          return body(model, getListByType(model), ref);
+          // LOADING→CONTENT 切换时内容柔和进场（首次挂载播放一次）。
+          // 纯淡入：列表为毛玻璃卡片，整体位移会迫使 BackdropFilter 逐帧
+          // 重采样模糊（进场掉帧、观感生硬），位置保持不动只做透明度过渡。
+          return ContentEntrance(
+            offsetY: 0,
+            child: body(model, getListByType(model), ref),
+          );
         },
         model: SingleAccountPageState.ofSubscribeProvider(context)(
           getProviderName(context),
@@ -157,12 +165,9 @@ class _SubscribePageState extends ConsumerState<SubscribePage> {
         },
       ),
     );
-    return LazyFirstScreen(
-      placeholder: const FirstScreenSkeleton(title: "订阅管理"),
-      // 动画期间显示骨架（~400ms），动画结束后挂载真实内容（含实时毛玻璃）。
-      // 仅作用于本路由，下层路由不受影响。
-      child: isCyber ? CyberBackground(child: scaffold) : scaffold,
-    );
+    // 骨架机制已移除：容器转场 + PageSnapshot 冻结帧下，推入动画期间挂载的
+    // 是页面自身 loading（轻量），重列表在数据到位后才挂载并柔和进场。
+    return isCyber ? CyberBackground(child: scaffold) : scaffold;
   }
 
   Widget body(
@@ -188,8 +193,7 @@ class _SubscribePageState extends ConsumerState<SubscribePage> {
               padding: const EdgeInsets.only(top: 64, bottom: 80),
               controller: controller,
               physics: const AlwaysScrollableScrollPhysics(),
-              keyboardDismissBehavior:
-                  ScrollViewKeyboardDismissBehavior.onDrag,
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               itemBuilder: (context, index) {
                 Map<String, dynamic> item = list[index];
                 if (searchText.text.isEmpty ||
@@ -409,7 +413,7 @@ class TaskItemCell extends StatelessWidget {
         sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
         borderRadius: BorderRadius.circular(AppleColors.radiusCard),
         child: Slidable(
-            key: ValueKey(bean["id"] as int),
+          key: ValueKey(bean["id"] as int),
           endActionPane: ActionPane(
             motion: const ScrollMotion(),
             extentRatio: 0.55,
@@ -519,132 +523,126 @@ class TaskItemCell extends StatelessWidget {
   }
 
   /// 卡片主体内容（赛博/非赛博共用）
+  /// 卡片共享展开：点击卡片 → 卡片隐藏 → 容器从卡片矩形展开详情页
   Widget _buildCardChild(BuildContext context, {required bool isCyber}) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
+    return CardTransitionSource(
+      child: OptimizedFrostedGlass(
+        sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
         borderRadius: BorderRadius.circular(18),
-        onTap: () {
-          Navigator.of(
-            context,
-          ).pushNamed(Routes.routeSubscribeDetail, arguments: bean);
-        },
-        child: OptimizedFrostedGlass(
-          sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
-          borderRadius: BorderRadius.circular(18),
-          child: Container(
-              width: MediaQuery.of(context).size.width,
-              decoration: BoxDecoration(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: CyberColors.cardStroke,
-                          width: 1,
-                        ),
-                      ),
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+        child: Container(
+          width: MediaQuery.of(context).size.width,
+          decoration: BoxDecoration(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: CyberColors.cardStroke, width: 1),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+          child: _buildSubscribeContent(context, isCyber),
+        ),
+      ),
+      sourceBuilder:
+          (ctx) => Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+            child: _buildSubscribeContent(ctx, isCyber),
+          ),
+      pageBuilder: (context) => SubscribeDetailPage(bean),
+      blurSigma: 6,
+      blurTintColor: CyberColors.bg.withOpacity(0.50),
+    );
+  }
+
+  /// 订阅卡片内容列（真实卡片与共享转场源共用，两处布局必须一致）。
+  Widget _buildSubscribeContent(BuildContext context, bool isCyber) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Row(
+                mainAxisSize: MainAxisSize.max,
                 mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.max,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            ConstrainedBox(
-                              constraints: BoxConstraints.loose(
-                                Size.fromWidth(
-                                  MediaQuery.of(context).size.width / 2,
-                                ),
-                              ),
-                              child: Material(
-                                color: Colors.transparent,
-                                child: Text(
-                                  bean["name"] ?? "",
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    overflow: TextOverflow.ellipsis,
-                                    color:
-                                        isCyber
-                                            ? CyberColors.titleWhite
-                                            : ref
-                                                .watch(themeProvider)
-                                                .themeColor
-                                                .titleColor(),
-                                    fontSize: 16,
-                                    fontFamily: 'MiSans',
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 7),
-                            bean["status"] == 0
-                                ? const RunningWidget()
-                                : const SizedBox.shrink(),
-                            const SizedBox(width: 7),
-                            (bean["is_disabled"] ?? 0) == 1
-                                ? const StatusWidget(
-                                  title: "已禁用",
-                                  color: Color(0xffFB5858),
-                                )
-                                : const SizedBox.shrink(),
-                          ],
+                  ConstrainedBox(
+                    constraints: BoxConstraints.loose(
+                      Size.fromWidth(MediaQuery.of(context).size.width / 2),
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: Text(
+                        bean["name"] ?? "",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          overflow: TextOverflow.ellipsis,
+                          color:
+                              isCyber
+                                  ? CyberColors.titleWhite
+                                  : ref
+                                      .watch(themeProvider)
+                                      .themeColor
+                                      .titleColor(),
+                          fontSize: 16,
+                          fontFamily: 'MiSans',
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 5),
-                  Material(
-                    color: Colors.transparent,
-                    child: Text(
-                      bean["schedule"] ?? "",
-                      maxLines: 1,
-                      style: TextStyle(
-                        overflow: TextOverflow.ellipsis,
-                        color:
-                            isCyber
-                                ? CyberColors.cyan.withValues(alpha: 0.7)
-                                : ref
-                                    .watch(themeProvider)
-                                    .themeColor
-                                    .descColor(),
-                        fontSize: 12,
-                        fontFamily: 'MiSans',
-                      ),
                     ),
                   ),
-                  const SizedBox(height: 5),
-                  Material(
-                    color: Colors.transparent,
-                    child: Text(
-                      bean["url"] ?? "",
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        overflow: TextOverflow.ellipsis,
-                        color:
-                            isCyber
-                                ? CyberColors.descColor
-                                : ref
-                                    .watch(themeProvider)
-                                    .themeColor
-                                    .descColor(),
-                        fontSize: 12,
-                        fontFamily: 'MiSans',
-                      ),
-                    ),
-                  ),
+                  const SizedBox(width: 7),
+                  bean["status"] == 0
+                      ? const RunningWidget()
+                      : const SizedBox.shrink(),
+                  const SizedBox(width: 7),
+                  (bean["is_disabled"] ?? 0) == 1
+                      ? const StatusWidget(
+                        title: "已禁用",
+                        color: Color(0xffFB5858),
+                      )
+                      : const SizedBox.shrink(),
                 ],
               ),
             ),
+          ],
         ),
-      ),
+        const SizedBox(height: 5),
+        Material(
+          color: Colors.transparent,
+          child: Text(
+            bean["schedule"] ?? "",
+            maxLines: 1,
+            style: TextStyle(
+              overflow: TextOverflow.ellipsis,
+              color:
+                  isCyber
+                      ? CyberColors.cyan.withValues(alpha: 0.7)
+                      : ref.watch(themeProvider).themeColor.descColor(),
+              fontSize: 12,
+              fontFamily: 'MiSans',
+            ),
+          ),
+        ),
+        const SizedBox(height: 5),
+        Material(
+          color: Colors.transparent,
+          child: Text(
+            bean["url"] ?? "",
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              overflow: TextOverflow.ellipsis,
+              color:
+                  isCyber
+                      ? CyberColors.descColor
+                      : ref.watch(themeProvider).themeColor.descColor(),
+              fontSize: 12,
+              fontFamily: 'MiSans',
+            ),
+          ),
+        ),
+      ],
     );
   }
 

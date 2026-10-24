@@ -12,10 +12,12 @@ import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/glass_text_field.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
-import 'package:qinglong_app/base/ui/selector_sheet.dart';
+import 'package:qinglong_app/base/sp_const.dart';
+import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/base/ui/settings_widgets.dart';
 import 'package:qinglong_app/module/subscribe/add_subscribe_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
+import 'package:qinglong_app/utils/sp_utils.dart';
 
 import '../base/commit_button.dart';
 
@@ -31,6 +33,10 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
 
   PushBean? current;
   bool loading = true;
+
+  // 通知方式展开卡控制器：选中选项后收起
+  final ExpansionTileController _expansionController =
+      ExpansionTileController();
 
   @override
   void initState() {
@@ -57,152 +63,181 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
       ),
       body: GlassPageBackground(
         child:
-          loading
-              ? const Center(child: LoadingWidget())
-              : SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 15,
-                    vertical: 10,
-                  ),
-                  child: SafeArea(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const SizedBox(height: 10),
-                        Text(
-                          "通知设置",
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: isCyber ? CyberColors.titleWhite : null,
-                            fontFamily: 'MiSans',
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        // 通知方式选择 — 点击后向下展开弹窗卡片
-                        GestureDetector(
-                          onTap: () => _showPushSelector(context),
-                          child: SettingsCard(
-                            margin: EdgeInsets.zero,
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 14,
-                              horizontal: 12,
+            loading
+                ? const Center(child: LoadingWidget())
+                : SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 15,
+                      vertical: 10,
+                    ),
+                    child: SafeArea(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(height: 10),
+                          // 通知方式选择 — 与任务日志页文件夹卡同款：
+                          // 展开/收起共用一张毛玻璃卡片，选项在卡内展开。
+                          OptimizedFrostedGlass(
+                            sigma: SpUtil.getDouble(
+                              spCardBlurSigma,
+                              defValue: 4,
                             ),
-                            child: Row(
-                              children: [
-                                Expanded(
+                            borderRadius: BorderRadius.circular(18),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.transparent,
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(
+                                  color: CyberColors.cardStroke,
+                                  width: 1,
+                                ),
+                              ),
+                              child: ExpansionTile(
+                                controller: _expansionController,
+                                tilePadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 4,
+                                ),
+                                iconColor:
+                                    isCyber ? CyberColors.cyan : Colors.white,
+                                collapsedIconColor:
+                                    isCyber ? CyberColors.cyan : Colors.white,
+                                title: Text(
+                                  current != null
+                                      ? getNameByKey(current!.name)
+                                      : "请选择",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color:
+                                        isCyber
+                                            ? CyberColors.titleWhite
+                                            : ref
+                                                .watch(themeProvider)
+                                                .themeColor
+                                                .title2Color(),
+                                    fontFamily: 'MiSans',
+                                  ),
+                                ),
+                                subtitle: Padding(
+                                  padding: const EdgeInsets.only(top: 2),
                                   child: Text(
-                                    current != null
-                                        ? getNameByKey(current!.name)
-                                        : "请选择",
+                                    "通知方式",
                                     style: TextStyle(
-                                      fontSize: 14,
+                                      fontSize: 11.5,
                                       color:
-                                          isCyber
-                                              ? CyberColors.titleWhite
-                                              : ref
-                                                  .watch(themeProvider)
-                                                  .themeColor
-                                                  .title2Color(),
-                                      fontFamily: 'MiSans',
+                                          ref
+                                              .watch(themeProvider)
+                                              .themeColor
+                                              .descColor(),
                                     ),
                                   ),
                                 ),
-                                Icon(
-                                  CupertinoIcons.chevron_down,
-                                  size: 16,
-                                  color: isCyber ? CyberColors.cyan : null,
-                                ),
-                              ],
+                                children: [
+                                  for (final PushBean bean in list)
+                                    ListTile(
+                                      onTap: () {
+                                        setState(() {
+                                          current = bean;
+                                        });
+                                        _expansionController.collapse();
+                                      },
+                                      title: Text(
+                                        getNameByKey(bean.name),
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color:
+                                              isCyber
+                                                  ? CyberColors.titleWhite
+                                                  : ref
+                                                      .watch(themeProvider)
+                                                      .themeColor
+                                                      .title2Color(),
+                                          fontFamily: 'MiSans',
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        bean.children.isEmpty
+                                            ? "已关闭通知"
+                                            : "${bean.children.length} 项配置",
+                                        style: TextStyle(
+                                          fontSize: 11.5,
+                                          color:
+                                              ref
+                                                  .watch(themeProvider)
+                                                  .themeColor
+                                                  .descColor(),
+                                        ),
+                                      ),
+                                      trailing:
+                                          current?.key == bean.key
+                                              ? const Icon(
+                                                Icons.check_rounded,
+                                                color: CyberColors.cyan,
+                                                size: 20,
+                                              )
+                                              : null,
+                                    ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children:
-                              current?.children
-                                  .map(
-                                    (e) => Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const SizedBox(height: 15),
-                                        TitleWidget(
-                                          e.key,
-                                          required: e.required,
-                                        ),
-                                        const SizedBox(height: 10),
-                                        GlassTextField(
-                                          controller: e.controller,
-                                          hintText: "请输入${e.key}",
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color:
-                                                isCyber
-                                                    ? CyberColors.titleWhite
-                                                    : null,
-                                            fontFamily: 'MiSans',
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children:
+                                current?.children
+                                    .map(
+                                      (e) => Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const SizedBox(height: 15),
+                                          TitleWidget(
+                                            e.key,
+                                            required: e.required,
                                           ),
-                                        ),
-                                        const SizedBox(height: 10),
-                                        Text(
-                                          e.name,
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color:
-                                                ref
-                                                    .watch(themeProvider)
-                                                    .themeColor
-                                                    .descColor(),
+                                          const SizedBox(height: 10),
+                                          GlassTextField(
+                                            controller: e.controller,
+                                            hintText: "请输入${e.key}",
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color:
+                                                  isCyber
+                                                      ? CyberColors.titleWhite
+                                                      : null,
+                                              fontFamily: 'MiSans',
+                                            ),
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                  .toList() ??
-                              [],
-                        ),
-                      ],
+                                          const SizedBox(height: 10),
+                                          Text(
+                                            e.name,
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color:
+                                                  ref
+                                                      .watch(themeProvider)
+                                                      .themeColor
+                                                      .descColor(),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                    .toList() ??
+                                [],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
       ),
     );
     return isCyber ? CyberBackground(child: scaffold) : scaffold;
-  }
-
-  void _showPushSelector(BuildContext context) {
-    // 与主题版一致：复用通用底部弹窗选择器（lib/base/ui/selector_sheet.dart），
-    // 选项带副标题（"已关闭通知"/"N 项配置"），避免自定义弹窗重复实现
-    final options = list
-        .map(
-          (bean) => SelectorOption<String>(
-            value: bean.key,
-            label: getNameByKey(bean.name),
-            subtitle: bean.children.isEmpty
-                ? "已关闭通知"
-                : "${bean.children.length} 项配置",
-          ),
-        )
-        .toList();
-    showSelectorSheet<String>(
-      context: context,
-      title: "选择通知方式",
-      options: options,
-      selectedValue: current?.key,
-      onSelected: (key) {
-        final index = list.indexWhere((e) => e.key == key);
-        if (index >= 0) {
-          setState(() {
-            current = list[index];
-          });
-        }
-      },
-    );
   }
 
   void initData() {
