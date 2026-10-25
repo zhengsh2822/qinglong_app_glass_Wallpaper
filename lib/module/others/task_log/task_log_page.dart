@@ -18,6 +18,7 @@ import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/base/ui/floating_search_bar_area.dart';
+import 'package:qinglong_app/base/ui/selector_card.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/module/others/task_log/task_log_bean.dart';
 import 'package:qinglong_app/module/task/intime_log/intime_history_log_page.dart';
@@ -249,23 +250,15 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                           width: 1,
                                         ),
                                       ),
-                                      child: ExpansionTile(
-                                        title: Text(
-                                          item.name ?? "",
-                                          style: TextStyle(
-                                            color:
-                                                ref
-                                                    .watch(themeProvider)
-                                                    .themeColor
-                                                    .titleColor(),
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                        children:
+                                      child: SelectorCard(
+                                        title: item.name ?? "",
+                                        collapseOnSelect: false,
+                                        items:
                                             (item.files?.isNotEmpty ?? false)
                                                 ? item.files!
                                                     .map(
-                                                      (e) => ListTile(
+                                                      (e) => SelectorCardItem(
+                                                        title: e,
                                                         onTap: () {
                                                           Navigator.of(
                                                             context,
@@ -289,25 +282,13 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                                             ),
                                                           );
                                                         },
-                                                        title: Text(
-                                                          e,
-                                                          style: TextStyle(
-                                                            color:
-                                                                ref
-                                                                    .watch(
-                                                                      themeProvider,
-                                                                    )
-                                                                    .themeColor
-                                                                    .titleColor(),
-                                                            fontSize: 14,
-                                                          ),
-                                                        ),
                                                       ),
                                                     )
                                                     .toList()
                                                 : (item.children ?? [])
                                                     .map(
-                                                      (e) => ListTile(
+                                                      (e) => SelectorCardItem(
+                                                        title: e.title ?? "",
                                                         onTap: () {
                                                           Navigator.of(context)
                                                               .push(
@@ -341,19 +322,6 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                                                 }
                                                               });
                                                         },
-                                                        title: Text(
-                                                          e.title ?? "",
-                                                          style: TextStyle(
-                                                            color:
-                                                                ref
-                                                                    .watch(
-                                                                      themeProvider,
-                                                                    )
-                                                                    .themeColor
-                                                                    .titleColor(),
-                                                            fontSize: 14,
-                                                          ),
-                                                        ),
                                                       ),
                                                     )
                                                     .toList(),
@@ -449,23 +417,15 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                       ),
                                     ],
                                   ),
-                                  child: ExpansionTile(
-                                    title: Text(
-                                      item.name ?? "",
-                                      style: TextStyle(
-                                        color:
-                                            ref
-                                                .watch(themeProvider)
-                                                .themeColor
-                                                .titleColor(),
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                    children:
+                                  child: SelectorCard(
+                                    title: item.name ?? "",
+                                    collapseOnSelect: false,
+                                    items:
                                         (item.files?.isNotEmpty ?? false)
                                             ? item.files!
                                                 .map(
-                                                  (e) => ListTile(
+                                                  (e) => SelectorCardItem(
+                                                    title: e,
                                                     onTap: () {
                                                       Navigator.of(
                                                         context,
@@ -489,25 +449,13 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                                         ),
                                                       );
                                                     },
-                                                    title: Text(
-                                                      e,
-                                                      style: TextStyle(
-                                                        color:
-                                                            ref
-                                                                .watch(
-                                                                  themeProvider,
-                                                                )
-                                                                .themeColor
-                                                                .titleColor(),
-                                                        fontSize: 14,
-                                                      ),
-                                                    ),
                                                   ),
                                                 )
                                                 .toList()
                                             : (item.children ?? [])
                                                 .map(
-                                                  (e) => ListTile(
+                                                  (e) => SelectorCardItem(
+                                                    title: e.title ?? "",
                                                     onTap: () {
                                                       Navigator.of(context)
                                                           .push(
@@ -538,19 +486,6 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                                             }
                                                           });
                                                     },
-                                                    title: Text(
-                                                      e.title ?? "",
-                                                      style: TextStyle(
-                                                        color:
-                                                            ref
-                                                                .watch(
-                                                                  themeProvider,
-                                                                )
-                                                                .themeColor
-                                                                .titleColor(),
-                                                        fontSize: 14,
-                                                      ),
-                                                    ),
                                                   ),
                                                 )
                                                 .toList(),

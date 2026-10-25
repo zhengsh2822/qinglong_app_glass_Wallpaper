@@ -11,6 +11,8 @@ import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/app_colors.dart';
+import 'package:qinglong_app/base/ui/elastic_reorder_list.dart';
+import 'package:qinglong_app/base/ui/spring_depth_page_track.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/glass_segmented_tab.dart';
 import 'package:qinglong_app/base/ui/animated_edit_mode_overlay.dart';
@@ -112,15 +114,19 @@ class EnvPageState extends ConsumerState<EnvPage>
   }
 
   int _lastInnerTabIndex = 0;
+
+  /// 顶部分段滑块的连续位置（滑块弹簧是唯一物理源，页面景深轨道跟随）
+  final ValueNotifier<double> _tabTravel = ValueNotifier<double>(0);
+
   void _onInnerTabChanged() {
-    // 仅在 tab 动画结束后再重置 Slidable 状态，避免在动画过程中重建
-    // TabBarView 导致的页面切换动画被中断（页面瞬间切换，没有滑动效果）
-    if (_tabController!.index != _lastInnerTabIndex &&
-        !_tabController!.indexIsChanging) {
+    _tabTravel.value = _tabController!.index.toDouble();
+    // 轨道切换需要立即拿到新目标页（景深豁免/层级/TickerMode），index 一变就 setState；
+    // Slidable 关闭走 SlidableCloseNotifier 信号（原 TabBarView 动画中断问题已不存在，
+    // 不再用 _slidableResetKey 重建子树的方式，页面滚动位置得以保留）
+    if (_tabController!.index != _lastInnerTabIndex) {
       _lastInnerTabIndex = _tabController!.index;
-      setState(() {
-        _slidableResetKey++;
-      });
+      SlidableCloseNotifier.notify();
+      setState(() {});
     }
   }
 
@@ -167,6 +173,7 @@ class EnvPageState extends ConsumerState<EnvPage>
     searchText.dispose();
     _scrollController.dispose();
     _tabController?.dispose();
+    _tabTravel.dispose();
     super.dispose();
   }
 
@@ -406,6 +413,7 @@ class EnvPageState extends ConsumerState<EnvPage>
                         ],
                         tabController: _tabController!,
                         editMode: editMode,
+                        travelListenable: _tabTravel,
                       ),
                     ),
                   ),
@@ -422,10 +430,11 @@ class EnvPageState extends ConsumerState<EnvPage>
                   return model.loadData(context, false);
                 },
                 child: SlidableAutoCloseBehavior(
-                  key: ValueKey('env_slidable_${_slidableResetKey}'),
-                  child: TabBarView(
-                    controller: _tabController,
-                    physics: const NeverScrollableScrollPhysics(),
+                  // 弹簧景深轨道（S1 纯盖上）：页面跟随顶部滑块弹簧；
+                  // Slidable 关闭走 SlidableCloseNotifier，不再用 key 重建子树
+                  child: SpringDepthPageTrack(
+                    position: _tabTravel,
+                    current: _tabController!.index,
                     children: [
                       EnvRecordListView(
                         list: model.list,
@@ -1309,9 +1318,6 @@ class _EnvRecordListViewState extends ConsumerState<EnvRecordListView>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    // 使用局部变量，避免在 build 中修改实例字段
-    final List<Widget> children = [];
-    int displayIndex = 0;
     // 先过滤 + 导航栏排序，再构建卡片（默认=保持创建时间顺序）
     final List<EnvBean> filtered = [];
     for (int i = 0; i < widget.list.length; i++) {
@@ -1324,10 +1330,18 @@ class _EnvRecordListViewState extends ConsumerState<EnvRecordListView>
       }
     }
     _applyEnvSort(filtered, widget.nameSort, widget.timeSort);
-    for (final value in filtered) {
-      children.add(
-        Padding(
-          key: ValueKey(value.sId),
+    // 弹性重排列表：长按 320ms 抓取（抓取放大 + 邻卡弹性让位 + 落位回弹）
+    return ElasticReorderList<EnvBean>(
+      items: filtered,
+      itemKey: (EnvBean value) => ValueKey(value.sId),
+      enabled: widget.draggable,
+      padding: const EdgeInsets.only(
+        bottom: kBottomNavigationBarHeight + 50,
+        top: kToolbarHeight,
+      ),
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      itemBuilder: (BuildContext context, EnvBean value, int displayIndex) {
+        return Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: EnvItemCell(
             value,
@@ -1340,19 +1354,8 @@ class _EnvRecordListViewState extends ConsumerState<EnvRecordListView>
             },
             checked: widget.checked.contains(value.sId),
           ),
-        ),
-      );
-      displayIndex++;
-    }
-    return ReorderableListView(
-      padding: const EdgeInsets.only(
-        bottom: kBottomNavigationBarHeight + 50,
-        top: kToolbarHeight,
-      ),
-      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-      // 排序激活时禁用拖拽（buildDefaultDragHandles=false + onReorder 空），
-      // 避免拖拽基于原始 list 与显示顺序错位
-      buildDefaultDragHandles: widget.draggable,
+        );
+      },
       onReorder:
           widget.draggable
               ? (int oldIndex, int newIndex) {
@@ -1379,7 +1382,6 @@ class _EnvRecordListViewState extends ConsumerState<EnvRecordListView>
                 });
               }
               : (_, __) {},
-      children: children,
     );
   }
 }

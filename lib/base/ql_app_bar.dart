@@ -132,25 +132,22 @@ class _QlAppBarState extends State<QlAppBar> {
         builder: (titleContext) {
           final TextStyle style = DefaultTextStyle.of(titleContext).style;
           _titleStyle = style;
-          // 整个标题区（含左右空白）统一触发账号页；
-          // 返回键 / actions 仍是独立子节点，不会被这里吞掉。
+          // 标题收缩包裹（文字本身）：centerTitle 在整个工具栏宽度上居中标题，
+          // 永远屏幕居中。若做成 width:double.infinity 的全宽触发区，无限宽
+          // 组件无法被居中——只会填满 leading/actions 之间的空隙，文字在
+          // 不对称空隙里居中导致标题偏移（左右按钮宽度不等时明显）。
+          // 空白区域的账号页触发由 flexibleSpace 手势层承担，不受影响。
           return GestureDetector(
             key: _titleKey,
             behavior: HitTestBehavior.opaque,
             onTap: _openAccountPage,
             child: Opacity(
               opacity: _opening ? 0 : 1,
-              child: SizedBox(
-                width: double.infinity,
-                height: kToolbarHeight,
-                child: Center(
-                  child: Text(
-                    widget.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: style,
-                  ),
-                ),
+              child: Text(
+                widget.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: style,
               ),
             ),
           );

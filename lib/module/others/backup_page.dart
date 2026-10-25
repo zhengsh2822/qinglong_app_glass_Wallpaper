@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/spring_sheet.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
@@ -409,9 +410,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
 
   /// 选择恢复来源：最近备份 / 从文件管理器选择
   Future<String?> _showRestoreSourceSheet() async {
-    return showModalBottomSheet<String>(
+    return showSpringSheet<String>(
       context: context,
-      backgroundColor: Colors.transparent,
       builder: (context) {
         final bool isCyber = ref.watch(themeProvider).themeMode == modeCyber;
         return Container(
@@ -508,9 +508,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   /// 备份完成后的操作面板：分享文件 / 完成
   Future<void> _showBackupResultSheet(String savePath, {required bool isSuccess}) async {
     if (!mounted) return;
-    await showModalBottomSheet<void>(
+    await showSpringSheet<void>(
       context: context,
-      backgroundColor: Colors.transparent,
       builder: (context) {
         final bool isCyber = ref.watch(themeProvider).themeMode == modeCyber;
         return Container(
@@ -631,10 +630,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
 
   /// 文件选择 BottomSheet（85% 高度，确保长文件名显示完整）
   Future<String?> _showFileSelectSheet(List<File> files) async {
-    return showModalBottomSheet<String>(
+    return showSpringSheet<String>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (context) {
         final bool isCyber = ref.watch(themeProvider).themeMode == modeCyber;
         return Container(

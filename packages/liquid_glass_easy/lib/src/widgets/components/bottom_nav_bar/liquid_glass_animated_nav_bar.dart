@@ -364,6 +364,11 @@ class LiquidGlassAnimatedNavBar extends StatefulWidget {
   /// pill）放大到该比例，松开 easeOutBack 弹回。`null` 关闭该效果。
   final double? pressScale;
 
+  /// 每帧外发胶囊连续绘制位置（frac = 拖拽时 _dragFollow，其余 _travelPos）。
+  /// 宿主据此驱动整页切换 —— 页面与胶囊共用同一物理，天然同步。
+  /// 由宿主持有；胶囊只写不 dispose。
+  final ValueNotifier<double>? travelListenable;
+
   const LiquidGlassAnimatedNavBar({
     super.key,
     required this.body,
@@ -423,6 +428,7 @@ class LiquidGlassAnimatedNavBar extends StatefulWidget {
     this.onLongTapItem,
     this.directDragSwitch = false,
     this.pressScale,
+    this.travelListenable,
   });
 
   @override
@@ -612,6 +618,7 @@ class _LiquidGlassAnimatedNavBarState extends State<LiquidGlassAnimatedNavBar>
     _travelTarget = _travelPos;
     _travelFrom = _travelPos;
     _ticker = createTicker(_onTick);
+    _emitTravel();
     _pressController = AnimationController(
       vsync: this,
       // 放大 140ms easeOutCubic：按下立即快速放大。
@@ -628,6 +635,11 @@ class _LiquidGlassAnimatedNavBarState extends State<LiquidGlassAnimatedNavBar>
         reverseCurve: Curves.easeOutBack,
       ),
     );
+  }
+
+  /// 外发胶囊连续绘制位置（页面切换跟随用，每帧同步一次）
+  void _emitTravel() {
+    widget.travelListenable?.value = _tabDragging ? _dragFollow : _travelPos;
   }
 
   /// Starts the shared ticker if it isn't already running.
@@ -1063,6 +1075,7 @@ class _LiquidGlassAnimatedNavBarState extends State<LiquidGlassAnimatedNavBar>
     }
 
     if (mounted) setState(() {});
+    _emitTravel();
   }
 
   /// The direction key for a travel of [span] cells. A travel with no

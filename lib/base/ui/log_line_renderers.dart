@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/http/api.dart';
 import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/spring_sheet.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
 import 'log_models.dart';
@@ -185,12 +186,17 @@ class _ImagePathCardState extends ConsumerState<_ImagePathCard> {
   }
 
   void _showActionSheet() {
-    showCupertinoModalPopup(
+    // 统一走弹簧弹层，与全 App 其它底部弹层手感一致
+    showSpringSheet<void>(
       context: context,
-      builder: (_) => _PathActionSheet(
-        path: widget.path,
-        accountIndex: widget.accountIndex,
-      ),
+      builder:
+          (_) => Material(
+            type: MaterialType.transparency,
+            child: _PathActionSheet(
+              path: widget.path,
+              accountIndex: widget.accountIndex,
+            ),
+          ),
     );
   }
 

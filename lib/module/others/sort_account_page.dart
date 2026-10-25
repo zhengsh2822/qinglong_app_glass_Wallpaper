@@ -7,6 +7,7 @@ import 'package:qinglong_app/base/multi_account_userinfo_viewmodel.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/elastic_reorder_list.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
@@ -93,23 +94,19 @@ class _ChangeAccountPageState extends ConsumerState<SortAccountPage> {
           ),
         ],
       ),
-      body: ReorderableListView.builder(
+      // 弹性重排列表：长按 320ms 抓取（抓取放大 + 邻卡弹性让位 + 落位回弹）
+      body: ElasticReorderList<TokenBean>(
+        items: list,
+        // key 唯一性：多个账号登录同一 host 或存在未登录账号时 host 可能
+        // 重复，ValueKey(e.host) 会撞 key → 用 ObjectKey(e)（对象引用唯一，
+        // 重排时引用不变，key 稳定）
+        itemKey: (TokenBean e) => ObjectKey(e),
         padding: const EdgeInsets.only(top: 10, bottom: 30),
-        buildDefaultDragHandles: true,
-        // 拖动浮层（Overlay）：背景改为全透明，保留阴影以体现层级；
-        // 内容由卡片自身（半透明毛玻璃）呈现，不再加不透明底色
-        proxyDecorator: (child, index, animation) {
-          return AnimatedBuilder(
-            animation: animation,
-            builder: (context, _) {
-              final t = Curves.easeInOut.transform(animation.value);
-              return Material(
-                color: Colors.transparent,
-                elevation: 6 * t,
-                borderRadius: BorderRadius.circular(18),
-                child: child,
-              );
-            },
+        itemBuilder: (context, e, index) {
+          return GlassListItemCard(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            sigma: 10,
+            child: buildCell(e),
           );
         },
         onReorder: (int oldIndex, int newIndex) {
@@ -121,27 +118,6 @@ class _ChangeAccountPageState extends ConsumerState<SortAccountPage> {
             final TokenBean item = list.removeAt(oldIndex);
             list.insert(newIndex, item);
           });
-        },
-        itemCount: list.length,
-        itemBuilder: (context, index) {
-          final e = list[index];
-          return GlassListItemCard(
-            // 关键修复：ReorderableListView 要求每张卡片 key 唯一。
-            // 之前用 ValueKey(e.host) 做 key——当多个账号登录同一 host
-            // （同样登录账号）或存在 host 相同的账号时，key 会重复，
-            // 导致卡片只显示一部分、长按自动下移/跳动等异常。
-            // 改用 ObjectKey(e)（每个 TokenBean 对象引用唯一），
-            // 且重排时对象引用不变，key 保持稳定，拖动正常。
-            key: ObjectKey(e),
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            sigma: 10,
-            // 恢复卡片毛玻璃（BackdropFilter）：真正根因是 key 重复而非模糊。
-            // GlassListItemCard 内部 OptimizedFrostedGlass 在 enableScrollCache:false
-            // 时不会创建 GlobalKey（不会与 ReorderableListView 拖动复制子树冲突），
-            // 拖动浮层由 proxyDecorator 提供不透明底色兜底，故可安全恢复模糊。
-            // 路由动画期间的整页快照由 PageSnapshot（路由级）统一处理，无需卡片级处理。
-            child: buildCell(e),
-          );
         },
       ),
     );

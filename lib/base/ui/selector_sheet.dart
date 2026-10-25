@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/spring_sheet.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
+import 'package:qinglong_app/base/ui/glow_sheet.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 
@@ -56,50 +58,19 @@ Future<void> showSelectorSheet<T>({
   final Color dividerColor =
       isCyber ? const Color(0x22FFFFFF) : const Color(0xFFE5E5EA);
 
-  await showModalBottomSheet<void>(
+  await showSpringSheet<void>(
     context: context,
-    isScrollControlled: true,
-    isDismissible: true,
-    enableDrag: true,
-    backgroundColor: Colors.transparent,
-    elevation: 0,
-    barrierColor: Colors.black.withValues(alpha: 0.5),
     builder: (ctx) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-        child: OptimizedFrostedGlass(
-          sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
-          borderRadius: BorderRadius.circular(18),
-          forceOpaqueSolid: true,
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.circular(18),
-              border: isCyber
-                  ? Border.all(
-                      color: CyberColors.cyan.withValues(alpha: 0.3),
-                      width: 1,
-                    )
-                  : Border.all(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      width: 0.5,
-                      style: BorderStyle.solid,
-                    ),
-            ),
+      return SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          child: GlowSheetContainer(
+            isCyber: isCyber,
             child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(top: 8, bottom: 4),
-                    decoration: BoxDecoration(
-                      color: isCyber
-                          ? CyberColors.cyan.withValues(alpha: 0.4)
-                          : Colors.black.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const DragHandle(isCyber: true),
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     vertical: 12,
@@ -116,7 +87,10 @@ Future<void> showSelectorSheet<T>({
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: fw,
-                            color: isCyber ? CyberColors.cyan : AppleColors.textPrimary,
+                            color:
+                                isCyber
+                                    ? CyberColors.cyan
+                                    : AppleColors.textPrimary,
                             fontFamily: 'MiSans',
                           ),
                         ),
@@ -126,9 +100,12 @@ Future<void> showSelectorSheet<T>({
                         child: Icon(
                           CupertinoIcons.xmark_circle_fill,
                           size: 22,
-                          color: isCyber
-                              ? CyberColors.titleWhite.withValues(alpha: 0.5)
-                              : Colors.black.withValues(alpha: 0.3),
+                          color:
+                              isCyber
+                                  ? CyberColors.titleWhite.withValues(
+                                    alpha: 0.5,
+                                  )
+                                  : Colors.black.withValues(alpha: 0.3),
                         ),
                       ),
                     ],
@@ -153,9 +130,10 @@ Future<void> showSelectorSheet<T>({
                           onSelected(option.value);
                         },
                         child: Container(
-                          color: selected
-                              ? accent.withValues(alpha: 0.08)
-                              : Colors.transparent,
+                          color:
+                              selected
+                                  ? accent.withValues(alpha: 0.08)
+                                  : Colors.transparent,
                           padding: const EdgeInsets.symmetric(
                             vertical: 14,
                             horizontal: 16,
@@ -174,11 +152,12 @@ Future<void> showSelectorSheet<T>({
                                       style: TextStyle(
                                         fontSize: 15,
                                         fontWeight: fw,
-                                        color: selected
-                                            ? accent
-                                            : (isCyber
-                                                ? CyberColors.titleWhite
-                                                : AppleColors.textPrimary),
+                                        color:
+                                            selected
+                                                ? accent
+                                                : (isCyber
+                                                    ? CyberColors.titleWhite
+                                                    : AppleColors.textPrimary),
                                         fontFamily: 'MiSans',
                                       ),
                                     ),
@@ -190,9 +169,10 @@ Future<void> showSelectorSheet<T>({
                                         overflow: TextOverflow.ellipsis,
                                         style: TextStyle(
                                           fontSize: 12,
-                                          color: isCyber
-                                              ? CyberColors.descColor
-                                              : AppleColors.textSecondary,
+                                          color:
+                                              isCyber
+                                                  ? CyberColors.descColor
+                                                  : AppleColors.textSecondary,
                                           fontFamily: 'MiSans',
                                         ),
                                       ),
@@ -264,9 +244,10 @@ class SelectorFieldCard extends ConsumerWidget {
                   fontSize: 14,
                   fontWeight: fw,
                   // 选择器当前显示值：非空时跟随主字体色，空值占位跟随次字体色
-                  color: currentValue.isEmpty
-                      ? ref.watch(themeProvider).themeColor.descColor()
-                      : ref.watch(themeProvider).themeColor.titleColor(),
+                  color:
+                      currentValue.isEmpty
+                          ? ref.watch(themeProvider).themeColor.descColor()
+                          : ref.watch(themeProvider).themeColor.titleColor(),
                   fontFamily: 'MiSans',
                 ),
               ),

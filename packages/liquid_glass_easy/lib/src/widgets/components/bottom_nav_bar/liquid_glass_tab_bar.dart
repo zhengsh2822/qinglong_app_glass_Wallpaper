@@ -62,6 +62,7 @@ class LiquidGlassTabBar extends StatelessWidget {
     this.onLongTapItem,
     this.directDragSwitch = false,
     this.pressScale,
+    this.travelListenable,
   })  : _impellerStandalone = false,
         assert(items.length > 0, 'Provide at least one item'),
         assert(selectedIndex >= 0 && selectedIndex < items.length,
@@ -111,6 +112,7 @@ class LiquidGlassTabBar extends StatelessWidget {
     this.onLongTapItem,
     this.directDragSwitch = false,
     this.pressScale,
+    this.travelListenable,
   })  : _impellerStandalone = true,
         assert(items.length > 0, 'Provide at least one item'),
         assert(selectedIndex >= 0 && selectedIndex < items.length,
@@ -139,6 +141,11 @@ class LiquidGlassTabBar extends StatelessWidget {
   /// q 弹（按压缩放）：按下导航栏区域整栏放大到该比例，松开弹回。
   /// `null` 关闭。See [LiquidGlassAnimatedNavBar.pressScale].
   final double? pressScale;
+
+  /// 每帧外发胶囊的连续绘制位置（frac，0..itemCount-1）。
+  /// 宿主用它驱动整页切换（页面与胶囊同一物理，天然像素级同步）。
+  /// 由宿主持有并 dispose；胶囊只写不 dispose。
+  final ValueNotifier<double>? travelListenable;
 
   /// The tab items.
   final List<LiquidGlassTabBarItem> items;
@@ -314,6 +321,7 @@ class LiquidGlassTabBar extends StatelessWidget {
       onLongTapItem: onLongTapItem,
       directDragSwitch: directDragSwitch,
       pressScale: pressScale,
+      travelListenable: travelListenable,
     );
   }
 

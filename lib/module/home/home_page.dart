@@ -10,6 +10,8 @@ import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
+import 'package:qinglong_app/base/ui/spring_depth_page_track.dart';
+import 'package:qinglong_app/base/ui/spring_sheet.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/liquid_glass_shapes.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
@@ -38,10 +40,10 @@ class HomePage extends ConsumerStatefulWidget {
 }
 
 class HomePageState extends ConsumerState<HomePage> {
-  // 底部 tab 页面控制器：与顶部 TabBar 同机制（PageView + animateToPage）
-  // NeverScrollableScrollPhysics 禁手势，仅由底部 tab 点击驱动平滑滑动
-  // 惰性初始化：initialPage 需读 provider，需等 build 有 context 后创建
-  PageController? _pageController;
+  // 底部 tab 页面轨道：底部胶囊的 travel 弹簧是唯一物理源（连续页位置外发到
+  // _navTravel），页面景深轨道直接跟随 —— 点击/连点打断/长按拖拽抓取全场景同步。
+  // 惰性初始化：initial 值需读 provider，等首次 build 再建
+  ValueNotifier<double>? _navTravel;
 
   @override
   void initState() {
@@ -236,7 +238,7 @@ class HomePageState extends ConsumerState<HomePage> {
 
   @override
   void dispose() {
-    _pageController?.dispose();
+    _navTravel?.dispose();
     MultiAccountPageState.clearAction();
     super.dispose();
   }
@@ -303,27 +305,9 @@ class HomePageState extends ConsumerState<HomePage> {
         getProviderName(context),
       ),
     );
-    // 惰性创建 PageController（首次 build 时 provider 才可读）
-    final PageController pageController =
-        _pageController ??= PageController(initialPage: homeIndex);
-    // provider 为唯一数据源：底部 tab 点击/外部跳转改 index，统一驱动平滑滑动
-    ref.listen<int>(
-      SingleAccountPageState.ofHomeIndexProvider(context)(
-        getProviderName(context),
-      ),
-      (previous, next) {
-        if (!pageController.hasClients) return;
-        if (pageController.page?.round() != next) {
-          // 对齐顶部 GlassSegmentedTab 参数（300ms + easeOutCubic）：
-          // 起步快、收尾缓，保证两处切换手感一致（easeInOutCubic 中间段慢、收尾拖沓）
-          pageController.animateToPage(
-            next,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOutCubic,
-          );
-        }
-      },
-    );
+    // 惰性创建 travel 值（首次 build 时 provider 才可读）；胶囊弹簧是唯一驱动源，
+    // provider 只改 selectedIndex → 胶囊弹簧 → 页面跟随，无需 ref.listen 驱动画
+    _navTravel ??= ValueNotifier<double>(homeIndex.toDouble());
     // 底部导航"我的"按钮几何（与官方 LiquidGlassTabBar 的胶囊侧边距 16 +
     // itemPadding=3 保持一致），用于长按"我的"弹窗对齐悬浮"我的"位置
     final double screenW = MediaQuery.of(context).size.width;
@@ -340,32 +324,19 @@ class HomePageState extends ConsumerState<HomePage> {
             RepaintBoundary(
               child: Scaffold(
                 extendBody: true,
-                // 与顶部 TabBar 同机制：PageView 轨道式整页滑动切换
-                // 页面保活见各页面 AutomaticKeepAliveClientMixin（滚动位置不丢）
-                //
-                // 功耗优化：TickerMode 包裹非当前 tab，切走后自动暂停该页
-                // 全部动画 ticker（AnimationController/Slidable 弹簧等），
-                // 静止时零动画重绘；TickerMode 不影响 paint，滑动切入时正常显示
-                body: PageView(
-                  controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(),
+                // 弹簧景深整页切换（S1 纯盖上，主题版 release_110~112 验收方案）：
+                // 页面位移跟随底部胶囊 travel 弹簧（同一物理，滑块与页面像素级同步）；
+                // 进入页全尺寸盖上、离开页原样沉底被盖，零缩放/零变暗/零投影。
+                // 页面保活：轨道惰性挂载后常驻（滚动位置不丢）；
+                // 功耗：轨道内非当前页 TickerMode 自动关闭，静止时零动画重绘
+                body: SpringDepthPageTrack(
+                  position: _navTravel!,
+                  current: homeIndex,
                   children: [
-                    TickerMode(
-                      enabled: homeIndex == 0,
-                      child: TaskPage(key: taskKey, loading: !getSystemBeanSuccess),
-                    ),
-                    TickerMode(
-                      enabled: homeIndex == 1,
-                      child: EnvPage(key: envKey),
-                    ),
-                    TickerMode(
-                      enabled: homeIndex == 2,
-                      child: ConfigPage(key: configKey),
-                    ),
-                    TickerMode(
-                      enabled: homeIndex == 3,
-                      child: OtherPage(key: meKey),
-                    ),
+                    TaskPage(key: taskKey, loading: !getSystemBeanSuccess),
+                    EnvPage(key: envKey),
+                    ConfigPage(key: configKey),
+                    OtherPage(key: meKey),
                   ],
                 ),
               ),
@@ -467,6 +438,8 @@ class HomePageState extends ConsumerState<HomePage> {
       width: barWidth,
       height: 60,
       itemPadding: 3,
+      // 每帧外发胶囊连续位置 → 页面景深轨道跟随（滑块与页面同一物理）
+      travelListenable: _navTravel,
       // 悬浮胶囊下边距 2（safe-area inset 由 withImpeller 内部自动加）
       margin: const EdgeInsets.only(bottom: 2),
       style: LiquidGlassStyle(
@@ -497,6 +470,10 @@ class HomePageState extends ConsumerState<HomePage> {
       ),
       pillStyle: LiquidGlassTabPillStyle(
         mode: LiquidGlassPillMode.both,
+        // travel 弹簧：统一弹簧规格，与弹窗卡片共用 SpringSheetSpec.open
+        // （全局唯一，ζ≈0.74 过冲≈3%；页面景深轨道跟随此弹簧，天然同步）
+        travelStiffness: SpringSheetSpec.open.stiffness,
+        travelDamping: SpringSheetSpec.open.damping,
         rest: LiquidGlassStyle(
           shape: cyberShape(28),
           appearance: const LiquidGlassAppearance(
@@ -540,14 +517,21 @@ class HomePageState extends ConsumerState<HomePage> {
       final (outlined, filled) = icons[i];
       return LiquidGlassTabBarItem(
         label: labels[i],
-        iconBuilder: (context, g) => Icon(
-          g.selected ? filled : outlined,
-          size: g.underGlass == true ? 24 : 24,
-          color: g.color,
-          shadows: g.selected
-              ? [Shadow(color: g.color.withValues(alpha: 0.85), blurRadius: 14)]
-              : null,
-        ),
+        iconBuilder:
+            (context, g) => Icon(
+              g.selected ? filled : outlined,
+              size: g.underGlass == true ? 24 : 24,
+              color: g.color,
+              shadows:
+                  g.selected
+                      ? [
+                        Shadow(
+                          color: g.color.withValues(alpha: 0.85),
+                          blurRadius: 14,
+                        ),
+                      ]
+                      : null,
+            ),
       );
     });
   }
@@ -571,10 +555,7 @@ class HomePageState extends ConsumerState<HomePage> {
               children: const [
                 Icon(Icons.person, size: 20, color: Colors.white),
                 SizedBox(height: 2),
-                Text(
-                  "我的",
-                  style: TextStyle(fontSize: 12, color: Colors.white),
-                ),
+                Text("我的", style: TextStyle(fontSize: 12, color: Colors.white)),
               ],
             ),
           ),
@@ -595,18 +576,15 @@ class HomePageState extends ConsumerState<HomePage> {
       sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
       borderRadius: BorderRadius.circular(cardRadius),
       child: Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height - kToolbarHeight * 2,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(cardRadius),
-            // 边框对齐全项目统一明显青色描边（cardStroke，不分深浅）
-            border: Border.all(
-              color: CyberColors.cardStroke,
-              width: 1,
-            ),
-          ),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height - kToolbarHeight * 2,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(cardRadius),
+          // 边框对齐全项目统一明显青色描边（cardStroke，不分深浅）
+          border: Border.all(color: CyberColors.cardStroke, width: 1),
+        ),
         child: SingleChildScrollView(
           child: Column(
             children:

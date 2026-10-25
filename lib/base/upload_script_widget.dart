@@ -15,6 +15,7 @@ import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
+import 'package:qinglong_app/base/ui/selector_card.dart';
 import 'package:qinglong_app/base/ui/tree/models/script_data.dart';
 import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/module/others/scripts/script_code_detail_page.dart';
@@ -62,7 +63,8 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
 
   void init() async {
     isLoading = true;
-    HttpResponse<List<ScriptData>> response = await SingleAccountPageState.ofApi(context).scripts();
+    HttpResponse<List<ScriptData>> response =
+        await SingleAccountPageState.ofApi(context).scripts();
 
     if (response.success) {
       if (response.bean == null || response.bean!.isEmpty) {
@@ -115,48 +117,45 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TitleWidget(
-          widget.onlyShowName ? "父目录" : "脚本目录",
-        ),
-        const SizedBox(
-          height: 10,
-        ),
+        TitleWidget(widget.onlyShowName ? "父目录" : "脚本目录"),
+        const SizedBox(height: 10),
         isLoading
             ? const Center(child: LoadingWidget())
-            : GestureDetector(
-                onTap: () => _showPathSelector(context),
-                behavior: HitTestBehavior.opaque,
-                child: GlassCard(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 15,
-                    vertical: 14,
+            // 卡内展开选择器（主题版 SelectorCard 架构）：原底部弹窗改为
+            // 卡片原地展开，根目录 + 动态路径 + 选中对勾，选中即收起；
+            // SelectorCard 透明背景，底色圆角由 GlassCard 卡壳提供
+            : GlassCard(
+              padding: EdgeInsets.zero,
+              child: SelectorCard(
+                title: scriptPath.isEmpty ? "根目录" : scriptPath,
+                subtitle: widget.onlyShowName ? "父目录" : "脚本目录",
+                items: [
+                  SelectorCardItem(
+                    title: "根目录",
+                    selected: scriptPath.isEmpty,
+                    onTap: () {
+                      scriptPath = "";
+                      widget.nameCallBack(fileName);
+                      setState(() {});
+                    },
                   ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          scriptPath.isEmpty ? "根目录" : scriptPath,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: ref.watch(themeProvider).themeColor.title2Color(),
-                          ),
+                  ...paths
+                      .where((e) => e != null)
+                      .map(
+                        (e) => SelectorCardItem(
+                          title: e!,
+                          selected: scriptPath == e,
+                          onTap: () {
+                            scriptPath = e!;
+                            widget.nameCallBack(fileName);
+                            setState(() {});
+                          },
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Icon(
-                        CupertinoIcons.chevron_down,
-                        size: 16,
-                        color: ref.watch(themeProvider).primaryColor,
-                      ),
-                    ],
-                  ),
-                ),
+                ],
               ),
-        const SizedBox(
-          height: 30,
-        ),
+            ),
+        const SizedBox(height: 30),
         Visibility(
           visible: !widget.onlyShowName,
           child: RichText(
@@ -172,17 +171,12 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
         ),
         Visibility(
           visible: !widget.onlyShowName,
-          child: const SizedBox(
-            height: 10,
-          ),
+          child: const SizedBox(height: 10),
         ),
         Visibility(
           visible: !widget.onlyShowName,
           child: GlassCard(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 15,
-              vertical: 15,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
             child: SizedBox(
               width: double.infinity,
               child: file == null ? addWidget(context) : addedWidget(context),
@@ -196,24 +190,21 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
   Widget addWidget(BuildContext context) {
     return GestureDetector(
       onTap: () async {
-        showMoreOperate(
-          context,
-          [
-            CupertinoSheer(
-              title: "远程地址",
-              onTap: () {
-                fromRemote(context);
-              },
-            ),
-            addDivider(),
-            CupertinoSheer(
-              title: "本地上传",
-              onTap: () {
-                pickLocalFile();
-              },
-            )
-          ],
-        );
+        showMoreOperate(context, [
+          CupertinoSheer(
+            title: "远程地址",
+            onTap: () {
+              fromRemote(context);
+            },
+          ),
+          addDivider(),
+          CupertinoSheer(
+            title: "本地上传",
+            onTap: () {
+              pickLocalFile();
+            },
+          ),
+        ]);
       },
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
@@ -243,159 +234,6 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
   }
 
   /// 脚本目录选择弹窗（卡片样式 + 毛玻璃模糊）
-  void _showPathSelector(BuildContext context) {
-    final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      isDismissible: true,
-      enableDrag: true,
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      barrierColor: Colors.black.withValues(alpha: 0.5),
-      builder: (ctx) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-          child: OptimizedFrostedGlass(
-            sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
-            borderRadius: BorderRadius.circular(18),
-            forceOpaqueSolid: true,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(18),
-                border: isCyber
-                    ? Border.all(
-                        color: CyberColors.cyan.withValues(alpha: 0.3),
-                        width: 1,
-                      )
-                    : Border.all(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        width: 0.5,
-                        style: BorderStyle.solid,
-                      ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(top: 8, bottom: 4),
-                    decoration: BoxDecoration(
-                      color: isCyber
-                          ? CyberColors.cyan.withValues(alpha: 0.4)
-                          : Colors.black.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 12,
-                      horizontal: 16,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          widget.onlyShowName ? "选择父目录" : "选择脚本目录",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: isCyber
-                                ? CyberColors.cyan
-                                : AppleColors.textPrimary,
-                            fontFamily: 'MiSans',
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () => Navigator.of(ctx).pop(),
-                          child: Icon(
-                            CupertinoIcons.xmark_circle_fill,
-                            size: 22,
-                            color: isCyber
-                                ? CyberColors.titleWhite.withValues(alpha: 0.5)
-                                : Colors.black.withValues(alpha: 0.3),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Divider(
-                    height: 0.5,
-                    color: isCyber
-                        ? CyberColors.cyan.withValues(alpha: 0.2)
-                        : Colors.black.withValues(alpha: 0.1),
-                  ),
-                  ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxHeight: MediaQuery.of(context).size.height * 0.55,
-                    ),
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      itemCount: paths.length + 1,
-                      itemBuilder: (context, index) {
-                        final bool isRoot = index == 0;
-                        final String value = isRoot ? "" : paths[index - 1] ?? "";
-                        final String label = isRoot ? "根目录" : value;
-                        final bool selected = scriptPath == value;
-                        return GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () {
-                            scriptPath = value;
-                            widget.nameCallBack(fileName);
-                            setState(() {});
-                            Navigator.of(ctx).pop();
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 14,
-                              horizontal: 16,
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    label,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      color: selected
-                                          ? (isCyber
-                                              ? CyberColors.cyan
-                                              : ref.read(themeProvider).primaryColor)
-                                          : (isCyber
-                                              ? CyberColors.titleWhite
-                                              : AppleColors.textPrimary),
-                                      fontFamily: 'MiSans',
-                                    ),
-                                  ),
-                                ),
-                                if (selected)
-                                  Icon(
-                                    CupertinoIcons.checkmark,
-                                    size: 18,
-                                    color: isCyber
-                                        ? CyberColors.cyan
-                                        : ref.read(themeProvider).primaryColor,
-                                  ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
 
   void pickLocalFile() async {
     var result = await FilePickerUtils.pickFile();
@@ -418,30 +256,28 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
   void fromRemote(BuildContext context) {
     Navigator.of(context)
         .push(
-      WallpaperPageRoute(
-        builder: (context) => const ScriptDownloadPage(),
-      ),
-    )
+          WallpaperPageRoute(builder: (context) => const ScriptDownloadPage()),
+        )
         .then((value) {
-      if (value != null) {
-        Map<String, String> data = value;
+          if (value != null) {
+            Map<String, String> data = value;
 
-        fileName = data["name"] ?? "";
-        String path = data["path"] ?? "";
-        file = File(path);
-        if (file == null) return;
-        if (file!.lengthSync() > 5242880) {
-          file = null;
-          "最大支持上传5M的文件".toast();
-          return;
-        }
+            fileName = data["name"] ?? "";
+            String path = data["path"] ?? "";
+            file = File(path);
+            if (file == null) return;
+            if (file!.lengthSync() > 5242880) {
+              file = null;
+              "最大支持上传5M的文件".toast();
+              return;
+            }
 
-        widget.nameCallBack(getFileName());
-        setState(() {});
-      } else {
-        fileName = null;
-      }
-    });
+            widget.nameCallBack(getFileName());
+            setState(() {});
+          } else {
+            fileName = null;
+          }
+        });
   }
 
   Widget addedWidget(BuildContext context) {
@@ -452,10 +288,11 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
           if (isImageFileName(getFileName())) {
             Navigator.of(context).push(
               WallpaperPageRoute(
-                builder: (context) => ScriptImagePreviewPage(
-                  fileName: getFileName(),
-                  localPath: file!.path,
-                ),
+                builder:
+                    (context) => ScriptImagePreviewPage(
+                      fileName: getFileName(),
+                      localPath: file!.path,
+                    ),
               ),
             );
             return;
@@ -463,10 +300,11 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
           String content = await file!.readAsString();
           Navigator.of(context).push(
             WallpaperPageRoute(
-              builder: (context) => ScriptCodeDetailPage(
-                title: getFileName(),
-                content: content,
-              ),
+              builder:
+                  (context) => ScriptCodeDetailPage(
+                    title: getFileName(),
+                    content: content,
+                  ),
             ),
           );
         } catch (e) {
@@ -476,19 +314,11 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
       behavior: HitTestBehavior.opaque,
       child: Container(
         height: 80,
-        padding: const EdgeInsets.symmetric(
-          vertical: 10,
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
           children: [
-            Image.asset(
-              getIconBySuffix(),
-              width: 50,
-              fit: BoxFit.cover,
-            ),
-            const SizedBox(
-              width: 15,
-            ),
+            Image.asset(getIconBySuffix(), width: 50, fit: BoxFit.cover),
+            const SizedBox(width: 15),
             Expanded(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -503,9 +333,7 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
                       fontSize: 16,
                     ),
                   ),
-                  const SizedBox(
-                    height: 5,
-                  ),
+                  const SizedBox(height: 5),
                   Text(
                     getFileSize(file!.path, 2),
                     style: TextStyle(

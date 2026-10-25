@@ -14,6 +14,7 @@ import 'package:qinglong_app/base/ui/glass_text_field.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
+import 'package:qinglong_app/base/ui/selector_card.dart';
 import 'package:qinglong_app/base/ui/settings_widgets.dart';
 import 'package:qinglong_app/module/subscribe/add_subscribe_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
@@ -33,10 +34,6 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
 
   PushBean? current;
   bool loading = true;
-
-  // 通知方式展开卡控制器：选中选项后收起
-  final ExpansionTileController _expansionController =
-      ExpansionTileController();
 
   @override
   void initState() {
@@ -77,8 +74,9 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const SizedBox(height: 10),
-                          // 通知方式选择 — 与任务日志页文件夹卡同款：
-                          // 展开/收起共用一张毛玻璃卡片，选项在卡内展开。
+                          // 通知方式选择 — 统一卡内展开选择器（主题版 SelectorCard
+                          // 架构）：AnimatedSize 无痕展开 + 箭头旋转 + 选中即收起，
+                          // 透明背景由外层毛玻璃卡壳提供底色圆角。
                           OptimizedFrostedGlass(
                             sigma: SpUtil.getDouble(
                               spCardBlurSigma,
@@ -94,92 +92,31 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
                                   width: 1,
                                 ),
                               ),
-                              child: ExpansionTile(
-                                controller: _expansionController,
-                                tilePadding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 4,
-                                ),
-                                iconColor:
-                                    isCyber ? CyberColors.cyan : Colors.white,
-                                collapsedIconColor:
-                                    isCyber ? CyberColors.cyan : Colors.white,
-                                title: Text(
-                                  current != null
-                                      ? getNameByKey(current!.name)
-                                      : "请选择",
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color:
-                                        isCyber
-                                            ? CyberColors.titleWhite
-                                            : ref
-                                                .watch(themeProvider)
-                                                .themeColor
-                                                .title2Color(),
-                                    fontFamily: 'MiSans',
-                                  ),
-                                ),
-                                subtitle: Padding(
-                                  padding: const EdgeInsets.only(top: 2),
-                                  child: Text(
-                                    "通知方式",
-                                    style: TextStyle(
-                                      fontSize: 11.5,
-                                      color:
-                                          ref
-                                              .watch(themeProvider)
-                                              .themeColor
-                                              .descColor(),
-                                    ),
-                                  ),
-                                ),
-                                children: [
-                                  for (final PushBean bean in list)
-                                    ListTile(
-                                      onTap: () {
-                                        setState(() {
-                                          current = bean;
-                                        });
-                                        _expansionController.collapse();
-                                      },
-                                      title: Text(
-                                        getNameByKey(bean.name),
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color:
-                                              isCyber
-                                                  ? CyberColors.titleWhite
-                                                  : ref
-                                                      .watch(themeProvider)
-                                                      .themeColor
-                                                      .title2Color(),
-                                          fontFamily: 'MiSans',
-                                        ),
-                                      ),
-                                      subtitle: Text(
-                                        bean.children.isEmpty
-                                            ? "已关闭通知"
-                                            : "${bean.children.length} 项配置",
-                                        style: TextStyle(
-                                          fontSize: 11.5,
-                                          color:
-                                              ref
-                                                  .watch(themeProvider)
-                                                  .themeColor
-                                                  .descColor(),
-                                        ),
-                                      ),
-                                      trailing:
-                                          current?.key == bean.key
-                                              ? const Icon(
-                                                Icons.check_rounded,
-                                                color: CyberColors.cyan,
-                                                size: 20,
-                                              )
-                                              : null,
-                                    ),
-                                ],
+                              child: SelectorCard(
+                                title:
+                                    current != null
+                                        ? getNameByKey(current!.name)
+                                        : "请选择",
+                                subtitle: "通知方式",
+                                collapseOnSelect: true,
+                                items:
+                                    list
+                                        .map(
+                                          (bean) => SelectorCardItem(
+                                            title: getNameByKey(bean.name),
+                                            subtitle:
+                                                bean.children.isEmpty
+                                                    ? "已关闭通知"
+                                                    : "${bean.children.length} 项配置",
+                                            selected: current?.key == bean.key,
+                                            onTap: () {
+                                              setState(() {
+                                                current = bean;
+                                              });
+                                            },
+                                          ),
+                                        )
+                                        .toList(),
                               ),
                             ),
                           ),
