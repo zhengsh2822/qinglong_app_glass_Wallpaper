@@ -11,6 +11,8 @@ import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/ui/spring_depth_page_track.dart';
+import 'package:qinglong_app/base/cupertino_sheet.dart';
+import 'package:qinglong_app/base/ui/glow_sheet.dart';
 import 'package:qinglong_app/base/ui/spring_sheet.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/liquid_glass_shapes.dart';
@@ -243,7 +245,11 @@ class HomePageState extends ConsumerState<HomePage> {
     super.dispose();
   }
 
-  bool showMask = false;
+  /// 长按「我的」→ 账号切换弹层（与配置文件长按弹层同款组件，
+  /// 弹簧动效/拖拽收起/取消胶囊由 showSpringSheet 内置）
+  /// 弹层重入防抖：长按手势会触发两次 onLongTapItem（间隔 ~30ms，组件双报），
+  /// 不防抖会压入两张叠着的弹层路由（翻两次才能关完）
+  DateTime? _lastSheetAt;
 
   GlobalKey<TaskPageState> taskKey = GlobalKey();
   GlobalKey<EnvPageState> envKey = GlobalKey();
@@ -298,6 +304,147 @@ class HomePageState extends ConsumerState<HomePage> {
     }
   }
 
+  /// 长按「我的」→ 账号切换弹层（弹簧动效/拖拽收起由 showSpringSheet 内置）
+  void _showAccountSheet() {
+    final DateTime now = DateTime.now();
+    if (_lastSheetAt != null &&
+        now.difference(_lastSheetAt!) < const Duration(milliseconds: 800)) {
+      return;
+    }
+    _lastSheetAt = now;
+    HapticFeedback.mediumImpact();
+    final viewModel = getIt<MultiAccountUserInfoViewModel>();
+    final List<Widget> rows = [];
+
+    if (SpUtil.getBool(spSingleInstance, defValue: false)) {
+      // 单账号模式：历史账号重登（与当前面板相同的仅收起）+ 登录新账号
+      final int count =
+          SpUtil.getInt(spVIP, defValue: typeNormal) == typeVIP
+              ? (viewModel.historyAccounts.length > 3
+                  ? 3
+                  : viewModel.historyAccounts.length)
+              : viewModel.historyAccounts.length;
+      for (int index = 0; index < count; index++) {
+        final userInfo = viewModel.historyAccounts[index];
+        rows.add(
+          CupertinoSheer(
+            title: (userInfo.host ?? "")
+                .replaceAll("http://", "")
+                .replaceAll("https://", ""),
+            onTap: () {
+              // 与当前面板相同：仅收起弹层
+              if (SingleAccountPageState.ofHttp(context)?.host ==
+                  userInfo.host) {
+                return;
+              }
+              WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
+                await EasyLoading.show(status: " 登录中");
+
+                LoginHelper loginHelper = LoginHelper(
+                  userInfo.host!,
+                  userInfo.userName!,
+                  userInfo.password!,
+                  true,
+                  userInfo.alias,
+                );
+                var response = await loginHelper.login(context);
+
+                EasyLoading.dismiss();
+
+                dealLoginResponse(loginHelper, response);
+              });
+            },
+          ),
+        );
+      }
+      rows.add(
+        CupertinoSheer(
+          title: "登录新账号",
+          onTap: () {
+            Navigator.of(context).pushNamed(Routes.routeLogin, arguments: true);
+          },
+        ),
+      );
+    } else {
+      // 多账号模式：账号切换 + 添加账户
+      final int maxAccount = MultiAccountUserInfoViewModel.maxAccount;
+      int count = viewModel.tokenBeans.length + 1;
+      if (count > maxAccount) {
+        count = maxAccount;
+      }
+      for (int index = 0; index < count; index++) {
+        final bool isAddRow =
+            index >= viewModel.tokenBeans.length ||
+            (viewModel.tokenBeans.length < count && index == count - 1);
+        if (isAddRow) {
+          rows.add(
+            CupertinoSheer(
+              title: "添加账户",
+              onTap: () {
+                WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                  context
+                      .findAncestorStateOfType<MultiAccountPageState>()
+                      ?.updateIndex(index);
+                });
+              },
+            ),
+          );
+        } else {
+          final userInfo = getIt<UserInfoViewModel>(
+            instanceName: index.toString(),
+          );
+          rows.add(
+            CupertinoSheer(
+              title: (userInfo.host ?? "")
+                  .replaceAll("http://", "")
+                  .replaceAll("https://", ""),
+              onTap: () {
+                WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                  context
+                      .findAncestorStateOfType<MultiAccountPageState>()
+                      ?.updateIndex(index);
+                });
+              },
+            ),
+          );
+        }
+      }
+    }
+
+    // 单卡结构：取消行并入主卡（账号切换弹层不用"主卡+取消胶囊"两层式）
+    showSpringSheet<void>(
+      context: context,
+      builder:
+          (ctx) => SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              child: GlowSheetContainer(
+                isCyber: ref.read(themeProvider).themeMode == modeCyber,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DragHandle(
+                      isCyber: ref.read(themeProvider).themeMode == modeCyber,
+                    ),
+                    ...rows.asMap().entries.map((entry) {
+                      final int index = entry.key;
+                      final CupertinoSheer item = entry.value as CupertinoSheer;
+                      return CupertinoSheer(
+                        title: item.title,
+                        onTap: item.onTap,
+                        danger: item.danger,
+                        showDivider: index != rows.length - 1,
+                      );
+                    }),
+                  ],
+                ),
+              ),
+            ),
+          ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final int homeIndex = ref.watch<int>(
@@ -313,8 +460,6 @@ class HomePageState extends ConsumerState<HomePage> {
     final double screenW = MediaQuery.of(context).size.width;
     const double navSide = 16.0;
     const double navInnerPad = 3.0;
-    final double navItemW = (screenW - navSide * 2 - navInnerPad * 2) / 4;
-    final double meCenter = navSide + navInnerPad + 3.5 * navItemW;
     return PopScope(
       canPop: true,
       child: Material(
@@ -343,39 +488,6 @@ class HomePageState extends ConsumerState<HomePage> {
             ),
             // 官方液态玻璃底部导航（withImpeller：双管道自包含，实时采样页面背景）
             _buildLiquidGlassNav(context, homeIndex),
-            Visibility(
-              visible: showMask,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () async {
-                  setState(() {
-                    showMask = false;
-                  });
-                },
-                child: Container(color: Colors.black.withOpacity(0.6)),
-              ),
-            ),
-            Positioned(
-              bottom: MediaQuery.of(context).viewPadding.bottom,
-              child: Visibility(
-                visible: showMask,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      // 右缘对齐"我的"按钮右缘，弹窗锚定在悬浮"我的"上
-                      margin: EdgeInsets.only(
-                        right: screenW - meCenter - navItemW / 2,
-                      ),
-                      width: MediaQuery.of(context).size.width / 2,
-                      child: _buildOtherAccounts(),
-                    ),
-                    _buildOtherWidget(meCenter: meCenter),
-                  ],
-                ),
-              ),
-            ),
             // 安卓双击状态栏区域回到顶部：
             // 沉浸式 edgeToEdge 下内容延伸到状态栏后方，此处放状态栏高度的
             // 透明双击层，双击即让当前激活 tab 页面回到顶部（仅拦截双击，
@@ -488,8 +600,7 @@ class HomePageState extends ConsumerState<HomePage> {
       longPressDurationByIndex: const {3: Duration(milliseconds: 500)},
       onLongTapItem: (i) {
         if (i == 3) {
-          HapticFeedback.mediumImpact();
-          setState(() => showMask = true);
+          _showAccountSheet();
           return true;
         }
         return false;
@@ -532,297 +643,6 @@ class HomePageState extends ConsumerState<HomePage> {
                       ]
                       : null,
             ),
-      );
-    });
-  }
-
-  Widget _buildOtherWidget({double? meCenter}) {
-    if (!showMask) return const SizedBox.shrink();
-    final double w = MediaQuery.of(context).size.width;
-    final double cx = meCenter ?? w / 2;
-    return SizedBox(
-      width: w,
-      height: kBottomNavigationBarHeight,
-      child: Stack(
-        children: [
-          // "我的"指针：改用与底部导航一致的新图标，水平居中于悬浮"我的"按钮
-          Positioned(
-            left: cx - 20,
-            width: 40,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: const [
-                Icon(Icons.person, size: 20, color: Colors.white),
-                SizedBox(height: 2),
-                Text("我的", style: TextStyle(fontSize: 12, color: Colors.white)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOtherAccounts() {
-    if (!showMask) return const SizedBox.shrink();
-    final isCyber = ref.watch(themeProvider).themeMode == modeCyber;
-    final cardRadius = isCyber ? 10.0 : AppleColors.radiusCard;
-    int count = getIt<MultiAccountUserInfoViewModel>().tokenBeans.length + 1;
-    if (count > MultiAccountUserInfoViewModel.maxAccount) {
-      count = MultiAccountUserInfoViewModel.maxAccount;
-    }
-    return OptimizedFrostedGlass(
-      sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
-      borderRadius: BorderRadius.circular(cardRadius),
-      child: Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height - kToolbarHeight * 2,
-        ),
-        decoration: BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(cardRadius),
-          // 边框对齐全项目统一明显青色描边（cardStroke，不分深浅）
-          border: Border.all(color: CyberColors.cardStroke, width: 1),
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            children:
-                SpUtil.getBool(spSingleInstance, defValue: false) == true
-                    ? _buildSingleInstance()
-                    : List.generate(count, (index) {
-                      if (index >=
-                              getIt<MultiAccountUserInfoViewModel>()
-                                  .tokenBeans
-                                  .length ||
-                          (getIt<MultiAccountUserInfoViewModel>()
-                                      .tokenBeans
-                                      .length <
-                                  count &&
-                              index == count - 1)) {
-                        return Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () {
-                              dismissMask();
-                              WidgetsBinding.instance.addPostFrameCallback((
-                                timeStamp,
-                              ) {
-                                context
-                                    .findAncestorStateOfType<
-                                      MultiAccountPageState
-                                    >()
-                                    ?.updateIndex(index);
-                              });
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 15,
-                                vertical: 12,
-                              ),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    CupertinoIcons.add,
-                                    size: 15,
-                                    color:
-                                        ref
-                                            .watch(themeProvider)
-                                            .themeColor
-                                            .titleColor(),
-                                  ),
-                                  const SizedBox(width: 5),
-                                  Text(
-                                    "添加账户",
-                                    style: TextStyle(
-                                      color:
-                                          ref
-                                              .watch(themeProvider)
-                                              .themeColor
-                                              .titleColor(),
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-                      var userInfo = getIt<UserInfoViewModel>(
-                        instanceName: index.toString(),
-                      );
-
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: () {
-                                dismissMask();
-                                WidgetsBinding.instance.addPostFrameCallback((
-                                  timeStamp,
-                                ) {
-                                  context
-                                      .findAncestorStateOfType<
-                                        MultiAccountPageState
-                                      >()
-                                      ?.updateIndex(index);
-                                });
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 15,
-                                  vertical: 12,
-                                ),
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  userInfo.host
-                                          ?.replaceAll("http://", "")
-                                          .replaceAll("https://", "") ??
-                                      "",
-                                  maxLines: 1,
-                                  softWrap: true,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color:
-                                        ref
-                                            .watch(themeProvider)
-                                            .themeColor
-                                            .titleColor(),
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const Divider(indent: 15, height: 1),
-                        ],
-                      );
-                    }),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void dismissMask() {
-    setState(() {
-      showMask = false;
-    });
-  }
-
-  List<Widget> _buildSingleInstance() {
-    int count = getIt<MultiAccountUserInfoViewModel>().historyAccounts.length;
-
-    if (SpUtil.getInt(spVIP, defValue: typeNormal) == typeVIP) {
-      if (count > 3) {
-        count = 3;
-      }
-    }
-
-    return List.generate(count + 1, (index) {
-      if (index >= count) {
-        return Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {
-              dismissMask();
-              WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-                Navigator.of(
-                  context,
-                ).pushNamed(Routes.routeLogin, arguments: true);
-              });
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Icon(
-                    CupertinoIcons.add,
-                    size: 15,
-                    color: ref.watch(themeProvider).themeColor.titleColor(),
-                  ),
-                  const SizedBox(width: 5),
-                  Text(
-                    "添加账户",
-                    style: TextStyle(
-                      color: ref.watch(themeProvider).themeColor.titleColor(),
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      }
-      var userInfo =
-          getIt<MultiAccountUserInfoViewModel>().historyAccounts[index];
-
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () {
-                dismissMask();
-
-                if (SingleAccountPageState.ofHttp(context)?.host ==
-                    userInfo.host)
-                  return;
-
-                WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
-                  await EasyLoading.show(status: " 登录中");
-
-                  LoginHelper loginHelper = LoginHelper(
-                    userInfo.host!,
-                    userInfo.userName!,
-                    userInfo.password!,
-                    true,
-                    userInfo.alias,
-                  );
-                  var response = await loginHelper.login(context);
-
-                  EasyLoading.dismiss();
-
-                  dealLoginResponse(loginHelper, response);
-                });
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 15,
-                  vertical: 12,
-                ),
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  userInfo.host
-                          ?.replaceAll("http://", "")
-                          .replaceAll("https://", "") ??
-                      "",
-                  maxLines: 1,
-                  softWrap: true,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color:
-                        SingleAccountPageState.ofHttp(context)?.host ==
-                                userInfo.host
-                            ? ref.watch(themeProvider).primaryColor
-                            : ref.watch(themeProvider).themeColor.titleColor(),
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const Divider(indent: 15, height: 1),
-        ],
       );
     });
   }

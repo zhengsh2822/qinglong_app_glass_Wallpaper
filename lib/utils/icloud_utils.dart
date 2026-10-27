@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:qinglong_app/base/http/api.dart';
 import 'package:qinglong_app/base/sp_const.dart';
+import 'package:qinglong_app/utils/download_dir_utils.dart';
 import 'package:qinglong_app/base/userinfo_viewmodel.dart';
 import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/module/env/env_bean.dart';
@@ -347,13 +348,23 @@ class FileUtil {
   }
 
   Future<File> writeDownloadFile(String suffix, String content) async {
-    final path = await downloadFilePath;
-    File f;
     if (Platform.isAndroid) {
-      f = File('$path/qinglong_app/$downloadFiles/$suffix');
-    } else {
-      f = File('$path/$downloadFiles/$suffix');
+      final Directory? pub = await resolveAndroidScriptDownloadDirectory();
+      if (pub != null) {
+        return _writeFreshFile(File('${pub.path}/$suffix'), content);
+      }
+      // 公共 Download 不可写（Android 10 及以下缺存储权限等），回退应用专属外部目录
+      final path = await downloadFilePath;
+      return _writeFreshFile(
+        File('$path/qinglong_app/$downloadFiles/$suffix'),
+        content,
+      );
     }
+    final path = await downloadFilePath;
+    return _writeFreshFile(File('$path/$downloadFiles/$suffix'), content);
+  }
+
+  Future<File> _writeFreshFile(File f, String content) async {
     if (f.existsSync()) {
       f.deleteSync();
     }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:qinglong_app/utils/ql_debug_log.dart';
 
 /// 最后一次点击的来源（点 + 命中的卡片矩形）。
 class TapOriginData {
@@ -62,12 +61,9 @@ class PageTapScope extends StatelessWidget {
         Rect? detected;
         try {
           detected = _detectCardRect(event.position, viewId, screen);
-        } catch (error, stack) {
-          QlDebugLog.write('QLLOG TapScope detect ERROR: $error\n$stack');
+        } catch (_) {
+          // 命中测试失败不阻断来源记录：rect 为空时路由回退到点击点
         }
-        QlDebugLog.write(
-          'QLLOG TapScope down pos=${event.position} rect=$detected',
-        );
         PageTapOrigin.record(event.position, detected);
       },
       child: child,

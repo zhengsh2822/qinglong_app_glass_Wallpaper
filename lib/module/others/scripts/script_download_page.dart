@@ -12,6 +12,7 @@ import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/module/subscribe/add_subscribe_page.dart';
 import 'package:path/path.dart';
+import 'package:qinglong_app/utils/download_dir_utils.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 
@@ -128,6 +129,11 @@ class _ScriptDownloadPageState extends ConsumerState<ScriptDownloadPage> {
   }
 
   Future<String> get _localPath async {
+    // Android 落到系统 Download/qinglong，文件管理器可见；不可写或非 Android 回退应用缓存目录
+    final Directory? pub = await resolveAndroidScriptDownloadDirectory();
+    if (pub != null) {
+      return pub.path;
+    }
     final directory = await getTemporaryDirectory();
     return directory.path;
   }

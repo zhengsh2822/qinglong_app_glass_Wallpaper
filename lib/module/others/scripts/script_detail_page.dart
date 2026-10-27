@@ -146,7 +146,7 @@ class _ScriptDetailPageState extends ConsumerState<ScriptDetailPage>
           try {
             String name = "${Random().nextInt(40000)}_${widget.title}";
             var file = await FileUtil(0).writeDownloadFile(name, content ?? "");
-            "已写入qinglong_app文件夹下,文件名$name".toast2();
+            "已写入Download/qinglong文件夹下,文件名$name".toast2();
           } catch (e) {
             e.toString().toast();
           }

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/utils/download_dir_utils.dart';
 import 'package:qinglong_app/base/ui/spring_sheet.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
@@ -66,10 +67,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
       children: [
         Scaffold(
           backgroundColor: Colors.transparent,
-          appBar: QlAppBar(
-            title: '备份与恢复',
-            canBack: true,
-          ),
+          appBar: QlAppBar(title: '备份与恢复', canBack: true),
           body: SingleChildScrollView(
             padding: EdgeInsets.only(
               left: AppleColors.spaceMd,
@@ -142,27 +140,29 @@ class _BackupPageState extends ConsumerState<BackupPage> {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: _backupOptions.entries.map((entry) {
-              final isBase = entry.key == _baseKey;
-              // 基础数据固定选中不可取消（对齐网页版），其余可勾选
-              final selected = isBase || _selected.contains(entry.key);
-              return SelectableChip(
-                label: entry.value,
-                selected: selected,
-                disabled: _processing,
-                onToggle: isBase
-                    ? null
-                    : (value) {
-                        setState(() {
-                          if (value) {
-                            _selected.add(entry.key);
-                          } else {
-                            _selected.remove(entry.key);
-                          }
-                        });
-                      },
-              );
-            }).toList(),
+            children:
+                _backupOptions.entries.map((entry) {
+                  final isBase = entry.key == _baseKey;
+                  // 基础数据固定选中不可取消（对齐网页版），其余可勾选
+                  final selected = isBase || _selected.contains(entry.key);
+                  return SelectableChip(
+                    label: entry.value,
+                    selected: selected,
+                    disabled: _processing,
+                    onToggle:
+                        isBase
+                            ? null
+                            : (value) {
+                              setState(() {
+                                if (value) {
+                                  _selected.add(entry.key);
+                                } else {
+                                  _selected.remove(entry.key);
+                                }
+                              });
+                            },
+                  );
+                }).toList(),
           ),
           const SizedBox(height: 16),
           SizedBox(
@@ -233,6 +233,18 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     );
   }
 
+  /// 备份目录统一解析（导出与扫描必须同源，否则扫不到刚导出的包）：
+  /// Android 优先公共 Download/qinglong_backup，不可写回退应用专属外部目录；
+  /// 非 Android 走 downloadFilePath（iOS = 文档目录），行为不变
+  Future<Directory> _resolveBackupDirectory(FileUtil fileUtil) async {
+    final Directory? pub = await resolveAndroidBackupDirectory();
+    if (pub != null) {
+      return pub;
+    }
+    final basePath = await fileUtil.downloadFilePath;
+    return Directory('$basePath${Platform.pathSeparator}qinglong_backup');
+  }
+
   /// 执行备份
   Future<void> _doBackup() async {
     setState(() {
@@ -241,12 +253,10 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     });
 
     try {
-      final fileUtil = FileUtil(
-        SingleAccountPageState.of(context)?.index ?? 0,
-      );
-      // 保存到外部存储目录，文件管理器可见
-      final basePath = await fileUtil.downloadFilePath;
-      final backupDir = Directory('$basePath${Platform.pathSeparator}qinglong_backup');
+      final fileUtil = FileUtil(SingleAccountPageState.of(context)?.index ?? 0);
+      // Android 优先公共 Download/qinglong_backup（文件管理器可见）；
+      // 不可写或非 Android 回退原应用专属外部目录，iOS 行为不变
+      final backupDir = await _resolveBackupDirectory(fileUtil);
       if (!await backupDir.exists()) {
         await backupDir.create(recursive: true);
       }
@@ -254,22 +264,23 @@ class _BackupPageState extends ConsumerState<BackupPage> {
           .toIso8601String()
           .replaceAll(':', '-')
           .replaceAll('.', '-');
-      final savePath = '${backupDir.path}${Platform.pathSeparator}backup_${fileUtil.getHost()}_$timestamp.tgz';
+      final savePath =
+          '${backupDir.path}${Platform.pathSeparator}backup_${fileUtil.getHost()}_$timestamp.tgz';
 
       final typeList = _selected.toList();
 
-      final error = await SingleAccountPageState.ofApi(context).exportData(
-        savePath,
-        type: typeList,
-      );
+      final error = await SingleAccountPageState.ofApi(
+        context,
+      ).exportData(savePath, type: typeList);
 
       if (!mounted) return;
 
       if (error == null) {
-        if (mounted) setState(() {
-          _processing = false;
-          _statusText = '备份成功\n$savePath';
-        });
+        if (mounted)
+          setState(() {
+            _processing = false;
+            _statusText = '备份成功\n$savePath';
+          });
         '备份成功'.toast();
         // 弹出操作面板：分享/完成
         if (mounted) {
@@ -304,8 +315,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
         final fileUtil = FileUtil(
           SingleAccountPageState.of(context)?.index ?? 0,
         );
-        final basePath = await fileUtil.downloadFilePath;
-        final backupDir = Directory('$basePath${Platform.pathSeparator}qinglong_backup');
+        final backupDir = await _resolveBackupDirectory(fileUtil);
 
         final tgzFiles = <File>[];
         if (await backupDir.exists()) {
@@ -325,7 +335,9 @@ class _BackupPageState extends ConsumerState<BackupPage> {
         }
 
         // 按修改时间倒序排列
-        tgzFiles.sort((a, b) => b.statSync().modified.compareTo(a.statSync().modified));
+        tgzFiles.sort(
+          (a, b) => b.statSync().modified.compareTo(a.statSync().modified),
+        );
 
         selectedPath = await _showFileSelectSheet(tgzFiles);
       } catch (e) {
@@ -424,81 +436,97 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             forceOpaqueSolid: true,
             child: Container(
-                color: (isCyber ? CyberColors.bg : AppleColors.bgSecondary).withOpacity(0.85),
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                child: SafeArea(
-                  top: false,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: CyberColors.descColor.withOpacity(0.5),
-                          borderRadius: BorderRadius.circular(2),
+              color: (isCyber ? CyberColors.bg : AppleColors.bgSecondary)
+                  .withOpacity(0.85),
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: CyberColors.descColor.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          '选择恢复来源',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: _globalFw,
+                            color:
+                                isCyber
+                                    ? CyberColors.titleWhite
+                                    : AppleColors.textPrimary,
+                          ),
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            '选择恢复来源',
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: _globalFw,
-                              color: isCyber ? CyberColors.titleWhite : AppleColors.textPrimary,
-                            ),
-                          ),
+                    ),
+                    ListTile(
+                      leading: Icon(
+                        CupertinoIcons.clock,
+                        color: isCyber ? CyberColors.cyan : AppleColors.accent,
+                      ),
+                      title: Text(
+                        '从最近备份选择',
+                        style: TextStyle(
+                          color:
+                              isCyber
+                                  ? CyberColors.titleWhite
+                                  : AppleColors.textPrimary,
                         ),
                       ),
-                      ListTile(
-                        leading: Icon(
-                          CupertinoIcons.clock,
-                          color: isCyber ? CyberColors.cyan : AppleColors.accent,
+                      subtitle: Text(
+                        '扫描应用备份目录的 .tgz 文件',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color:
+                              isCyber
+                                  ? CyberColors.descColor
+                                  : AppleColors.textSecondary,
                         ),
-                        title: Text(
-                          '从最近备份选择',
-                          style: TextStyle(
-                            color: isCyber ? CyberColors.titleWhite : AppleColors.textPrimary,
-                          ),
-                        ),
-                        subtitle: Text(
-                          '扫描应用备份目录的 .tgz 文件',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isCyber ? CyberColors.descColor : AppleColors.textSecondary,
-                          ),
-                        ),
-                        onTap: () => Navigator.pop(context, 'recent'),
                       ),
-                      ListTile(
-                        leading: Icon(
-                          CupertinoIcons.folder,
-                          color: isCyber ? CyberColors.cyan : AppleColors.accent,
-                        ),
-                        title: Text(
-                          '从文件管理器选择',
-                          style: TextStyle(
-                            color: isCyber ? CyberColors.titleWhite : AppleColors.textPrimary,
-                          ),
-                        ),
-                        subtitle: Text(
-                          '调用系统文件管理器选任意 .tgz 文件',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isCyber ? CyberColors.descColor : AppleColors.textSecondary,
-                          ),
-                        ),
-                        onTap: () => Navigator.pop(context, 'manager'),
+                      onTap: () => Navigator.pop(context, 'recent'),
+                    ),
+                    ListTile(
+                      leading: Icon(
+                        CupertinoIcons.folder,
+                        color: isCyber ? CyberColors.cyan : AppleColors.accent,
                       ),
-                      const SizedBox(height: 8),
-                    ],
-                  ),
+                      title: Text(
+                        '从文件管理器选择',
+                        style: TextStyle(
+                          color:
+                              isCyber
+                                  ? CyberColors.titleWhite
+                                  : AppleColors.textPrimary,
+                        ),
+                      ),
+                      subtitle: Text(
+                        '调用系统文件管理器选任意 .tgz 文件',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color:
+                              isCyber
+                                  ? CyberColors.descColor
+                                  : AppleColors.textSecondary,
+                        ),
+                      ),
+                      onTap: () => Navigator.pop(context, 'manager'),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
                 ),
               ),
+            ),
           ),
         );
       },
@@ -506,7 +534,10 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   }
 
   /// 备份完成后的操作面板：分享文件 / 完成
-  Future<void> _showBackupResultSheet(String savePath, {required bool isSuccess}) async {
+  Future<void> _showBackupResultSheet(
+    String savePath, {
+    required bool isSuccess,
+  }) async {
     if (!mounted) return;
     await showSpringSheet<void>(
       context: context,
@@ -522,106 +553,125 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             forceOpaqueSolid: true,
             child: Container(
-                color: (isCyber ? CyberColors.bg : AppleColors.bgSecondary).withOpacity(0.85),
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                child: SafeArea(
-                  top: false,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: CyberColors.descColor.withOpacity(0.5),
-                          borderRadius: BorderRadius.circular(2),
-                        ),
+              color: (isCyber ? CyberColors.bg : AppleColors.bgSecondary)
+                  .withOpacity(0.85),
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: CyberColors.descColor.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(2),
                       ),
-                      Row(
-                        children: [
-                          Icon(
-                            isSuccess ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.xmark_circle_fill,
-                            color: isSuccess ? CyberColors.cyan : Colors.redAccent,
-                            size: 22,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            isSuccess ? '备份成功' : '备份失败',
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: _globalFw,
-                              color: isCyber ? CyberColors.titleWhite : AppleColors.textPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: (isCyber ? CyberColors.cyan : AppleColors.accent).withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(10),
+                    ),
+                    Row(
+                      children: [
+                        Icon(
+                          isSuccess
+                              ? CupertinoIcons.checkmark_circle_fill
+                              : CupertinoIcons.xmark_circle_fill,
+                          color:
+                              isSuccess ? CyberColors.cyan : Colors.redAccent,
+                          size: 22,
                         ),
-                        child: Text(
-                          savePath,
+                        const SizedBox(width: 8),
+                        Text(
+                          isSuccess ? '备份成功' : '备份失败',
                           style: TextStyle(
-                            fontSize: 12,
-                            color: isCyber ? CyberColors.descColor : AppleColors.textSecondary,
-                            height: 1.4,
+                            fontSize: 17,
+                            fontWeight: _globalFw,
+                            color:
+                                isCyber
+                                    ? CyberColors.titleWhite
+                                    : AppleColors.textPrimary,
                           ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: (isCyber ? CyberColors.cyan : AppleColors.accent)
+                            .withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        savePath,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color:
+                              isCyber
+                                  ? CyberColors.descColor
+                                  : AppleColors.textSecondary,
+                          height: 1.4,
                         ),
                       ),
-                      const SizedBox(height: 14),
-                      if (isSuccess)
-                        SizedBox(
-                          width: double.infinity,
-                          child: GlassCard(
-                            sigma: 10,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            onTap: () async {
-                              Navigator.pop(context);
-                              await Share.shareXFiles([XFile(savePath)],
-                                  text: '青龙面板备份文件');
-                            },
-                            child: Center(
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(CupertinoIcons.share, size: 18, color: CyberColors.cyan),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    '分享/保存到文件管理器',
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: _globalFw,
-                                      color: CyberColors.cyan,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      const SizedBox(height: 8),
+                    ),
+                    const SizedBox(height: 14),
+                    if (isSuccess)
                       SizedBox(
                         width: double.infinity,
-                        child: TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text(
-                            '完成',
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: isCyber ? CyberColors.descColor : AppleColors.textSecondary,
+                        child: GlassCard(
+                          sigma: 10,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          onTap: () async {
+                            Navigator.pop(context);
+                            await Share.shareXFiles([
+                              XFile(savePath),
+                            ], text: '青龙面板备份文件');
+                          },
+                          child: Center(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  CupertinoIcons.share,
+                                  size: 18,
+                                  color: CyberColors.cyan,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '分享/保存到文件管理器',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: _globalFw,
+                                    color: CyberColors.cyan,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(
+                          '完成',
+                          style: TextStyle(
+                            fontSize: 15,
+                            color:
+                                isCyber
+                                    ? CyberColors.descColor
+                                    : AppleColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
+            ),
           ),
         );
       },
@@ -645,111 +695,140 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             forceOpaqueSolid: true,
             child: Container(
-                color: (isCyber ? CyberColors.bg : AppleColors.bgSecondary).withOpacity(0.85),
-                child: Column(
-                  children: [
-                    // 顶部拖拽条
-                    Container(
-                      margin: const EdgeInsets.only(top: 8, bottom: 4),
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: CyberColors.descColor.withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
+              color: (isCyber ? CyberColors.bg : AppleColors.bgSecondary)
+                  .withOpacity(0.85),
+              child: Column(
+                children: [
+                  // 顶部拖拽条
+                  Container(
+                    margin: const EdgeInsets.only(top: 8, bottom: 4),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: CyberColors.descColor.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(2),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                      child: Row(
-                        children: [
-                          Text(
-                            '选择备份文件',
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: _globalFw,
-                              color: isCyber ? CyberColors.titleWhite : AppleColors.textPrimary,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 16,
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          '选择备份文件',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: _globalFw,
+                            color:
+                                isCyber
+                                    ? CyberColors.titleWhite
+                                    : AppleColors.textPrimary,
+                          ),
+                        ),
+                        const Spacer(),
+                        GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: Icon(
+                            CupertinoIcons.xmark,
+                            size: 22,
+                            color:
+                                isCyber
+                                    ? CyberColors.descColor
+                                    : AppleColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  // 文件列表
+                  Expanded(
+                    child: ListView.separated(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      itemCount: files.length,
+                      separatorBuilder:
+                          (_, __) => const Divider(height: 1, indent: 16),
+                      itemBuilder: (context, index) {
+                        final file = files[index];
+                        final stat = file.statSync();
+                        final name =
+                            file.path.split(Platform.pathSeparator).last;
+                        final sizeKB = stat.size / 1024;
+                        final sizeStr =
+                            sizeKB >= 1024
+                                ? '${(sizeKB / 1024).toStringAsFixed(2)} MB'
+                                : '${sizeKB.toStringAsFixed(1)} KB';
+                        final time = stat.modified.toString().substring(0, 16);
+                        return InkWell(
+                          onTap: () => Navigator.pop(context, file.path),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  CupertinoIcons.doc,
+                                  size: 28,
+                                  color:
+                                      isCyber
+                                          ? CyberColors.cyan
+                                          : AppleColors.accent,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        name,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: _globalFw,
+                                          color:
+                                              isCyber
+                                                  ? CyberColors.titleWhite
+                                                  : AppleColors.textPrimary,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '$sizeStr · $time',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color:
+                                              isCyber
+                                                  ? CyberColors.descColor
+                                                  : AppleColors.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(
+                                  CupertinoIcons.right_chevron,
+                                  size: 16,
+                                  color:
+                                      isCyber
+                                          ? CyberColors.descColor
+                                          : AppleColors.textSecondary,
+                                ),
+                              ],
                             ),
                           ),
-                          const Spacer(),
-                          GestureDetector(
-                            onTap: () => Navigator.pop(context),
-                            child: Icon(
-                              CupertinoIcons.xmark,
-                              size: 22,
-                              color: isCyber ? CyberColors.descColor : AppleColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
-                    const Divider(height: 1),
-                    // 文件列表
-                    Expanded(
-                      child: ListView.separated(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        itemCount: files.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1, indent: 16),
-                        itemBuilder: (context, index) {
-                          final file = files[index];
-                          final stat = file.statSync();
-                          final name = file.path.split(Platform.pathSeparator).last;
-                          final sizeKB = stat.size / 1024;
-                          final sizeStr = sizeKB >= 1024
-                              ? '${(sizeKB / 1024).toStringAsFixed(2)} MB'
-                              : '${sizeKB.toStringAsFixed(1)} KB';
-                          final time = stat.modified.toString().substring(0, 16);
-                          return InkWell(
-                            onTap: () => Navigator.pop(context, file.path),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    CupertinoIcons.doc,
-                                    size: 28,
-                                    color: isCyber ? CyberColors.cyan : AppleColors.accent,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          name,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: _globalFw,
-                                            color: isCyber ? CyberColors.titleWhite : AppleColors.textPrimary,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          '$sizeStr · $time',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: isCyber ? CyberColors.descColor : AppleColors.textSecondary,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Icon(
-                                    CupertinoIcons.right_chevron,
-                                    size: 16,
-                                    color: isCyber ? CyberColors.descColor : AppleColors.textSecondary,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+            ),
           ),
         );
       },
