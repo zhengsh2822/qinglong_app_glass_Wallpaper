@@ -33,7 +33,8 @@ class InTimeSubscribeLogPage extends StatefulWidget {
 }
 
 class _InTimeSubscribeLogPageState extends State<InTimeSubscribeLogPage>
-    with LazyLoadState<InTimeSubscribeLogPage>,
+    with
+        LazyLoadState<InTimeSubscribeLogPage>,
         PauseableTimerMixin<InTimeSubscribeLogPage> {
   String? content;
 

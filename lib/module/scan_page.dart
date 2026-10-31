@@ -6,6 +6,7 @@ import 'package:qinglong_app/base/http/api.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
@@ -49,7 +50,7 @@ class ScanPageState extends ConsumerState<ScanPage> {
             Navigator.of(context).pop();
           } else {
             if (isCyber) {
-              showCyberConfirmDialog(
+              showConfirmDialog(
                 context,
                 title: '温馨提示',
                 content: '当前正在扫描文件,确定退出吗?',
@@ -61,38 +62,14 @@ class ScanPageState extends ConsumerState<ScanPage> {
               });
               return;
             }
-            showCupertinoDialog(
-              context: context,
-              useRootNavigator: false,
-              builder:
-                  (childContext) => CupertinoAlertDialog(
-                    title: const Text("温馨提示"),
-                    content: const Text("当前正在扫描文件,确定退出吗?"),
-                    actions: [
-                      CupertinoDialogAction(
-                        child: const Text(
-                          "取消",
-                          style: TextStyle(color: Color(0xff999999)),
-                        ),
-                        onPressed: () {
-                          Navigator.of(childContext).pop();
-                        },
-                      ),
-                      CupertinoDialogAction(
-                        child: Text(
-                          "确定",
-                          style: TextStyle(
-                            color: ref.watch(themeProvider).primaryColor,
-                          ),
-                        ),
-                        onPressed: () {
-                          Navigator.of(childContext).pop();
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                    ],
-                  ),
-            );
+            showConfirmDialog(
+              context,
+              title: "温馨提示",
+              content: "当前正在扫描文件,确定退出吗?",
+            ).then((confirmed) {
+              if (confirmed != true) return;
+            });
+            ;
           }
         },
       ),
@@ -196,7 +173,7 @@ class ScanPageState extends ConsumerState<ScanPage> {
         if (jsInstalled.isNotEmpty || pyInstalled.isNotEmpty) {
           final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
           if (isCyber) {
-            showCyberConfirmDialog(
+            showConfirmDialog(
               context,
               title: '本次已安装如下依赖',
               content:
@@ -307,10 +284,7 @@ class ScanPageState extends ConsumerState<ScanPage> {
                       text,
                       maxLines: 1,
                       overflow: TextOverflow.fade,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: descColor,
-                      ),
+                      style: TextStyle(fontSize: 12, color: descColor),
                     );
                   },
                 ),

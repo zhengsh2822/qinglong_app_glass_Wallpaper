@@ -161,7 +161,7 @@ class _ScriptDetailPageState extends ConsumerState<ScriptDetailPage>
 
           if (cyber) {
             // 赛博模式：高斯模糊确认弹窗
-            final confirmed = await showCyberConfirmDialog(
+            final confirmed = await showConfirmDialog(
               context,
               title: "确认删除",
               content: "确认删除该脚本吗",
@@ -242,39 +242,43 @@ class _ScriptDetailPageState extends ConsumerState<ScriptDetailPage>
         },
         title: widget.title,
         // 图片预览时隐藏文本类操作（编辑/添加到任务均基于文本内容，对图片无意义）
-        actions: _isImageFile
-            ? []
-            : [
-                CupertinoButton(
-                  color: Colors.transparent,
-                  padding: EdgeInsets.zero,
-                  onPressed: () async {
-                    await hideKeyboardFocus();
-                    showMoreOperate(context, actions);
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 15),
-                    child: Center(
-                      child: Icon(
-                        Icons.more_horiz,
-                        size: 26,
-                        color:
-                            isCyber
-                                ? CyberColors.cyan
-                                : Theme.of(context).appBarTheme.iconTheme?.color,
+        actions:
+            _isImageFile
+                ? []
+                : [
+                  CupertinoButton(
+                    color: Colors.transparent,
+                    padding: EdgeInsets.zero,
+                    onPressed: () async {
+                      await hideKeyboardFocus();
+                      showMoreOperate(context, actions);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 15),
+                      child: Center(
+                        child: Icon(
+                          Icons.more_horiz,
+                          size: 26,
+                          color:
+                              isCyber
+                                  ? CyberColors.cyan
+                                  : Theme.of(
+                                    context,
+                                  ).appBarTheme.iconTheme?.color,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
       ),
-      body: _isImageFile
-          ? ScriptImagePreviewBody(
-              accountIndex: SingleAccountPageState.of(context)?.index ?? 0,
-              fileName: widget.title,
-              dirPath: widget.path,
-            )
-          : content == null
+      body:
+          _isImageFile
+              ? ScriptImagePreviewBody(
+                accountIndex: SingleAccountPageState.of(context)?.index ?? 0,
+                fileName: widget.title,
+                dirPath: widget.path,
+              )
+              : content == null
               ? Center(
                 child: LoadingWidget(
                   color:
@@ -300,9 +304,7 @@ class _ScriptDetailPageState extends ConsumerState<ScriptDetailPage>
     );
 
     // 赛博模式：CyberBackground包裹透明Scaffold，光影渐变穿透整个页面
-    return isCyber
-        ? CyberBackground(child: scaffold)
-        : scaffold;
+    return isCyber ? CyberBackground(child: scaffold) : scaffold;
   }
 
   Future<void> loadData() async {

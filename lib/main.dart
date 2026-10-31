@@ -19,6 +19,7 @@ import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/animated_indexed_switch.dart';
 import 'package:qinglong_app/base/ui/keyboard_dismiss_observer.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/page_tap_origin.dart';
 import 'package:qinglong_app/base/ui/wallpaper_background.dart';
 import 'package:qinglong_app/utils/extension.dart';
@@ -81,31 +82,16 @@ void main() async {
         builder: (context) {
           return GestureDetector(
             onDoubleTap: () {
-              showCupertinoDialog(
-                context: context,
-                useRootNavigator: false,
-                builder:
-                    (childContext) => CupertinoAlertDialog(
-                      title: const Text("温馨提示"),
-                      content: const Text("确定要还原App所有配置吗,本次操作不可逆?"),
-                      actions: [
-                        CupertinoDialogAction(
-                          child: const Text("取消"),
-                          onPressed: () {
-                            Navigator.of(childContext).pop();
-                          },
-                        ),
-                        CupertinoDialogAction(
-                          child: const Text("确定"),
-                          onPressed: () {
-                            SpUtil.clear();
-                            "已完成,请重启App".toast();
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                      ],
-                    ),
-              );
+              showConfirmDialog(
+                context,
+                title: "温馨提示",
+                content: "确定要还原App所有配置吗,本次操作不可逆?",
+                danger: true,
+              ).then((confirmed) {
+                if (confirmed != true) return;
+                SpUtil.clear();
+                "已完成,请重启App".toast();
+              });
             },
             child: Center(
               child: Padding(

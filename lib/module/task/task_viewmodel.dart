@@ -13,6 +13,7 @@ Map<int, int> sort = {0: 0, 5: 1, 3: 2, 1: 3, 4: 4};
 class TaskViewModel extends BaseViewModel {
   static const String allStr = "全部";
   static const String runningStr = "运行中";
+
   /// 空闲中：与青龙网页端「状态」筛选一致（CrontabStatus.idle）
   static const String idleStr = "空闲中";
   static const String notScriptStr = "拉库";
@@ -48,7 +49,8 @@ class TaskViewModel extends BaseViewModel {
     success();
     // 同步"运行中"快照，确保加载后启动轮询首轮不会因快照为空而误判有变化
     _syncRunningSnapshot();
-    if (MultiAccountPageState.actionRunAll == MultiAccountPageState.useAction() &&
+    if (MultiAccountPageState.actionRunAll ==
+            MultiAccountPageState.useAction() &&
         !runAllTasked) {
       runAllTasked = true;
       runAllTasks(context);
@@ -85,11 +87,12 @@ class TaskViewModel extends BaseViewModel {
 
   /// 从当前 [list] 重建"运行中"快照。
   void _syncRunningSnapshot() {
-    _runningIdsSnapshot = list
-        .where((e) => (e.status ?? 1) == 0)
-        .map((e) => e.sId ?? "")
-        .where((id) => id.isNotEmpty)
-        .toSet();
+    _runningIdsSnapshot =
+        list
+            .where((e) => (e.status ?? 1) == 0)
+            .map((e) => e.sId ?? "")
+            .where((id) => id.isNotEmpty)
+            .toSet();
   }
 
   /// 对比最新任务列表里的"运行中"集合，若与上一轮一致则静默跳过（不刷新），
@@ -98,11 +101,12 @@ class TaskViewModel extends BaseViewModel {
     final tasks = await _fetchTasks(context);
     if (tasks == null) return false;
 
-    final newRunning = tasks
-        .where((e) => (e.status ?? 1) == 0)
-        .map((e) => e.sId ?? "")
-        .where((id) => id.isNotEmpty)
-        .toSet();
+    final newRunning =
+        tasks
+            .where((e) => (e.status ?? 1) == 0)
+            .map((e) => e.sId ?? "")
+            .where((id) => id.isNotEmpty)
+            .toSet();
 
     final changed =
         newRunning.length != _runningIdsSnapshot.length ||

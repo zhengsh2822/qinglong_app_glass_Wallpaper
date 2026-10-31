@@ -9,6 +9,7 @@ import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/floating_search_bar_area.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
@@ -187,43 +188,16 @@ class _ScriptPageState extends ConsumerState<ScriptPage>
                             }
                           },
                           onDeleteSelfClick: (ScriptData data) {
-                            showCupertinoDialog(
-                              useRootNavigator: false,
-                              context: context,
-                              builder:
-                                  (context1) => CupertinoAlertDialog(
-                                    title: const Text("确认删除"),
-                                    content: const Text("确认删除吗"),
-                                    actions: [
-                                      CupertinoDialogAction(
-                                        child: const Text(
-                                          "取消",
-                                          style: TextStyle(
-                                            color: Color(0xff999999),
-                                          ),
-                                        ),
-                                        onPressed: () {
-                                          Navigator.of(context).pop();
-                                        },
-                                      ),
-                                      CupertinoDialogAction(
-                                        child: Text(
-                                          "确定",
-                                          style: TextStyle(
-                                            color:
-                                                ref
-                                                    .watch(themeProvider)
-                                                    .primaryColor,
-                                          ),
-                                        ),
-                                        onPressed: () async {
-                                          Navigator.of(context1).pop();
-                                          deleteFold(data);
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                            );
+                            showConfirmDialog(
+                              context,
+                              title: "确认删除",
+                              content: "确认删除吗",
+                              danger: true,
+                            ).then((confirmed) {
+                              if (confirmed != true) return;
+                              deleteFold(data);
+                            });
+                            ;
                           },
                           onNodeTap: (key) {
                             ScriptData? selectedNode = _treeViewController

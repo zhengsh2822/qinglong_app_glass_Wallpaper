@@ -8,6 +8,7 @@ import 'package:qinglong_app/base/cupertino_sheet.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
@@ -138,196 +139,173 @@ class _TaskDetailPageState extends ConsumerState<SubscribeDetailPage>
       ),
       body: GlassPageBackground(
         child:
-          isLoading
-              ? const Center(child: LoadingWidget())
-              : SingleChildScrollView(
-                primary: true,
-                child: Container(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 15,
-                    vertical: 15,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      SubscribeDetailCell(
-                        title: '名称',
-                        desc: widget.taskBean >> "name",
-                      ),
-                      SubscribeDetailCell(
-                        title: '类型',
-                        desc: widget.taskBean >> "type",
-                      ),
-                      SubscribeDetailCell(
-                        title: '链接',
-                        desc: widget.taskBean >> "url",
-                      ),
-                      Visibility(
-                        visible: type == Type.public,
-                        child: _buildOpenPub(),
-                      ),
-                      Visibility(
-                        visible: type == Type.single,
-                        child: _buildSingle(),
-                      ),
-                      Visibility(
-                        visible: type == Type.private,
-                        child: _buildPrivatePub(),
-                      ),
-                      SubscribeDetailCell(
-                        title: '定时类型',
-                        desc: widget.taskBean >> "schedule_type",
-                      ),
-                      Visibility(
-                        visible: cronType == CronType.cron,
-                        child: SubscribeDetailCell(
-                          title: "定时规则",
-                          desc: widget.taskBean >> "schedule",
+            isLoading
+                ? const Center(child: LoadingWidget())
+                : SingleChildScrollView(
+                  primary: true,
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 15,
+                      vertical: 15,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        SubscribeDetailCell(
+                          title: '名称',
+                          desc: widget.taskBean >> "name",
                         ),
-                      ),
-                      Visibility(
-                        visible: cronType == CronType.interval,
-                        child: SubscribeDetailCell(
-                          title: "定时规则",
-                          desc: widget.taskBean >> "interval_schedule",
+                        SubscribeDetailCell(
+                          title: '类型',
+                          desc: widget.taskBean >> "type",
                         ),
-                      ),
-                      Visibility(
-                        visible: type != Type.single,
-                        child: SubscribeDetailCell(
-                          title: "白名单",
-                          desc: widget.taskBean >> "whitelist",
+                        SubscribeDetailCell(
+                          title: '链接',
+                          desc: widget.taskBean >> "url",
                         ),
-                      ),
-                      Visibility(
-                        visible: type != Type.single,
-                        child: SubscribeDetailCell(
-                          title: "黑名单",
-                          desc: widget.taskBean >> "blacklist",
+                        Visibility(
+                          visible: type == Type.public,
+                          child: _buildOpenPub(),
                         ),
-                      ),
-                      Visibility(
-                        visible: type != Type.single,
-                        child: SubscribeDetailCell(
-                          title: "依赖文件",
-                          desc: widget.taskBean >> "dependences",
+                        Visibility(
+                          visible: type == Type.single,
+                          child: _buildSingle(),
                         ),
-                      ),
-                      Visibility(
-                        visible: type != Type.single,
-                        child: SubscribeDetailCell(
-                          title: "文件后缀",
-                          desc: widget.taskBean >> "extensions",
+                        Visibility(
+                          visible: type == Type.private,
+                          child: _buildPrivatePub(),
                         ),
-                      ),
-                      Visibility(
-                        visible: type != Type.single,
-                        child: SubscribeDetailCell(
-                          title: "执行前",
-                          desc: widget.taskBean >> "sub_before",
+                        SubscribeDetailCell(
+                          title: '定时类型',
+                          desc: widget.taskBean >> "schedule_type",
                         ),
-                      ),
-                      Visibility(
-                        visible: type != Type.single,
-                        child: SubscribeDetailCell(
-                          title: "执行后",
-                          desc: widget.taskBean >> "sub_after",
-                        ),
-                      ),
-                      SubscribeDetailCell(
-                        title: "运行状态",
-                        desc: widget.taskBean["status"] == 0 ? "正在运行" : "空闲",
-                      ),
-                      SubscribeDetailCell(
-                        title: "订阅状态",
-                        desc:
-                            (widget.taskBean["is_disabled"] ?? 0) == 1
-                                ? "已禁用"
-                                : "已启用",
-                      ),
-                      SubscribeDetailCell(
-                        title: "日志",
-                        desc: widget.taskBean >> "log_path",
-                        taped: () {
-                          showLog();
-                        },
-                      ),
-                      SubscribeDetailCell(
-                        title: "创建时间",
-                        desc: widget.taskBean >> "createdAt",
-                        hideDivide: true,
-                      ),
-                      const SizedBox(height: 30),
-                      Center(
-                        child: SizedBox(
-                          width: MediaQuery.of(context).size.width - 80,
-                          child: CupertinoButton(
-                            padding: const EdgeInsets.symmetric(vertical: 5),
-                            alignment: Alignment.center,
-                            color: Colors.red,
-                            child: const Text(
-                              "删 除",
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white,
-                              ),
-                            ),
-                            onPressed: () {
-                              delSubscribe(context, ref);
-                            },
+                        Visibility(
+                          visible: cronType == CronType.cron,
+                          child: SubscribeDetailCell(
+                            title: "定时规则",
+                            desc: widget.taskBean >> "schedule",
                           ),
                         ),
-                      ),
-                    ],
+                        Visibility(
+                          visible: cronType == CronType.interval,
+                          child: SubscribeDetailCell(
+                            title: "定时规则",
+                            desc: widget.taskBean >> "interval_schedule",
+                          ),
+                        ),
+                        Visibility(
+                          visible: type != Type.single,
+                          child: SubscribeDetailCell(
+                            title: "白名单",
+                            desc: widget.taskBean >> "whitelist",
+                          ),
+                        ),
+                        Visibility(
+                          visible: type != Type.single,
+                          child: SubscribeDetailCell(
+                            title: "黑名单",
+                            desc: widget.taskBean >> "blacklist",
+                          ),
+                        ),
+                        Visibility(
+                          visible: type != Type.single,
+                          child: SubscribeDetailCell(
+                            title: "依赖文件",
+                            desc: widget.taskBean >> "dependences",
+                          ),
+                        ),
+                        Visibility(
+                          visible: type != Type.single,
+                          child: SubscribeDetailCell(
+                            title: "文件后缀",
+                            desc: widget.taskBean >> "extensions",
+                          ),
+                        ),
+                        Visibility(
+                          visible: type != Type.single,
+                          child: SubscribeDetailCell(
+                            title: "执行前",
+                            desc: widget.taskBean >> "sub_before",
+                          ),
+                        ),
+                        Visibility(
+                          visible: type != Type.single,
+                          child: SubscribeDetailCell(
+                            title: "执行后",
+                            desc: widget.taskBean >> "sub_after",
+                          ),
+                        ),
+                        SubscribeDetailCell(
+                          title: "运行状态",
+                          desc: widget.taskBean["status"] == 0 ? "正在运行" : "空闲",
+                        ),
+                        SubscribeDetailCell(
+                          title: "订阅状态",
+                          desc:
+                              (widget.taskBean["is_disabled"] ?? 0) == 1
+                                  ? "已禁用"
+                                  : "已启用",
+                        ),
+                        SubscribeDetailCell(
+                          title: "日志",
+                          desc: widget.taskBean >> "log_path",
+                          taped: () {
+                            showLog();
+                          },
+                        ),
+                        SubscribeDetailCell(
+                          title: "创建时间",
+                          desc: widget.taskBean >> "createdAt",
+                          hideDivide: true,
+                        ),
+                        const SizedBox(height: 30),
+                        Center(
+                          child: SizedBox(
+                            width: MediaQuery.of(context).size.width - 80,
+                            child: CupertinoButton(
+                              padding: const EdgeInsets.symmetric(vertical: 5),
+                              alignment: Alignment.center,
+                              color: Colors.red,
+                              child: const Text(
+                                "删 除",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              onPressed: () {
+                                delSubscribe(context, ref);
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
       ),
     );
   }
 
   void delSubscribe(BuildContext context1, WidgetRef ref) {
-    showCupertinoDialog(
-      useRootNavigator: false,
-      context: context1,
-      builder:
-          (context) => CupertinoAlertDialog(
-            title: const Text("确认删除"),
-            content: Text("确认删除订阅 ${widget.taskBean["name"] ?? ""} 吗"),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text(
-                  "取消",
-                  style: TextStyle(color: Color(0xff999999)),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              CupertinoDialogAction(
-                child: Text(
-                  "确定",
-                  style: TextStyle(
-                    color: ref.watch(themeProvider).primaryColor,
-                  ),
-                ),
-                onPressed: () async {
-                  Navigator.of(context).pop();
-                  await ref
-                      .read(
-                        SingleAccountPageState.ofSubscribeProvider(context1)(
-                          getProviderName(context1),
-                        ),
-                      )
-                      .delSubscribe(context1, widget.taskBean["id"]);
-                  Navigator.of(context1).pop();
-                },
-              ),
-            ],
-          ),
-    );
+    showConfirmDialog(
+      context1,
+      title: "确认删除",
+      content: "确认删除订阅 ${widget.taskBean["name"] ?? ""} 吗",
+      danger: true,
+    ).then((confirmed) async {
+      if (confirmed != true) return;
+      await ref
+          .read(
+            SingleAccountPageState.ofSubscribeProvider(context1)(
+              getProviderName(context1),
+            ),
+          )
+          .delSubscribe(context1, widget.taskBean["id"]);
+    });
+    ;
   }
 
   Widget buildRadioButton(

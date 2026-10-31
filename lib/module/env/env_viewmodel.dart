@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:qinglong_app/base/base_viewmodel.dart';
 import 'package:qinglong_app/base/http/http.dart';
@@ -6,6 +8,7 @@ import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/module/env/env_bean.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/icloud_utils.dart';
+import 'package:qinglong_app/utils/webdav_backup_utils.dart';
 
 class EnvViewModel extends BaseViewModel {
   static const String allStr = "全部";
@@ -25,15 +28,17 @@ class EnvViewModel extends BaseViewModel {
       loading(notify: true);
     }
 
-    HttpResponse<List<EnvBean>> result =
-        await SingleAccountPageState.ofApi(context).envs("");
+    HttpResponse<List<EnvBean>> result = await SingleAccountPageState.ofApi(
+      context,
+    ).envs("");
 
     if (result.success && result.bean != null) {
       list.clear();
       list.addAll(result.bean!);
       disabledList.clear();
-      disabledList
-          .addAll(list.where((element) => element.status == 1).toList());
+      disabledList.addAll(
+        list.where((element) => element.status == 1).toList(),
+      );
       enabledList.clear();
       enabledList.addAll(list.where((element) => element.status == 0).toList());
       notifyICloud(context, list);
@@ -48,14 +53,19 @@ class EnvViewModel extends BaseViewModel {
 
   void notifyICloud(BuildContext context, List<EnvBean> list) {
     getIt<ICloudUtils>(
-            instanceName:
-                SingleAccountPageState.of(context)?.index.toString() ?? "0")
-        .asyncEnv(list);
+      instanceName: SingleAccountPageState.of(context)?.index.toString() ?? "0",
+    ).asyncEnv(list);
+    unawaited(
+      WebDavBackupUtils.maybeAutoBackup(
+        SingleAccountPageState.of(context)?.index ?? 0,
+      ),
+    );
   }
 
   Future<void> delEnvs(BuildContext context, List<String> id) async {
-    HttpResponse<NullResponse> result =
-        await SingleAccountPageState.ofApi(context).delEnvs(id);
+    HttpResponse<NullResponse> result = await SingleAccountPageState.ofApi(
+      context,
+    ).delEnvs(id);
     if (result.success) {
       "删除成功".toast();
       loadData(context, false);
@@ -65,8 +75,9 @@ class EnvViewModel extends BaseViewModel {
   }
 
   Future<void> delEnv(BuildContext context, String id) async {
-    HttpResponse<NullResponse> result =
-        await SingleAccountPageState.ofApi(context).delEnv(id);
+    HttpResponse<NullResponse> result = await SingleAccountPageState.ofApi(
+      context,
+    ).delEnv(id);
     if (result.success) {
       "删除成功".toast();
       loadData(context, false);
@@ -80,10 +91,14 @@ class EnvViewModel extends BaseViewModel {
   }
 
   Future<void> enableEnv(
-      BuildContext context, List<String> sId, int status) async {
+    BuildContext context,
+    List<String> sId,
+    int status,
+  ) async {
     if (status == 1) {
-      HttpResponse<NullResponse> response =
-          await SingleAccountPageState.ofApi(context).enableEnv(sId);
+      HttpResponse<NullResponse> response = await SingleAccountPageState.ofApi(
+        context,
+      ).enableEnv(sId);
 
       if (response.success) {
         "启用成功".toast();
@@ -92,8 +107,9 @@ class EnvViewModel extends BaseViewModel {
         failToast(response.message, notify: true);
       }
     } else {
-      HttpResponse<NullResponse> response =
-          await SingleAccountPageState.ofApi(context).disableEnv(sId);
+      HttpResponse<NullResponse> response = await SingleAccountPageState.ofApi(
+        context,
+      ).disableEnv(sId);
 
       if (response.success) {
         "禁用成功".toast();
@@ -105,7 +121,11 @@ class EnvViewModel extends BaseViewModel {
   }
 
   void update(
-      BuildContext context, String id, int newIndex, int oldIndex) async {
+    BuildContext context,
+    String id,
+    int newIndex,
+    int oldIndex,
+  ) async {
     await SingleAccountPageState.ofApi(context).moveEnv(id, oldIndex, newIndex);
     loadData(context, false);
   }

@@ -4,13 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
-import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
-import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
+import 'package:qinglong_app/base/ui/blur_effect.dart';
+import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 import 'package:qinglong_app/utils/extension.dart';
-import 'package:qinglong_app/utils/sp_utils.dart';
 
-const double _dialogBlurSigma = 4.0;
+const double _dialogBlurSigma = 25.0;
 const double _dialogBorderRadius = 18.0;
 const double _dialogBarrierDim = 0.65;
 const Duration _dialogTransitionDuration = Duration(milliseconds: 400);
@@ -49,9 +48,13 @@ class DialogButton extends StatelessWidget {
       textColor = Colors.white;
       borderColor = primaryColor;
     } else {
+      // 取消按钮：赛博模式用白色，非赛博模式用黑色（浅色背景下可见）
       btnColor = Colors.transparent;
-      textColor = Colors.white;
-      borderColor = Colors.white.withValues(alpha: 0.3);
+      textColor = isCyber ? Colors.white : AppleColors.textPrimary;
+      borderColor =
+          isCyber
+              ? Colors.white.withValues(alpha: 0.3)
+              : AppleColors.textPrimary.withValues(alpha: 0.3);
     }
 
     return Expanded(
@@ -60,13 +63,16 @@ class DialogButton extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: primary || danger
-                ? btnColor.withValues(alpha: isCyber ? 0.2 : 0.15)
-                : Colors.transparent,
+            // 确定按钮：赛博模式 alpha 0.2，非赛博模式完全主色（避免透明度太浅）
+            color:
+                primary || danger
+                    ? (isCyber ? btnColor.withValues(alpha: 0.2) : btnColor)
+                    : Colors.transparent,
             borderRadius: BorderRadius.circular(_dialogButtonRadius),
-            border: primary || danger
-                ? null
-                : Border.all(color: borderColor, width: 1),
+            border:
+                primary || danger
+                    ? null
+                    : Border.all(color: borderColor, width: 1),
           ),
           child: Center(
             child: Text(
@@ -118,7 +124,7 @@ class _DialogTheme {
 _DialogTheme _resolveDialogTheme(bool isCyber, bool isDark, bool danger) {
   if (isCyber) {
     return _DialogTheme(
-      cardBg: Colors.transparent,
+      cardBg: CyberColors.bg.withValues(alpha: 0.3),
       borderColor: CyberColors.cyan.withValues(alpha: 0.2),
       borderWidth: 0.5,
       titleColor: danger ? CyberColors.neonRed : CyberColors.cyan,
@@ -132,7 +138,7 @@ _DialogTheme _resolveDialogTheme(bool isCyber, bool isDark, bool danger) {
     );
   } else if (isDark) {
     return _DialogTheme(
-      cardBg: Colors.transparent,
+      cardBg: AppleColors.bgPrimary.withValues(alpha: 0.75),
       borderColor: Colors.white.withValues(alpha: 0.15),
       borderWidth: 0.5,
       titleColor: danger ? const Color(0xFFFF453A) : AppleColors.textPrimary,
@@ -152,7 +158,7 @@ _DialogTheme _resolveDialogTheme(bool isCyber, bool isDark, bool danger) {
     );
   } else {
     return _DialogTheme(
-      cardBg: Colors.transparent,
+      cardBg: AppleColors.bgPrimary.withValues(alpha: 0.75),
       borderColor: Colors.black.withValues(alpha: 0.1),
       borderWidth: 0.5,
       titleColor: danger ? const Color(0xFFFF3B30) : AppleColors.textPrimary,
@@ -179,17 +185,72 @@ Widget _buildDialogPage({
   required _DialogTheme theme,
   required Animation<double> animation,
   VoidCallback? onBarrierTap,
+  bool useGlow = false,
+  bool isCyber = false,
 }) {
   final curved = CurvedAnimation(
     parent: animation,
     curve: Curves.easeOutCubic,
     reverseCurve: Curves.easeInCubic,
   );
+  // 高光内发光卡片模式（日志设置等弹窗对齐新设计语言）
+  if (useGlow) {
+    return AnimatedBuilder(
+      animation: curved,
+      builder: (context, _) {
+        final t = curved.value;
+        return Material(
+          color: Colors.transparent,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: GestureDetector(
+                  onTap: onBarrierTap,
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    color: Colors.black.withValues(
+                      alpha: _dialogBarrierDim * t,
+                    ),
+                  ),
+                ),
+              ),
+              Center(
+                child: Opacity(
+                  opacity: t,
+                  child: Transform.scale(
+                    scale: 0.94 + 0.06 * t,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 380),
+                        child: CapsuleGlowCard(
+                          isCyber: isCyber,
+                          isPinned: false,
+                          child: child,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+  // 读取毛玻璃开关（动画期间不变化，避免每帧重读）
+  final bool blurEnabled = ProviderScope.containerOf(
+    context,
+  ).read(blurEffectProvider);
+  // 毛玻璃关闭时背景置为完全不透明（纯色），符合"关闭=纯色"契约
+  final Color cardBg =
+      blurEnabled ? theme.cardBg : theme.cardBg.withValues(alpha: 1.0);
+
   return AnimatedBuilder(
     animation: curved,
     builder: (context, _) {
       final t = curved.value;
-      final baseSigma = SpUtil.getDouble(spCardBlurSigma, defValue: _dialogBlurSigma);
       return Material(
         color: Colors.transparent,
         child: Stack(
@@ -212,24 +273,21 @@ Widget _buildDialogPage({
                     padding: const EdgeInsets.symmetric(horizontal: 32),
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 380),
-                      child: OptimizedFrostedGlass(
-                        sigma: baseSigma * t,
-                        borderRadius:
-                            BorderRadius.circular(_dialogBorderRadius),
-                        forceOpaqueSolid: true,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: theme.cardBg,
-                            borderRadius: BorderRadius.circular(
-                              _dialogBorderRadius,
-                            ),
-                            border: Border.all(
-                              color: theme.borderColor,
-                              width: theme.borderWidth,
-                            ),
-                          ),
-                          child: child,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(
+                          _dialogBorderRadius,
                         ),
+                        child:
+                            blurEnabled
+                                ? BackdropFilter(
+                                  // sigma 固定，不随动画 t 变化，避免每帧重算模糊
+                                  filter: ImageFilter.blur(
+                                    sigmaX: 20,
+                                    sigmaY: 20,
+                                  ),
+                                  child: _dialogCard(cardBg, theme, child),
+                                )
+                                : _dialogCard(cardBg, theme, child),
                       ),
                     ),
                   ),
@@ -243,10 +301,23 @@ Widget _buildDialogPage({
   );
 }
 
+/// 弹窗卡片背景容器（提取复用，避免 blurEnabled 分支重复代码）
+Widget _dialogCard(Color cardBg, _DialogTheme theme, Widget child) {
+  return Container(
+    decoration: BoxDecoration(
+      color: cardBg,
+      borderRadius: BorderRadius.circular(_dialogBorderRadius),
+      border: Border.all(color: theme.borderColor, width: theme.borderWidth),
+      boxShadow: theme.shadows,
+    ),
+    child: child,
+  );
+}
+
 Widget _buildDialogButtons({
   required _DialogTheme theme,
   required bool isCyber,
-  required String cancelLabel,
+  required String? cancelLabel,
   required String confirmLabel,
   required bool danger,
   required VoidCallback onCancel,
@@ -254,13 +325,15 @@ Widget _buildDialogButtons({
 }) {
   return Row(
     children: [
-      DialogButton(
-        label: cancelLabel,
-        onTap: onCancel,
-        isCyber: isCyber,
-        primaryColor: theme.primaryAction,
-      ),
-      const SizedBox(width: 12),
+      if (cancelLabel != null) ...[
+        DialogButton(
+          label: cancelLabel,
+          onTap: onCancel,
+          isCyber: isCyber,
+          primaryColor: theme.primaryAction,
+        ),
+        const SizedBox(width: 12),
+      ],
       DialogButton(
         label: confirmLabel,
         onTap: onConfirm,
@@ -277,7 +350,8 @@ Future<bool?> showConfirmDialog(
   BuildContext context, {
   required String title,
   required String content,
-  String cancelLabel = '取消',
+  // null = 仅显示确定按钮（纯提示弹窗）
+  String? cancelLabel = '取消',
   String confirmLabel = '确定',
   bool danger = false,
 }) {
@@ -296,14 +370,14 @@ Future<bool?> showConfirmDialog(
     barrierColor: Colors.transparent,
     transitionDuration: _dialogTransitionDuration,
     pageBuilder: (context, animation, secondaryAnimation) {
-      // 弹窗标题字重跟随全局粗细调节（弹窗为瞬时场景，打开时读取一次）
-      final FontWeight fw = FontWeight(
-        ProviderScope.containerOf(context).read(textWeightProvider),
-      );
       return _buildDialogPage(
         context: context,
         animation: animation,
         theme: theme,
+        // 与日志删除频率弹窗同款高光发光卡（CapsuleGlowCard）：
+        // 普通毛玻璃卡在毛玻璃开关关闭时退化为纯黑不透明+大留白，观感差
+        useGlow: true,
+        isCyber: isCyber,
         onBarrierTap: () => Navigator.of(context).pop(false),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
@@ -317,11 +391,14 @@ Future<bool?> showConfirmDialog(
                 style: TextStyle(
                   color: theme.titleColor,
                   fontSize: 17,
-                  fontWeight: fw,
+                  // 标题跟随全局字体粗细（弹窗卡片统一）
+                  fontWeight: FontWeight(
+                    ProviderScope.containerOf(context).read(textWeightProvider),
+                  ),
                   letterSpacing: 0.3,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 20),
               Text(
                 content,
                 textAlign: TextAlign.center,
@@ -378,10 +455,6 @@ Future<String?> showInputDialog(
     barrierColor: Colors.transparent,
     transitionDuration: _dialogTransitionDuration,
     pageBuilder: (context, animation, secondaryAnimation) {
-      // 弹窗标题字重跟随全局粗细调节（弹窗为瞬时场景，打开时读取一次）
-      final FontWeight fw = FontWeight(
-        ProviderScope.containerOf(context).read(textWeightProvider),
-      );
       return _buildDialogPage(
         context: context,
         animation: animation,
@@ -399,7 +472,10 @@ Future<String?> showInputDialog(
                 style: TextStyle(
                   color: theme.titleColor,
                   fontSize: 17,
-                  fontWeight: fw,
+                  // 标题跟随全局字体粗细（弹窗卡片统一）
+                  fontWeight: FontWeight(
+                    ProviderScope.containerOf(context).read(textWeightProvider),
+                  ),
                   letterSpacing: 0.3,
                 ),
               ),
@@ -461,7 +537,9 @@ Future<String?> showInputDialog(
         ),
       );
     },
-  );
+  ).whenComplete(() {
+    controller.dispose();
+  });
 }
 
 Future<int?> showFrequencyDialog(
@@ -471,6 +549,7 @@ Future<int?> showFrequencyDialog(
   int minValue = 1,
   int maxValue = 1000,
   String unit = '天',
+
   /// 可选的异步值加载器。
   ///
   /// 传入时，弹窗会立即显示（先用 [initialValue] 占位），
@@ -498,6 +577,8 @@ Future<int?> showFrequencyDialog(
         context: context,
         animation: animation,
         theme: theme,
+        useGlow: true,
+        isCyber: isCyber,
         onBarrierTap: () => Navigator.of(context).pop(),
         child: _FrequencyDialogContent(
           title: title,
@@ -512,7 +593,9 @@ Future<int?> showFrequencyDialog(
         ),
       );
     },
-  );
+  ).whenComplete(() {
+    controller.dispose();
+  });
 }
 
 /// 频率输入弹窗内容（支持异步加载当前值）
@@ -594,10 +677,6 @@ class _FrequencyDialogContentState extends State<_FrequencyDialogContent> {
 
   @override
   Widget build(BuildContext context) {
-    // 弹窗标题字重跟随全局粗细调节（弹窗为瞬时场景，build 时读取一次）
-    final FontWeight fw = FontWeight(
-      ProviderScope.containerOf(context).read(textWeightProvider),
-    );
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
       child: Column(
@@ -610,7 +689,10 @@ class _FrequencyDialogContentState extends State<_FrequencyDialogContent> {
             style: TextStyle(
               color: widget.theme.titleColor,
               fontSize: 17,
-              fontWeight: fw,
+              // 标题跟随全局字体粗细（弹窗卡片统一）
+              fontWeight: FontWeight(
+                ProviderScope.containerOf(context).read(textWeightProvider),
+              ),
               letterSpacing: 0.3,
             ),
           ),

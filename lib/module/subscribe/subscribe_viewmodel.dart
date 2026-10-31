@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
@@ -7,6 +8,7 @@ import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/icloud_utils.dart';
+import 'package:qinglong_app/utils/webdav_backup_utils.dart';
 
 class SubscribeViewModel extends BaseViewModel {
   List<Map<String, dynamic>> list = [];
@@ -51,14 +53,19 @@ class SubscribeViewModel extends BaseViewModel {
 
   void notifyICloud(BuildContext context, String content) {
     getIt<ICloudUtils>(
-            instanceName:
-                SingleAccountPageState.of(context)?.index.toString() ?? "0")
-        .asyncSubscribe(content);
+      instanceName: SingleAccountPageState.of(context)?.index.toString() ?? "0",
+    ).asyncSubscribe(content);
+    unawaited(
+      WebDavBackupUtils.maybeAutoBackup(
+        SingleAccountPageState.of(context)?.index ?? 0,
+      ),
+    );
   }
 
   Future<void> runCrons(BuildContext context, int cron) async {
-    HttpResponse<NullResponse> result =
-        await SingleAccountPageState.ofApi(context).startSubscribes([cron]);
+    HttpResponse<NullResponse> result = await SingleAccountPageState.ofApi(
+      context,
+    ).startSubscribes([cron]);
     if (result.success) {
       loadData(context, false);
     } else {
@@ -67,8 +74,9 @@ class SubscribeViewModel extends BaseViewModel {
   }
 
   Future<void> stopCrons(BuildContext context, int cron) async {
-    HttpResponse<NullResponse> result =
-        await SingleAccountPageState.ofApi(context).stopSubscribes([cron]);
+    HttpResponse<NullResponse> result = await SingleAccountPageState.ofApi(
+      context,
+    ).stopSubscribes([cron]);
     if (result.success) {
       loadData(context, false);
     } else {
@@ -77,8 +85,9 @@ class SubscribeViewModel extends BaseViewModel {
   }
 
   Future<void> delSubscribe(BuildContext context, int id) async {
-    HttpResponse<NullResponse> result =
-        await SingleAccountPageState.ofApi(context).delSubscribe(id);
+    HttpResponse<NullResponse> result = await SingleAccountPageState.ofApi(
+      context,
+    ).delSubscribe(id);
     if (result.success) {
       "删除成功".toast();
       loadData(context, false);
@@ -88,10 +97,14 @@ class SubscribeViewModel extends BaseViewModel {
   }
 
   Future<void> enableSubscribe(
-      BuildContext context, int sId, int isDisabled) async {
+    BuildContext context,
+    int sId,
+    int isDisabled,
+  ) async {
     if (isDisabled == 0) {
-      HttpResponse<NullResponse> response =
-          await SingleAccountPageState.ofApi(context).disableSubscribe(sId);
+      HttpResponse<NullResponse> response = await SingleAccountPageState.ofApi(
+        context,
+      ).disableSubscribe(sId);
 
       if (response.success) {
         "禁用成功".toast();
@@ -100,8 +113,9 @@ class SubscribeViewModel extends BaseViewModel {
         failToast(response.message, notify: true);
       }
     } else {
-      HttpResponse<NullResponse> response =
-          await SingleAccountPageState.ofApi(context).enableSubscribe(sId);
+      HttpResponse<NullResponse> response = await SingleAccountPageState.ofApi(
+        context,
+      ).enableSubscribe(sId);
 
       if (response.success) {
         "启用成功".toast();

@@ -14,6 +14,7 @@ import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/ui/elastic_reorder_list.dart';
 import 'package:qinglong_app/base/ui/spring_depth_page_track.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/glass_segmented_tab.dart';
 import 'package:qinglong_app/base/ui/animated_edit_mode_overlay.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
@@ -583,49 +584,25 @@ class EnvPageState extends ConsumerState<EnvPage>
       return;
     }
 
-    showCupertinoDialog(
-      context: context,
-      useRootNavigator: false,
-      builder:
-          (context) => CupertinoAlertDialog(
-            title: Text("确认$s"),
-            content: Text("确认$s吗"),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text(
-                  "取消",
-                  style: TextStyle(color: Color(0xff999999)),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              CupertinoDialogAction(
-                child: Text(
-                  "确定",
-                  style: TextStyle(
-                    color: ref.watch(themeProvider).primaryColor,
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  editMode = false;
-                  removeOverlay();
-                  WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-                    if (s == "启用") {
-                      enableEnv();
-                    } else if (s == "禁用") {
-                      disableEnv();
-                    } else if (s == "删除") {
-                      deleteEnvs();
-                    }
-                  });
-                  setState(() {});
-                },
-              ),
-            ],
-          ),
-    );
+    showConfirmDialog(
+      context,
+      title: "确认$s",
+      content: "确认$s吗",
+      danger: s == "删除",
+    ).then((confirmed) {
+      if (confirmed != true) return;
+      editMode = false;
+      removeOverlay();
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        if (s == "启用") {
+          enableEnv();
+        } else if (s == "禁用") {
+          disableEnv();
+        } else if (s == "删除") {
+          deleteEnvs();
+        }
+      });
+    });
   }
 
   void enableEnv() {
@@ -1162,44 +1139,22 @@ class EnvItemCell extends StatelessWidget {
   }
 
   void delEnv(BuildContext context1, WidgetRef ref) {
-    showCupertinoDialog(
-      useRootNavigator: false,
-      context: context1,
-      builder:
-          (context) => CupertinoAlertDialog(
-            title: const Text("确认删除"),
-            content: Text("确认删除环境变量 ${bean.name ?? ""} 吗"),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text(
-                  "取消",
-                  style: TextStyle(color: Color(0xff999999)),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              CupertinoDialogAction(
-                child: Text(
-                  "确定",
-                  style: TextStyle(
-                    color: ref.watch(themeProvider).primaryColor,
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  ref
-                      .read(
-                        SingleAccountPageState.ofEnvProvider(context1)(
-                          getProviderName(context1),
-                        ),
-                      )
-                      .delEnv(context1, bean.sId!);
-                },
-              ),
-            ],
-          ),
-    );
+    showConfirmDialog(
+      context1,
+      title: "确认删除",
+      content: "确认删除环境变量 ${bean.name ?? ""} 吗",
+      danger: true,
+    ).then((confirmed) {
+      if (confirmed != true || !context1.mounted) return;
+      ref
+          .read(
+            SingleAccountPageState.ofEnvProvider(context1)(
+              getProviderName(context1),
+            ),
+          )
+          .delEnv(context1, bean.sId!);
+    });
+    ;
   }
 
   int getIndexByIndex(BuildContext context, int index) {

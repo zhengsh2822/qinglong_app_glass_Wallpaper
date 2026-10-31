@@ -9,6 +9,7 @@ import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/glass_text_field.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/utils/extension.dart';
@@ -118,7 +119,9 @@ class StorageRetentionPageState extends ConsumerState<StorageRetentionPage> {
 
   Future<void> _savePolicy() async {
     EasyLoading.show(status: "保存中");
-    final res = await SingleAccountPageState.ofApi(context).updateRetentionConfig(
+    final res = await SingleAccountPageState.ofApi(
+      context,
+    ).updateRetentionConfig(
       _days(_runDaysController),
       _days(_statDaysController),
     );
@@ -149,26 +152,16 @@ class StorageRetentionPageState extends ConsumerState<StorageRetentionPage> {
   }
 
   Future<void> _doCleanup() async {
-    final bool? ok = await showCupertinoDialog<bool>(
-      context: context,
-      builder:
-          (childContext) => CupertinoAlertDialog(
-            title: const Text('确认清理'),
-            content: const Text('将按上面的保留天数永久删除历史运行实例与执行统计，并清空勾选的依赖缓存，操作不可撤销。'),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text('取消'),
-                onPressed: () => Navigator.of(childContext).pop(false),
-              ),
-              CupertinoDialogAction(
-                isDestructiveAction: true,
-                child: const Text('确认清理'),
-                onPressed: () => Navigator.of(childContext).pop(true),
-              ),
-            ],
-          ),
-    );
-    if (ok != true) return;
+    final bool ok =
+        await showConfirmDialog(
+          context,
+          title: '确认清理',
+          content: '将按上面的保留天数永久删除历史运行实例与执行统计，并清空勾选的依赖缓存，操作不可撤销。',
+          danger: true,
+          confirmLabel: '确认清理',
+        ) ==
+        true;
+    if (!ok) return;
 
     EasyLoading.show(status: "清理中");
     final res = await SingleAccountPageState.ofApi(
@@ -179,10 +172,12 @@ class StorageRetentionPageState extends ConsumerState<StorageRetentionPage> {
       final Map<String, dynamic>? data = _parseObject(res.bean);
       final Map<String, dynamic>? deleted =
           (data?['deleted'] as Map<String, dynamic>?);
-      final int instances = (deleted?['runningInstances'] as num?)?.toInt() ?? 0;
+      final int instances =
+          (deleted?['runningInstances'] as num?)?.toInt() ?? 0;
       final int stats = (deleted?['cronStats'] as num?)?.toInt() ?? 0;
       final bool compacted = data?['compactedDatabase'] == true;
-      "已清理：运行实例 $instances 条、执行统计 $stats 条${compacted ? '，数据库已压缩' : ''}".toast();
+      "已清理：运行实例 $instances 条、执行统计 $stats 条${compacted ? '，数据库已压缩' : ''}"
+          .toast();
       setState(() => _preview = null);
       await _loadData();
     } else {
@@ -295,9 +290,10 @@ class StorageRetentionPageState extends ConsumerState<StorageRetentionPage> {
             alignment: Alignment.centerRight,
             child: CupertinoButton(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              color: ref.watch(themeProvider).primaryColor.withValues(
-                alpha: 0.15,
-              ),
+              color: ref
+                  .watch(themeProvider)
+                  .primaryColor
+                  .withValues(alpha: 0.15),
               onPressed: _savePolicy,
               child: Text(
                 '保存策略',
@@ -348,10 +344,7 @@ class StorageRetentionPageState extends ConsumerState<StorageRetentionPage> {
           ),
           const SizedBox(height: 10),
           if (p != null) ...[
-            Text(
-              '预览结果',
-              style: TextStyle(fontSize: 12, color: desc),
-            ),
+            Text('预览结果', style: TextStyle(fontSize: 12, color: desc)),
             const SizedBox(height: 6),
             _buildInfoLine('历史运行实例', '${p['runningInstances'] ?? 0} 条'),
             const SizedBox(height: 4),
@@ -359,7 +352,9 @@ class StorageRetentionPageState extends ConsumerState<StorageRetentionPage> {
             const SizedBox(height: 4),
             _buildInfoLine(
               '依赖缓存',
-              _formatBytes((p['dependenceCacheBytes'] as num?)?.toDouble() ?? 0),
+              _formatBytes(
+                (p['dependenceCacheBytes'] as num?)?.toDouble() ?? 0,
+              ),
             ),
             const SizedBox(height: 10),
           ],
@@ -371,9 +366,10 @@ class StorageRetentionPageState extends ConsumerState<StorageRetentionPage> {
                   horizontal: 14,
                   vertical: 6,
                 ),
-                color: ref.watch(themeProvider).primaryColor.withValues(
-                  alpha: 0.15,
-                ),
+                color: ref
+                    .watch(themeProvider)
+                    .primaryColor
+                    .withValues(alpha: 0.15),
                 onPressed: _previewing ? null : _doPreview,
                 child: Text(
                   _previewing ? '预览中…' : '预览',
@@ -403,7 +399,11 @@ class StorageRetentionPageState extends ConsumerState<StorageRetentionPage> {
     );
   }
 
-  Widget _buildCheckRow(String label, bool value, ValueChanged<bool> onChanged) {
+  Widget _buildCheckRow(
+    String label,
+    bool value,
+    ValueChanged<bool> onChanged,
+  ) {
     return Row(
       children: [
         Expanded(

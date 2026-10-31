@@ -11,6 +11,7 @@ import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
@@ -185,53 +186,16 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                       icon: CupertinoIcons.delete,
                                       color: const Color(0xffEA4D3E),
                                       onTap: () {
-                                        showCupertinoDialog(
-                                          context: context,
-                                          useRootNavigator: false,
-                                          builder:
-                                              (context) => CupertinoAlertDialog(
-                                                title: const Text("确认删除"),
-                                                content: const Text(
-                                                  "确定删除这个文件夹吗",
-                                                ),
-                                                actions: [
-                                                  CupertinoDialogAction(
-                                                    child: const Text(
-                                                      "取消",
-                                                      style: TextStyle(
-                                                        color: Color(
-                                                          0xff999999,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    onPressed: () {
-                                                      Navigator.of(
-                                                        context,
-                                                      ).pop();
-                                                    },
-                                                  ),
-                                                  CupertinoDialogAction(
-                                                    child: Text(
-                                                      "确定",
-                                                      style: TextStyle(
-                                                        color:
-                                                            ref
-                                                                .watch(
-                                                                  themeProvider,
-                                                                )
-                                                                .primaryColor,
-                                                      ),
-                                                    ),
-                                                    onPressed: () {
-                                                      Navigator.of(
-                                                        context,
-                                                      ).pop();
-                                                      deleteFold(item);
-                                                    },
-                                                  ),
-                                                ],
-                                              ),
-                                        );
+                                        showConfirmDialog(
+                                          context,
+                                          title: "确认删除",
+                                          content: "确定删除这个文件夹吗",
+                                          danger: true,
+                                        ).then((confirmed) {
+                                          if (confirmed != true) return;
+                                          deleteFold(item);
+                                        });
+                                        ;
                                       },
                                     ),
                                   ],
@@ -358,55 +322,16 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                         color: const Color(0xffEA4D3E),
                                         icon: CupertinoIcons.delete,
                                         onTap: () {
-                                          showCupertinoDialog(
-                                            context: context,
-                                            useRootNavigator: false,
-                                            builder:
-                                                (
-                                                  context,
-                                                ) => CupertinoAlertDialog(
-                                                  title: const Text("确认删除"),
-                                                  content: const Text(
-                                                    "确定删除这个文件夹吗",
-                                                  ),
-                                                  actions: [
-                                                    CupertinoDialogAction(
-                                                      child: const Text(
-                                                        "取消",
-                                                        style: TextStyle(
-                                                          color: Color(
-                                                            0xff999999,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      onPressed: () {
-                                                        Navigator.of(
-                                                          context,
-                                                        ).pop();
-                                                      },
-                                                    ),
-                                                    CupertinoDialogAction(
-                                                      child: Text(
-                                                        "确定",
-                                                        style: TextStyle(
-                                                          color:
-                                                              ref
-                                                                  .watch(
-                                                                    themeProvider,
-                                                                  )
-                                                                  .primaryColor,
-                                                        ),
-                                                      ),
-                                                      onPressed: () {
-                                                        Navigator.of(
-                                                          context,
-                                                        ).pop();
-                                                        deleteFold(item);
-                                                      },
-                                                    ),
-                                                  ],
-                                                ),
-                                          );
+                                          showConfirmDialog(
+                                            context,
+                                            title: "确认删除",
+                                            content: "确定删除这个文件夹吗",
+                                            danger: true,
+                                          ).then((confirmed) {
+                                            if (confirmed != true) return;
+                                            deleteFold(item);
+                                          });
+                                          ;
                                         },
                                         cyberMode: false,
                                         width: double.infinity,
@@ -510,53 +435,16 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                       icon: CupertinoIcons.delete,
                                       color: const Color(0xffEA4D3E),
                                       onTap: () {
-                                        showCupertinoDialog(
-                                          context: context,
-                                          useRootNavigator: false,
-                                          builder:
-                                              (context) => CupertinoAlertDialog(
-                                                title: const Text("确认删除"),
-                                                content: const Text(
-                                                  "确定删除这个文件吗",
-                                                ),
-                                                actions: [
-                                                  CupertinoDialogAction(
-                                                    child: const Text(
-                                                      "取消",
-                                                      style: TextStyle(
-                                                        color: Color(
-                                                          0xff999999,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    onPressed: () {
-                                                      Navigator.of(
-                                                        context,
-                                                      ).pop();
-                                                    },
-                                                  ),
-                                                  CupertinoDialogAction(
-                                                    child: Text(
-                                                      "确定",
-                                                      style: TextStyle(
-                                                        color:
-                                                            ref
-                                                                .watch(
-                                                                  themeProvider,
-                                                                )
-                                                                .primaryColor,
-                                                      ),
-                                                    ),
-                                                    onPressed: () {
-                                                      Navigator.of(
-                                                        context,
-                                                      ).pop();
-                                                      deleteFold(item);
-                                                    },
-                                                  ),
-                                                ],
-                                              ),
-                                        );
+                                        showConfirmDialog(
+                                          context,
+                                          title: "确认删除",
+                                          content: "确定删除这个文件吗",
+                                          danger: true,
+                                        ).then((confirmed) {
+                                          if (confirmed != true) return;
+                                          deleteFold(item);
+                                        });
+                                        ;
                                       },
                                     ),
                                   ],
@@ -640,55 +528,16 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                         color: const Color(0xffEA4D3E),
                                         icon: CupertinoIcons.delete,
                                         onTap: () {
-                                          showCupertinoDialog(
-                                            context: context,
-                                            useRootNavigator: false,
-                                            builder:
-                                                (
-                                                  context,
-                                                ) => CupertinoAlertDialog(
-                                                  title: const Text("确认删除"),
-                                                  content: const Text(
-                                                    "确定删除这个文件吗",
-                                                  ),
-                                                  actions: [
-                                                    CupertinoDialogAction(
-                                                      child: const Text(
-                                                        "取消",
-                                                        style: TextStyle(
-                                                          color: Color(
-                                                            0xff999999,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      onPressed: () {
-                                                        Navigator.of(
-                                                          context,
-                                                        ).pop();
-                                                      },
-                                                    ),
-                                                    CupertinoDialogAction(
-                                                      child: Text(
-                                                        "确定",
-                                                        style: TextStyle(
-                                                          color:
-                                                              ref
-                                                                  .watch(
-                                                                    themeProvider,
-                                                                  )
-                                                                  .primaryColor,
-                                                        ),
-                                                      ),
-                                                      onPressed: () {
-                                                        Navigator.of(
-                                                          context,
-                                                        ).pop();
-                                                        deleteFold(item);
-                                                      },
-                                                    ),
-                                                  ],
-                                                ),
-                                          );
+                                          showConfirmDialog(
+                                            context,
+                                            title: "确认删除",
+                                            content: "确定删除这个文件吗",
+                                            danger: true,
+                                          ).then((confirmed) {
+                                            if (confirmed != true) return;
+                                            deleteFold(item);
+                                          });
+                                          ;
                                         },
                                         cyberMode: false,
                                         width: double.infinity,

@@ -300,6 +300,24 @@ class Url {
           ? "/open/system/update-check"
           : "/api/system/update-check";
 
+  // ==== 青龙 2.24.0 新增：面板安全升级（任务化：download → update-status 轮询 → reload system）====
+  // PUT 启动下载暂存任务；GET 轮询任务状态（status: ready 待重启 / completed / failed）
+  get systemUpdate =>
+      getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
+          ? "/open/system/update"
+          : "/api/system/update";
+
+  get systemUpdateStatus =>
+      getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
+          ? "/open/system/update-status"
+          : "/api/system/update-status";
+
+  // GET 通知审计日志（青龙 2.24.0 新增，对齐网页版「通知日志」）
+  get systemNotifyLog =>
+      getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
+          ? "/open/system/notify-log"
+          : "/api/system/notify-log";
+
   // ==== 青龙 2.22 新增：客户端 IP / 可信代理解析 ====
   // GET 读取配置；PUT 更新（body: {trustProxy}）
   get clientIpConfig =>

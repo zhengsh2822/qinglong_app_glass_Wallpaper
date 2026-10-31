@@ -5,7 +5,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
+import 'package:qinglong_app/base/ui/wallpaper_page_route.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
+import 'package:qinglong_app/module/others/update/panel_upgrade_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
@@ -476,42 +479,44 @@ class _AboutPageState extends ConsumerState<AboutPage>
   void onLazyLoad() {}
 
   void _checkUpdate() async {
-    final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
     var response = await SingleAccountPageState.ofApi(context).checkUpdate();
     if (response.success) {
       if (response.bean?.hasNewVersion ?? false) {
-        if (isCyber) {
-          showCyberConfirmDialog(
-            context,
-            title: "青龙服务端发现新版本 ${response.bean?.lastVersion}",
-            content: "${response.bean?.lastLog}",
-            confirmLabel: "知道了",
-          );
-          return;
-        }
-        showCupertinoDialog(
-          context: context,
-          useRootNavigator: false,
-          builder:
-              (childContext) => CupertinoAlertDialog(
-                title: Text("青龙服务端发现新版本 ${response.bean?.lastVersion}"),
-                content: Padding(
-                  padding: const EdgeInsets.only(left: 5, top: 5),
-                  child: Text(
-                    "${response.bean?.lastLog}",
-                    textAlign: TextAlign.left,
-                  ),
-                ),
-                actions: [
-                  CupertinoDialogAction(
-                    child: const Text("知道了"),
-                    onPressed: () {
-                      Navigator.of(childContext).pop();
-                    },
-                  ),
-                ],
-              ),
+        // 2.24.0 起面板升级任务化（下载暂存→校验依赖→重启应用，失败可回退）；
+        // 旧版 ql update 流程曾因依赖未装完导致面板起不来，应用内升级只对 2.24.0+ 开放
+        final String index =
+            (SingleAccountPageState.of(context)?.index ?? 0).toString();
+        final bool upgradeSupported =
+            getIt<SystemBean>(instanceName: index).isUpperVersion2_24_0();
+
+        final String content =
+            upgradeSupported
+                ? "${response.bean?.lastLog ?? ''}\n\n"
+                    "将采用 2.24.0+ 安全升级流程：自动下载校验并准备依赖后，"
+                    "由你确认重启面板应用更新；升级过程不影响环境变量、任务、脚本等数据。"
+                : "${response.bean?.lastLog ?? ''}\n\n"
+                    "当前面板版本低于 2.24.0，暂不支持应用内安全升级"
+                    "（旧版更新流程易出现依赖未装完导致面板无法启动）。\n"
+                    "请先在服务器/网页端手动升级面板到 2.24.0 及以上。";
+
+        final dynamic confirmed = await showConfirmDialog(
+          context,
+          title: "青龙服务端发现新版本 ${response.bean?.lastVersion}",
+          content: content,
+          confirmLabel: upgradeSupported ? "立即更新" : "知道了",
+          cancelLabel: upgradeSupported ? "稍后再说" : "关闭",
         );
+
+        if (confirmed == true && upgradeSupported && mounted) {
+          Navigator.of(context).push(
+            WallpaperPageRoute(
+              builder:
+                  (context) => PanelUpgradePage(
+                    targetVersion: response.bean?.lastVersion,
+                  ),
+            ),
+          );
+        }
       } else {
         "已经是新版本".toast();
       }
@@ -677,43 +682,16 @@ class _AboutPageState extends ConsumerState<AboutPage>
         launchUrl(Uri.parse(releaseUrl));
       }
 
-      final bool isCyber =
-          ProviderScope.containerOf(context).read(themeProvider).themeMode ==
-          modeCyber;
-      if (isCyber) {
-        showCyberConfirmDialog(
-          context,
-          title: "发现新版安装包",
-          content: content,
-          cancelLabel: "稍后",
-          confirmLabel: "获取安装包",
-        ).then((confirmed) {
-          if (confirmed == true) openGithub();
-        });
-        return;
-      }
-      showCupertinoDialog(
-        context: context,
-        useRootNavigator: false,
-        builder:
-            (childContext) => CupertinoAlertDialog(
-              title: const Text("发现新版安装包"),
-              content: Text(content, textAlign: TextAlign.left),
-              actions: [
-                CupertinoDialogAction(
-                  child: const Text("稍后"),
-                  onPressed: () => Navigator.pop(childContext),
-                ),
-                CupertinoDialogAction(
-                  child: const Text("获取安装包"),
-                  onPressed: () {
-                    Navigator.pop(childContext);
-                    openGithub();
-                  },
-                ),
-              ],
-            ),
-      );
+      // 三模式通用 frosted glass 弹窗（赛博/毛玻璃/默认统一走新 UI）
+      showConfirmDialog(
+        context,
+        title: "发现新版安装包",
+        content: content,
+        cancelLabel: "稍后",
+        confirmLabel: "获取安装包",
+      ).then((confirmed) {
+        if (confirmed == true) openGithub();
+      });
     } catch (e) {
       // 主动提醒模式下网络异常静默，不 toast
       if (!autoRemind) "网络异常，无法获取更新信息".toast();

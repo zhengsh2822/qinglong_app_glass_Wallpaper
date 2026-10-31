@@ -137,7 +137,7 @@ Future<bool> deleteConfigFile(BuildContext context, ConfigBean bean) async {
   final String tip = '确认删除配置文件 $name 吗？\n该操作不可撤销';
   final dynamic confirmed =
       isCyber
-          ? await showCyberConfirmDialog(
+          ? await showConfirmDialog(
             context,
             title: '确认删除',
             content: tip,
@@ -195,11 +195,12 @@ Future<bool> _deleteByTempTask(BuildContext context, String name) async {
     final logResult = await api.inTimeLog(id);
     final String log = (logResult.success ? logResult.bean : null) ?? '';
     if (log.trim().isNotEmpty) {
-      final lines = log
-          .split('\n')
-          .map((e) => e.replaceAll('\r', '').trim())
-          .where((e) => e.isNotEmpty)
-          .toList();
+      final lines =
+          log
+              .split('\n')
+              .map((e) => e.replaceAll('\r', '').trim())
+              .where((e) => e.isNotEmpty)
+              .toList();
       final failLine = lines.firstWhere(
         (e) => e.contains('QLDEL_FAIL'),
         orElse: () => '',
@@ -333,10 +334,10 @@ Future<void> _editConfig(
         arguments: {"title": bean.title, "content": text},
       )
       .then((value) {
-    if (value != null && value is String && value.isNotEmpty) {
-      onContentChanged?.call(value);
-    }
-  });
+        if (value != null && value is String && value.isNotEmpty) {
+          onContentChanged?.call(value);
+        }
+      });
 }
 
 /// 取文件内容：优先用已缓存的内容，否则实时向面板拉取

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/tag_chip.dart';
 import 'package:qinglong_app/utils/extension.dart';
@@ -41,119 +42,94 @@ class _TaskDetailPageState extends ConsumerState<AppKeyDetailDetailPage> {
       ),
       body: GlassPageBackground(
         child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            AppKeyDetailCell(
-              title: 'Client ID	',
-              desc: widget.bean >> "client_id",
-            ),
-            const SizedBox(height: 5),
-            AppKeyDetailCell(
-              title: 'Client Secret	',
-              obtext: true,
-              desc: widget.bean >> "client_secret",
-            ),
-            const SizedBox(height: 5),
-            Padding(
-              padding: const EdgeInsets.only(top: 10, right: 10, bottom: 10),
-              child: Text(
-                "权限",
-                style: TextStyle(
-                  color: ref.watch(themeProvider).themeColor.titleColor(),
-                  fontSize: 16,
-                ),
+          margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              AppKeyDetailCell(
+                title: 'Client ID	',
+                desc: widget.bean >> "client_id",
               ),
-            ),
-            const SizedBox(height: 5),
-            Material(
-              color: Colors.transparent,
-              child: Wrap(
-                runSpacing: 5,
-                spacing: 5,
-                children:
-                    AppKeyViewModel.getScopeNames(
-                          (widget.bean["scopes"] as List<dynamic>?),
-                        )
-                        .map((e) => TagChip(label: e))
-                        .toList(),
+              const SizedBox(height: 5),
+              AppKeyDetailCell(
+                title: 'Client Secret	',
+                obtext: true,
+                desc: widget.bean >> "client_secret",
               ),
-            ),
-            const Spacer(),
-            Center(
-              child: SizedBox(
-                width: MediaQuery.of(context).size.width - 80,
-                child: CupertinoButton(
-                  padding: const EdgeInsets.symmetric(vertical: 5),
-                  alignment: Alignment.center,
-                  color: Colors.red,
-                  child: const Text(
-                    "删 除",
-                    style: TextStyle(fontSize: 16, color: Colors.white),
+              const SizedBox(height: 5),
+              Padding(
+                padding: const EdgeInsets.only(top: 10, right: 10, bottom: 10),
+                child: Text(
+                  "权限",
+                  style: TextStyle(
+                    color: ref.watch(themeProvider).themeColor.titleColor(),
+                    fontSize: 16,
                   ),
-                  onPressed: () {
-                    _del(context, ref);
-                  },
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 5),
+              Material(
+                color: Colors.transparent,
+                child: Wrap(
+                  runSpacing: 5,
+                  spacing: 5,
+                  children:
+                      AppKeyViewModel.getScopeNames(
+                        (widget.bean["scopes"] as List<dynamic>?),
+                      ).map((e) => TagChip(label: e)).toList(),
+                ),
+              ),
+              const Spacer(),
+              Center(
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width - 80,
+                  child: CupertinoButton(
+                    padding: const EdgeInsets.symmetric(vertical: 5),
+                    alignment: Alignment.center,
+                    color: Colors.red,
+                    child: const Text(
+                      "删 除",
+                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
+                    onPressed: () {
+                      _del(context, ref);
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
 
   void _del(BuildContext context1, WidgetRef ref) {
-    showCupertinoDialog(
-      context: context1,
-      useRootNavigator: false,
-      builder:
-          (context) => CupertinoAlertDialog(
-            title: const Text("确认删除"),
-            content: Text("确认删除应用 ${widget.bean["name"] ?? ""} 吗"),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text(
-                  "取消",
-                  style: TextStyle(color: Color(0xff999999)),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              CupertinoDialogAction(
-                child: Text(
-                  "确定",
-                  style: TextStyle(
-                    color: ref.watch(themeProvider).primaryColor,
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  EasyLoading.show(status: "删除中");
-                  ref
-                      .read(
-                        SingleAccountPageState.ofAppKeyProvider(context1)(
-                          getProviderName(context1),
-                        ),
-                      )
-                      .delAppKey(context1, getAppKeyId(widget.bean))
-                      .then((value) {
-                        EasyLoading.dismiss();
-                        Navigator.of(context1).pop(true);
-                      })
-                      .catchError((_, __) {
-                        EasyLoading.dismiss();
-                      });
-                },
-              ),
-            ],
-          ),
-    );
+    showConfirmDialog(
+      context1,
+      title: "确认删除",
+      content: "确认删除应用 ${widget.bean["name"] ?? ""} 吗",
+      danger: true,
+    ).then((confirmed) {
+      if (confirmed != true) return;
+      EasyLoading.show(status: "删除中");
+      ref
+          .read(
+            SingleAccountPageState.ofAppKeyProvider(context1)(
+              getProviderName(context1),
+            ),
+          )
+          .delAppKey(context1, getAppKeyId(widget.bean))
+          .then((value) {
+            EasyLoading.dismiss();
+            Navigator.of(context1).pop(true);
+          })
+          .catchError((_, __) {
+            EasyLoading.dismiss();
+          });
+    });
   }
 }
 

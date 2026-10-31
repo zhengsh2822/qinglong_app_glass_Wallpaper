@@ -31,7 +31,9 @@ class InTimeDepLogPage extends StatefulWidget {
 }
 
 class _InTimeDepLogPageState extends State<InTimeDepLogPage>
-    with LazyLoadState<InTimeDepLogPage>, PauseableTimerMixin<InTimeDepLogPage> {
+    with
+        LazyLoadState<InTimeDepLogPage>,
+        PauseableTimerMixin<InTimeDepLogPage> {
   String? content;
 
   @override

@@ -7,6 +7,7 @@ import 'package:qinglong_app/base/commit_button.dart';
 import 'package:qinglong_app/base/multi_account_userinfo_viewmodel.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/glass_text_field.dart';
@@ -103,7 +104,7 @@ class _UpdateMaxAccountPageState extends ConsumerState<UpdateMaxAccountPage> {
 
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
     if (isCyber) {
-      showCyberConfirmDialog(
+      showConfirmDialog(
         context,
         title: '温馨提示',
         content: '你设置了${controller.text}个最大登录数,确定吗?',
@@ -119,47 +120,24 @@ class _UpdateMaxAccountPageState extends ConsumerState<UpdateMaxAccountPage> {
       });
       return;
     }
-    showCupertinoDialog(
-      useRootNavigator: false,
-      context: context,
-      builder:
-          (context) => CupertinoAlertDialog(
-            title: const Text("温馨提示"),
-            content: Text("你设置了${controller.text}个最大登录数,确定吗?"),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text(
-                  "取消",
-                  style: TextStyle(color: Color(0xff999999)),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              CupertinoDialogAction(
-                child: Text(
-                  "确实",
-                  style: TextStyle(
-                    color: ref.watch(themeProvider).primaryColor,
-                  ),
-                ),
-                onPressed: () async {
-                  Navigator.of(context).pop();
-                  MultiAccountUserInfoViewModel.updateMaxAccount(
-                    int.tryParse(controller.text.toString()) ?? count,
-                  );
-                  _restartApp(context);
-                },
-              ),
-            ],
-          ),
-    );
+    showConfirmDialog(
+      context,
+      title: "温馨提示",
+      content: "你设置了${controller.text}个最大登录数,确定吗?",
+      confirmLabel: "确实",
+    ).then((confirmed) {
+      if (confirmed != true) return;
+      MultiAccountUserInfoViewModel.updateMaxAccount(
+        int.tryParse(controller.text.toString()) ?? count,
+      );
+      _restartApp(context);
+    });
   }
 
   void _restartApp(BuildContext context) {
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
     if (isCyber) {
-      showCyberConfirmDialog(
+      showConfirmDialog(
         context,
         title: '提示',
         content: '重启APP后，相关功能将会启用',

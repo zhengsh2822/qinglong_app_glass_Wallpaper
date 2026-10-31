@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
@@ -7,9 +8,11 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/http/http.dart';
+import 'package:qinglong_app/utils/webdav_backup_utils.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/glass_dialog.dart';
 import 'package:qinglong_app/base/ui/highlight/selectable_code_view.dart';
 import 'package:qinglong_app/main.dart';
@@ -57,9 +60,7 @@ class _ConfigEditPageState extends ConsumerState<ConfigEditPage> {
       content: const Text("由于Android适配问题,如果你的键盘无法正常使用,请长按文：即可弹出键盘"),
       actions: [
         GlassDialogAction(
-          textStyle: TextStyle(
-            color: ref.watch(themeProvider).primaryColor,
-          ),
+          textStyle: TextStyle(color: ref.watch(themeProvider).primaryColor),
           child: const Text("知道："),
           onPressed: () {
             Navigator.of(context).pop();
@@ -116,31 +117,14 @@ class _ConfigEditPageState extends ConsumerState<ConfigEditPage> {
           if (preResult == result) {
             Navigator.of(context).pop();
           } else {
-            showGlassDialog(
-              context: context,
-              useRootNavigator: false,
-              title: const Text("温馨提示"),
-              content: const Text("你编辑的内容还没用提：确定退出吗?"),
-              actions: [
-                GlassDialogAction(
-                  textStyle: const TextStyle(color: Color(0xff999999)),
-                  child: const Text("取消"),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
-                GlassDialogAction(
-                  textStyle: TextStyle(
-                    color: ref.watch(themeProvider).primaryColor,
-                  ),
-                  child: const Text("确定"),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ],
-            );
+            showConfirmDialog(
+              context,
+              title: "温馨提示",
+              content: "你编辑的内容还没用提交,确定退出吗?",
+            ).then((confirmed) {
+              if (confirmed != true) return;
+              Navigator.of(context).pop();
+            });
           }
         },
         title: '编辑${widget.title}',
@@ -207,7 +191,10 @@ class _ConfigEditPageState extends ConsumerState<ConfigEditPage> {
                 child: const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 15),
                   child: Center(
-                    child: Icon(CupertinoIcons.arrow_up_right_diamond, size: 20),
+                    child: Icon(
+                      CupertinoIcons.arrow_up_right_diamond,
+                      size: 20,
+                    ),
                   ),
                 ),
               ),
@@ -226,6 +213,12 @@ class _ConfigEditPageState extends ConsumerState<ConfigEditPage> {
                 if (Platform.isIOS) {
                   await notifyICloud(context, widget.title, result);
                 }
+                // WebDAV 自动云备份不受平台门控（iCloud 还原仅 iOS 有意义）
+                unawaited(
+                  WebDavBackupUtils.maybeAutoBackup(
+                    SingleAccountPageState.of(context)?.index ?? 0,
+                  ),
+                );
                 await EasyLoading.dismiss();
                 if (response.success) {
                   "提交成功".toast();
@@ -332,10 +325,7 @@ class _ConfigEditPageState extends ConsumerState<ConfigEditPage> {
       ),
       content: TextField(
         controller: controller,
-        decoration: const InputDecoration(
-          isDense: true,
-          hintText: "请输入：",
-        ),
+        decoration: const InputDecoration(isDense: true, hintText: "请输入："),
         autofocus: false,
       ),
       actions: [
@@ -347,9 +337,7 @@ class _ConfigEditPageState extends ConsumerState<ConfigEditPage> {
           },
         ),
         GlassDialogAction(
-          textStyle: TextStyle(
-            color: ref.watch(themeProvider).primaryColor,
-          ),
+          textStyle: TextStyle(color: ref.watch(themeProvider).primaryColor),
           child: const Text("确定"),
           onPressed: () async {
             Navigator.of(context).pop();

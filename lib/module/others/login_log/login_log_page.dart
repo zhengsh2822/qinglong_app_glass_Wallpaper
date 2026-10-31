@@ -12,6 +12,7 @@ import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/content_entrance.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
+import 'package:qinglong_app/base/ui/empty_widget.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/utils.dart';
 
@@ -28,6 +29,8 @@ class _LoginLogPageState extends ConsumerState<LoginLogPage>
     with LazyLoadState<LoginLogPage> {
   List<LoginLogBean> list = [];
 
+  /// 首次加载是否完成：未完成前显示加载态，完成后空数据显示空态（防永远转圈）
+  bool _loaded = false;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,8 +44,10 @@ class _LoginLogPageState extends ConsumerState<LoginLogPage>
       body: GlassPageBackground(
         // 内容首现柔和进场：数据到位后淡入+上移，不再直接闪现
         child:
-            list.isEmpty
+            !_loaded
                 ? const Center(child: LoadingWidget())
+                : list.isEmpty
+                ? const EmptyWidget()
                 : ContentEntrance(
                   child: ListView.separated(
                     primary: true,
@@ -145,15 +150,19 @@ class _LoginLogPageState extends ConsumerState<LoginLogPage>
     HttpResponse<List<LoginLogBean>> response =
         await SingleAccountPageState.ofApi(context).loginLog();
 
+    // 无论成功失败都结束加载态：失败/无数据以空态呈现，避免页面永远转圈
+    _loaded = true;
     if (response.success) {
       if (response.bean == null || response.bean!.isEmpty) {
         "暂无数据".toast();
       }
       list.clear();
       list.addAll(response.bean ?? []);
-      setState(() {});
     } else {
       response.message?.toast();
+    }
+    if (mounted) {
+      setState(() {});
     }
   }
 

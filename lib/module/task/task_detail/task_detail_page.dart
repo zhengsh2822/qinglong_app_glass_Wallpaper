@@ -10,6 +10,7 @@ import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
@@ -473,45 +474,22 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage>
   }
 
   void delTask(BuildContext context1, WidgetRef ref) {
-    showCupertinoDialog(
-      useRootNavigator: false,
-      context: context1,
-      builder:
-          (context) => CupertinoAlertDialog(
-            title: const Text("确认删除"),
-            content: Text("确认删除定时任务 ${widget.taskBean.name ?? ""} 吗？"),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text(
-                  "取消",
-                  style: TextStyle(color: AppColors.greyText),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              CupertinoDialogAction(
-                child: Text(
-                  "确定",
-                  style: TextStyle(
-                    color: ref.watch(themeProvider).primaryColor,
-                  ),
-                ),
-                onPressed: () async {
-                  Navigator.of(context).pop();
-                  await ref
-                      .read(
-                        SingleAccountPageState.ofTaskProvider(context1)(
-                          getProviderName(context1),
-                        ),
-                      )
-                      .delCron(context1, [widget.taskBean.sId!]);
-                  Navigator.of(context1).pop();
-                },
-              ),
-            ],
-          ),
-    );
+    showConfirmDialog(
+      context1,
+      title: "确认删除",
+      content: "确认删除定时任务 ${widget.taskBean.name ?? ""} 吗？",
+      danger: true,
+    ).then((confirmed) async {
+      if (confirmed != true) return;
+      await ref
+          .read(
+            SingleAccountPageState.ofTaskProvider(context1)(
+              getProviderName(context1),
+            ),
+          )
+          .delCron(context1, [widget.taskBean.sId!]);
+    });
+    ;
   }
 
   void showLog() {

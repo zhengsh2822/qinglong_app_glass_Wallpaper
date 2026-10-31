@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/highlight/selectable_code_view.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/glass_dialog.dart';
@@ -96,64 +97,36 @@ class ScriptCodeDetailPageState extends ConsumerState<ScriptCodeDetailPage>
                 color: Colors.transparent,
                 padding: EdgeInsets.zero,
                 onPressed: () {
-                  showGlassDialog(
-                    context: context,
-                    useRootNavigator: false,
-                    title: const Text("温馨提示"),
-                    content: const Text("确定还原吗?"),
-                    actions: [
-                      GlassDialogAction(
-                        child: const Text("取消"),
-                        textStyle: const TextStyle(color: Color(0xff999999)),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                      GlassDialogAction(
-                        child: const Text("确定"),
-                        textStyle: TextStyle(
-                          color: ref.watch(themeProvider).primaryColor,
-                        ),
-                        onPressed: () async {
-                          Navigator.of(context).pop();
-                          if (widget.title.endsWith(".${FileUtil.env}")) {
-                            getIt<ICloudUtils>(
-                              instanceName:
-                                  (SingleAccountPageState.of(
-                                            context,
-                                          )?.index ??
-                                          0)
-                                      .toString(),
-                            ).restoreEnv(widget.absPath!);
-                          } else if (widget.title.endsWith(
-                            ".${FileUtil.config}",
-                          )) {
-                            getIt<ICloudUtils>(
-                              instanceName:
-                                  (SingleAccountPageState.of(
-                                            context,
-                                          )?.index ??
-                                          0)
-                                      .toString(),
-                            ).restoreConfig(widget.absPath!);
-                          } else if (widget.title.endsWith(
-                            ".${FileUtil.subscribe}",
-                          )) {
-                            getIt<ICloudUtils>(
-                              instanceName:
-                                  (SingleAccountPageState.of(
-                                            context,
-                                          )?.index ??
-                                          0)
-                                      .toString(),
-                            ).restoreSubscribe(widget.absPath!);
-                          } else {
-                            "不支持还原该文件".toast();
-                          }
-                        },
-                      ),
-                    ],
-                  );
+                  showConfirmDialog(
+                    context,
+                    title: "温馨提示",
+                    content: "确定还原吗?",
+                  ).then((confirmed) async {
+                    if (confirmed != true) return;
+                    if (widget.title.endsWith(".${FileUtil.env}")) {
+                      getIt<ICloudUtils>(
+                        instanceName:
+                            (SingleAccountPageState.of(context)?.index ?? 0)
+                                .toString(),
+                      ).restoreEnv(widget.absPath!);
+                    } else if (widget.title.endsWith(".${FileUtil.config}")) {
+                      getIt<ICloudUtils>(
+                        instanceName:
+                            (SingleAccountPageState.of(context)?.index ?? 0)
+                                .toString(),
+                      ).restoreConfig(widget.absPath!);
+                    } else if (widget.title.endsWith(
+                      ".${FileUtil.subscribe}",
+                    )) {
+                      getIt<ICloudUtils>(
+                        instanceName:
+                            (SingleAccountPageState.of(context)?.index ?? 0)
+                                .toString(),
+                      ).restoreSubscribe(widget.absPath!);
+                    } else {
+                      "不支持还原该文件".toast();
+                    }
+                  });
                 },
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 15),

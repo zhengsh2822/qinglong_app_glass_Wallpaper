@@ -9,9 +9,11 @@ import 'package:qinglong_app/module/login/user_bean.dart';
 import 'package:qinglong_app/module/others/LogDelBean.dart';
 import 'package:qinglong_app/module/others/dependencies/dependency_bean.dart';
 import 'package:qinglong_app/module/others/login_log/login_log_bean.dart';
+import 'package:qinglong_app/module/others/notify_log/notify_log_bean.dart';
 import 'package:qinglong_app/module/others/scripts/script_bean.dart';
 import 'package:qinglong_app/module/others/task_log/task_log_bean.dart';
 import 'package:qinglong_app/module/others/update/check_update_bean.dart';
+import 'package:qinglong_app/module/others/update/upgrade_status_bean.dart';
 import 'package:qinglong_app/module/task/task_bean.dart';
 
 import '../../module/task/TaskBean2.dart';
@@ -138,10 +140,9 @@ class Api {
 
   /// 登录 IP 黑名单列表（GET）
   Future<HttpResponse<String>> ipBlacklist() async {
-    return await getIt<Http>(instanceName: index.toString()).get<String>(
-      getIt<Url>(instanceName: index.toString()).ipBlacklist,
-      {},
-    );
+    return await getIt<Http>(
+      instanceName: index.toString(),
+    ).get<String>(getIt<Url>(instanceName: index.toString()).ipBlacklist, {});
   }
 
   /// 添加 IP 到黑名单（PUT，body: {ip}）
@@ -165,13 +166,12 @@ class Api {
     int runningInstanceRetentionDays,
     int cronStatRetentionDays,
   ) async {
-    return await getIt<Http>(instanceName: index.toString()).put<String>(
-      getIt<Url>(instanceName: index.toString()).retentionConfig,
-      {
-        "runningInstanceRetentionDays": runningInstanceRetentionDays,
-        "cronStatRetentionDays": cronStatRetentionDays,
-      },
-    );
+    return await getIt<Http>(
+      instanceName: index.toString(),
+    ).put<String>(getIt<Url>(instanceName: index.toString()).retentionConfig, {
+      "runningInstanceRetentionDays": runningInstanceRetentionDays,
+      "cronStatRetentionDays": cronStatRetentionDays,
+    });
   }
 
   /// 清理预览（POST）
@@ -208,17 +208,18 @@ class Api {
     dynamic instanceId,
   ) async {
     return await getIt<Http>(instanceName: index.toString()).post<String>(
-      getIt<Url>(instanceName: index.toString()).cronInstanceStop(id, instanceId),
+      getIt<Url>(
+        instanceName: index.toString(),
+      ).cronInstanceStop(id, instanceId),
       {},
     );
   }
 
   /// 某任务的历史日志文件列表（GET）
   Future<HttpResponse<String>> cronLogs(dynamic id) async {
-    return await getIt<Http>(instanceName: index.toString()).get<String>(
-      getIt<Url>(instanceName: index.toString()).cronLogs(id),
-      {},
-    );
+    return await getIt<Http>(
+      instanceName: index.toString(),
+    ).get<String>(getIt<Url>(instanceName: index.toString()).cronLogs(id), {});
   }
 
   Future<HttpResponse<LoginBean>> login(
@@ -664,21 +665,18 @@ class Api {
       if (offset != null) {
         query["offset"] = offset.toString();
       }
-      return await getIt<Http>(instanceName: index.toString()).get<String>(
-        url.logDetail,
-        query,
-      );
+      return await getIt<Http>(
+        instanceName: index.toString(),
+      ).get<String>(url.logDetail, query);
     }
     if (systemBean.isUpperVersion2_13_0()) {
-      return await getIt<Http>(instanceName: index.toString()).get<String>(
-        url.taskLogDetail + name + "?path=" + path,
-        null,
-      );
+      return await getIt<Http>(
+        instanceName: index.toString(),
+      ).get<String>(url.taskLogDetail + name + "?path=" + path, null);
     }
-    return await getIt<Http>(instanceName: index.toString()).get<String>(
-      url.taskLogDetail + path + "/" + name,
-      null,
-    );
+    return await getIt<Http>(
+      instanceName: index.toString(),
+    ).get<String>(url.taskLogDetail + path + "/" + name, null);
   }
 
   Future<HttpResponse<List<ScriptData>>> scripts() async {
@@ -758,9 +756,7 @@ class Api {
   /// 成功 GetBytesResult.success(bytes)
   /// 失败 GetBytesResult.fail(code, message, bodyPreview) —— 含真实 HTTP 状态码与响应体
   Future<GetBytesResult> scriptFile(String path) async {
-    return await getIt<Http>(
-      instanceName: index.toString(),
-    ).getBytes(
+    return await getIt<Http>(instanceName: index.toString()).getBytes(
       getIt<Url>(instanceName: index.toString()).scriptFile,
       {"path": path},
     );
@@ -773,9 +769,7 @@ class Api {
     String filename,
     String path,
   ) async {
-    return await getIt<Http>(
-      instanceName: index.toString(),
-    ).postBytes(
+    return await getIt<Http>(instanceName: index.toString()).postBytes(
       getIt<Url>(instanceName: index.toString()).scriptFileDownload,
       {"filename": filename, "path": path},
     );
@@ -824,9 +818,7 @@ class Api {
   /// 获取系统配置（含依赖设置字段：dependenceProxy/nodeMirror/pythonMirror/linuxMirror）
   /// 禁用缓存：依赖设置页面每次打开都需要最新配置，避免 _origXxx 保存旧值导致比对错误
   Future<HttpResponse<String>> systemConfig() async {
-    return await getIt<Http>(
-      instanceName: index.toString(),
-    ).get<String>(
+    return await getIt<Http>(instanceName: index.toString()).get<String>(
       getIt<Url>(instanceName: index.toString()).systemConfig,
       null,
       useCache: false,
@@ -885,39 +877,42 @@ class Api {
   /// 不传 type 默认只备份 db + upload
   /// [savePath] 本地保存路径
   /// 成功返回 null，失败返回错误信息
-  Future<String?> exportData(String savePath, {List<String>? type}) async {
+  Future<String?> exportData(
+    String savePath, {
+    List<String>? type,
+    void Function(int received, int total)? onReceiveProgress,
+  }) async {
     final body = <String, dynamic>{};
     if (type != null && type.isNotEmpty) {
       body['type'] = type;
     }
-    return await getIt<Http>(
-      instanceName: index.toString(),
-    ).downloadFile(
+    return await getIt<Http>(instanceName: index.toString()).downloadFile(
       getIt<Url>(instanceName: index.toString()).dataExport,
       body,
       savePath,
+      onReceiveProgress: onReceiveProgress,
     );
   }
 
   /// 导入数据恢复（上传 .tgz 压缩包）
   /// [filePath] 本地 .tgz 文件路径
   /// 返回服务器解压输出信息
-  Future<HttpResponse<String>> importData(String filePath) async {
-    return await getIt<Http>(
-      instanceName: index.toString(),
-    ).uploadFile<String>(
+  Future<HttpResponse<String>> importData(
+    String filePath, {
+    void Function(int sent, int total)? onSendProgress,
+  }) async {
+    return await getIt<Http>(instanceName: index.toString()).uploadFile<String>(
       getIt<Url>(instanceName: index.toString()).dataImport,
       filePath,
       'data',
+      onSendProgress: onSendProgress,
     );
   }
 
   /// 重载系统（恢复后调用使配置生效）
   /// [type] "data" 或 "system"
   Future<HttpResponse<NullResponse>> reloadSystem(String type) async {
-    return await getIt<Http>(
-      instanceName: index.toString(),
-    ).put<NullResponse>(
+    return await getIt<Http>(instanceName: index.toString()).put<NullResponse>(
       getIt<Url>(instanceName: index.toString()).systemReload,
       {"type": type},
     );
@@ -1011,6 +1006,40 @@ class Api {
     ).put<CheckUpdateBean>(
       getIt<Url>(instanceName: index.toString()).checkUpdate,
       {},
+    );
+  }
+
+  /// 青龙 2.24.0+：启动面板安全升级下载暂存任务（PUT /system/update）
+  /// 2.24.0 前的面板走旧 ql update 流程（无任务状态），客户端不提供此入口
+  Future<HttpResponse<UpgradeStatusBean>> startPanelUpdate() async {
+    return await getIt<Http>(
+      instanceName: index.toString(),
+    ).put<UpgradeStatusBean>(
+      getIt<Url>(instanceName: index.toString()).systemUpdate,
+      {},
+    );
+  }
+
+  /// 青龙 2.24.0+：轮询升级任务状态（GET /system/update-status）
+  /// 面板重启期间会连接失败（success=false），由调用方容忍并继续轮询
+  Future<HttpResponse<UpgradeStatusBean>> panelUpdateStatus() async {
+    return await getIt<Http>(
+      instanceName: index.toString(),
+    ).get<UpgradeStatusBean>(
+      getIt<Url>(instanceName: index.toString()).systemUpdateStatus,
+      {},
+      useCache: false,
+    );
+  }
+
+  /// 青龙 2.24.0+：通知审计日志（GET /system/notify-log，对齐网页版「通知日志」）
+  Future<HttpResponse<List<NotifyLogBean>>> notifyLog() async {
+    return await getIt<Http>(
+      instanceName: index.toString(),
+    ).get<List<NotifyLogBean>>(
+      getIt<Url>(instanceName: index.toString()).systemNotifyLog,
+      {},
+      useCache: false,
     );
   }
 

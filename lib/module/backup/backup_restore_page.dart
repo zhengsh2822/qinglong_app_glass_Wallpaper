@@ -1,40 +1,49 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
-import 'package:qinglong_app/base/single_account_page.dart';
-import 'package:qinglong_app/base/theme.dart';
-import 'package:qinglong_app/utils/download_dir_utils.dart';
-import 'package:qinglong_app/base/ui/spring_sheet.dart';
-import 'package:qinglong_app/base/ui/glass_card.dart';
-import 'package:qinglong_app/base/ui/loading_widget.dart';
-import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
-import 'package:qinglong_app/base/ui/selectable_chip.dart';
+import 'package:qinglong_app/base/http/api.dart';
+import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
+import 'package:qinglong_app/base/ui/wallpaper_page_route.dart';
+import 'package:qinglong_app/base/single_account_page.dart';
+import 'package:qinglong_app/base/sp_const.dart';
+import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
+import 'package:qinglong_app/base/ui/progress_ring_loader.dart';
+import 'package:qinglong_app/base/ui/lazy_load_state.dart';
+import 'package:qinglong_app/base/ui/glow_sheet.dart';
+import 'package:qinglong_app/base/ui/selectable_chip.dart';
+import 'package:qinglong_app/base/ui/glass_card.dart';
+import 'package:qinglong_app/base/ui/settings_widgets.dart';
+import 'package:qinglong_app/base/ui/spring_sheet.dart';
+import 'package:qinglong_app/main.dart';
+import 'package:qinglong_app/module/others/file_directory_page.dart';
+import 'package:qinglong_app/module/others/other_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/file_picker_utils.dart';
 import 'package:qinglong_app/utils/icloud_utils.dart';
+import 'package:qinglong_app/utils/sp_utils.dart';
 import 'package:share_plus/share_plus.dart';
 
-/// 压缩包备份与恢复页面
-///
-/// 基于青龙面板服务端 API：
-/// - PUT /api/system/data/export - 导出 .tgz 压缩包备份
-/// - PUT /api/system/data/import - 上传 .tgz 恢复
-/// - PUT /api/system/reload - 恢复后重载生效
-///
-/// 备份内容可勾选：config / scripts / deps / log（默认包含 db + upload）
-class BackupPage extends ConsumerStatefulWidget {
-  const BackupPage({Key? key}) : super(key: key);
+/// 备份与恢复页（合并页）：
+/// 上半部分 = 原文件备份页（三件套本地/iCloud 备份 + 自动备份开关）；
+/// 下半部分 = 原「备份恢复」页（青龙面板 .tgz 全量包本地备份与恢复）。
+class BackupRestorePage extends ConsumerStatefulWidget {
+  const BackupRestorePage({super.key});
 
   @override
-  ConsumerState<BackupPage> createState() => _BackupPageState();
+  ConsumerState<BackupRestorePage> createState() => _BackupRestorePageState();
 }
 
-class _BackupPageState extends ConsumerState<BackupPage> {
-  // 备份内容选项（对齐青龙官方导出数据 API 的 type 枚举，共 10 项）
+class _BackupRestorePageState extends ConsumerState<BackupRestorePage>
+    with LazyLoadState<BackupRestorePage> {
+  // ---- 面板 .tgz 备份选项（对齐青龙官方导出 API 的 type 枚举，共 10 项）----
   final Map<String, String> _backupOptions = {
     'base': '基础数据',
     'config': '配置文件',
@@ -47,7 +56,6 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     'repo': '远程仓库缓存',
     'ssh.d': 'SSH 文件缓存',
   };
-  // 基础数据固定包含，不可取消（对齐网页版）
   static const String _baseKey = 'base';
 
   final Set<String> _selected = {'base', 'config', 'scripts'};
@@ -55,86 +63,412 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   bool _processing = false;
   String _statusText = '';
 
-  /// 全局字重（build 顶部统一 watch，供卡片标题/按钮/sheet 标题使用）
   FontWeight _globalFw = FontWeight.w400;
+
+  // ---- 三件套本地备份统计 ----
+  String? fileNum = "-";
+  String fileSizes = "-";
+
+  int get _index => SingleAccountPageState.of(context)?.index ?? 0;
 
   @override
   Widget build(BuildContext context) {
     final _ = ref.watch(themeProvider);
     _globalFw = FontWeight(ref.watch(textWeightProvider));
-
-    return Stack(
-      children: [
-        Scaffold(
-          backgroundColor: Colors.transparent,
-          appBar: QlAppBar(title: '备份与恢复', canBack: true),
-          body: SingleChildScrollView(
-            padding: EdgeInsets.only(
-              left: AppleColors.spaceMd,
-              right: AppleColors.spaceMd,
-              top: AppleColors.spaceMd,
-              bottom: MediaQuery.of(context).viewPadding.bottom + 30,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildBackupSection(),
-                const SizedBox(height: AppleColors.spaceMd),
-                _buildRestoreSection(),
-                const SizedBox(height: 20),
-                if (_statusText.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      _statusText,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: CyberColors.descColor,
+    final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
+    final Widget scaffold = Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: QlAppBar(title: "备份与恢复"),
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            primary: true,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 15),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 15),
+                  const SectionHeader(
+                    title: "当你添加,修改,删除的时候,将会自动备份",
+                    padding: EdgeInsets.symmetric(horizontal: 15),
+                  ),
+                  const SizedBox(height: 5),
+                  _buildAutoCard(),
+                  const SizedBox(height: 5),
+                  SectionHeader(
+                    title: "当前已有备份文件 $fileNum 个,共占用 $fileSizes 容量",
+                    padding: const EdgeInsets.symmetric(horizontal: 15),
+                  ),
+                  const SizedBox(height: 15),
+                  const SectionHeader(
+                    title: "环境变量",
+                    padding: EdgeInsets.symmetric(horizontal: 15),
+                  ),
+                  const SizedBox(height: 5),
+                  _buildEnvCard(),
+                  const SizedBox(height: 15),
+                  SectionHeader(
+                    title:
+                        SpUtil.getInt(spVIP, defValue: typeNormal) == typeVIP
+                            ? "config.sh文件"
+                            : "配置文件",
+                    padding: const EdgeInsets.symmetric(horizontal: 15),
+                  ),
+                  const SizedBox(height: 5),
+                  _buildConfigCard(),
+                  const SizedBox(height: 5),
+                  const SectionHeader(
+                    title: "备份和还原配置文件",
+                    padding: EdgeInsets.symmetric(horizontal: 15),
+                  ),
+                  const SizedBox(height: 15),
+                  const SectionHeader(
+                    title: "订阅管理",
+                    padding: EdgeInsets.symmetric(horizontal: 15),
+                  ),
+                  const SizedBox(height: 5),
+                  _buildSubscribeCard(),
+                  const SizedBox(height: 15),
+                  const SectionHeader(
+                    title: "功能",
+                    padding: EdgeInsets.symmetric(horizontal: 15),
+                  ),
+                  const SizedBox(height: 5),
+                  GlassCard(
+                    margin: EdgeInsets.zero,
+                    child: SettingsTapRow(
+                      title: "备份文件删除频率",
+                      onTap: _delDuration,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 13,
+                        horizontal: 15,
                       ),
                     ),
                   ),
-              ],
-            ),
-          ),
-        ),
-        if (_processing)
-          Positioned.fill(
-            child: AbsorbPointer(
-              child: Center(
-                child: LoadingWidget(color: CyberColors.cyan, size: 30),
+                  const SizedBox(height: 20),
+                  Visibility(
+                    visible: Platform.isAndroid,
+                    child: const SectionHeader(
+                      title:
+                          "Android用户为了数据安全,备份文件保存在/data/user/0/work.master.qinglongapp/files/文件夹下,非root用户无法通过文件浏览器查看,只可以点击页面顶部的查看文件按钮查看",
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 15,
+                        vertical: 5,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  _buildTgzBackupSection(),
+                  const SizedBox(height: 15),
+                  _buildTgzRestoreSection(),
+                  const SizedBox(height: 20),
+                  if (_statusText.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        _statusText,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color:
+                              ref.watch(themeProvider).themeColor.descColor(),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 30),
+                ],
               ),
             ),
           ),
-      ],
+        ],
+      ),
+    );
+    return isCyber ? CyberBackground(child: scaffold) : scaffold;
+  }
+
+  // ==================== 三件套本地备份（原文件备份页内容） ====================
+
+  Widget _buildAutoCard() {
+    return GlassCard(
+      margin: EdgeInsets.zero,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SettingsSwitchRow(
+            title: "自动备份",
+            value: SpUtil.getBool(spICloud, defValue: true),
+            onChanged: (v) {
+              SpUtil.putBool(spICloud, v);
+              setState(() {});
+            },
+          ),
+          const Divider(height: 1, indent: 15),
+          SettingsTapRow(title: "查看文件", onTap: lookUpFiles),
+        ],
+      ),
     );
   }
 
-  /// 备份区域
-  Widget _buildBackupSection() {
+  Widget _buildSyncRow({
+    required String title,
+    required String timeSpKey,
+    required VoidCallback onTap,
+  }) {
+    return SettingsTapRow(
+      title: title,
+      onTap: onTap,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            SpUtil.getString(timeSpKey, defValue: ""),
+            style: TextStyle(
+              fontSize: 16,
+              color: ref.watch(themeProvider).themeColor.descColor(),
+            ),
+          ),
+          Icon(
+            CupertinoIcons.right_chevron,
+            size: 16,
+            color: ref.watch(themeProvider).themeColor.descColor(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEnvCard() {
     return GlassCard(
-      sigma: 10,
+      margin: EdgeInsets.zero,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSyncRow(
+            title: "同步环境变量",
+            timeSpKey: spEnvBackTime,
+            onTap: () async {
+              try {
+                var result = await Api(_index).envs("");
+                await getIt<ICloudUtils>(
+                  instanceName: _index.toString(),
+                ).asyncEnv(result.bean ?? [], focusUpdate: true);
+                SpUtil.putString(spEnvBackTime, ICloudUtils.now());
+                setState(() {});
+              } catch (e) {}
+            },
+          ),
+          const Divider(height: 1, indent: 15),
+          SettingsTapRow(title: "还原备份", onTap: lookUpFiles),
+          const Divider(height: 1, indent: 15),
+          SettingsTapRow(
+            title: "删除备份",
+            onTap: () async {
+              if (Platform.isAndroid) {
+                "请点击页面下方备份文件删除频率按钮设置删除".toast2();
+                return;
+              }
+              "请前往 \"文件\" App手动删除".toast();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConfigCard() {
+    return GlassCard(
+      margin: EdgeInsets.zero,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSyncRow(
+            title: "同步config.sh文件",
+            timeSpKey: spConfigBackTime,
+            onTap: () async {
+              String content;
+              HttpResponse<String> result = await SingleAccountPageState.ofApi(
+                context,
+              ).content("config.sh");
+              if (result.success && result.bean != null) {
+                content = result.bean ?? "";
+                await getIt<ICloudUtils>(
+                  instanceName: _index.toString(),
+                ).asyncConfig("config.sh", content, focusUpdate: true);
+                SpUtil.putString(spConfigBackTime, ICloudUtils.now());
+                setState(() {});
+              } else {
+                result.message!.toast();
+              }
+            },
+          ),
+          const Divider(height: 1, indent: 15),
+          SettingsTapRow(title: "还原备份", onTap: lookUpFiles),
+          const Divider(height: 1, indent: 15),
+          SettingsTapRow(
+            title: "删除备份",
+            onTap: () async {
+              if (Platform.isAndroid) {
+                "请点击页面下方备份文件删除频率按钮设置删除".toast2();
+                return;
+              }
+              "请前往 \"文件\" App手动删除".toast();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubscribeCard() {
+    return GlassCard(
+      margin: EdgeInsets.zero,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSyncRow(
+            title: "同步订阅管理",
+            timeSpKey: spSubscribeBackTime,
+            onTap: () async {
+              try {
+                var result = await Api(_index).subscribes();
+                await getIt<ICloudUtils>(
+                  instanceName: _index.toString(),
+                ).asyncSubscribe(result.bean ?? "", focusUpdate: true);
+                SpUtil.putString(spSubscribeBackTime, ICloudUtils.now());
+                setState(() {});
+              } catch (e) {}
+            },
+          ),
+          const Divider(height: 1, indent: 15),
+          SettingsTapRow(title: "还原备份", onTap: lookUpFiles),
+          const Divider(height: 1, indent: 15),
+          SettingsTapRow(
+            title: "删除备份",
+            onTap: () async {
+              if (Platform.isAndroid) {
+                "请点击页面下方备份文件删除频率按钮设置删除".toast2();
+                return;
+              }
+              "请前往 \"文件\" App手动删除".toast();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _delDuration() async {
+    final initial = SpUtil.getInt(
+      spLocalBackUpFileExperiedTime,
+      defValue: getDefaultLogExperiedTime(),
+    );
+    final days = await showFrequencyDialog(
+      context,
+      title: '备份文件删除频率',
+      initialValue: initial,
+      minValue: 1,
+      maxValue: 100,
+      unit: '天',
+    );
+    if (days != null) {
+      SpUtil.putInt(spLocalBackUpFileExperiedTime, days);
+      setState(() {});
+    }
+  }
+
+  @override
+  void onLazyLoad() async {
+    try {
+      Map<String, int> result = await compute(
+        dirStatSync,
+        await FileUtil(_index).sourcePath,
+      );
+      fileNum = result["fileNum"].toString();
+      fileSizes = getFileSizeString(result["size"] ?? 0, 2);
+      setState(() {});
+    } catch (e) {}
+  }
+
+  static String getFileSizeString(int bytes, int decimals) {
+    if (bytes <= 0) return "0 B";
+    const suffixes = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
+    var i = (log(bytes) / log(1024)).floor();
+    return '${(bytes / pow(1024, i)).toStringAsFixed(decimals)}${suffixes[i]}';
+  }
+
+  void lookUpFiles() async {
+    String path = await FileUtil(_index).sourcePath;
+    Navigator.of(context).push(
+      WallpaperPageRoute(builder: (context) => FileDirectoryPage(path: path)),
+    );
+  }
+
+  // ==================== 面板 .tgz 全量包（原「备份恢复」页内容） ====================
+
+  Widget _primaryButton(String text, VoidCallback? onTap) {
+    return SizedBox(
+      width: double.infinity,
+      child: Opacity(
+        opacity: _processing ? 0.5 : 1.0,
+        child: GestureDetector(
+          onTap: _processing ? null : onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(
+              color: ref.watch(themeProvider).primaryColor,
+              borderRadius: BorderRadius.circular(AppleColors.radiusButton),
+            ),
+            child: Center(
+              child: Text(
+                text,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: _globalFw,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTgzBackupSection() {
+    return GlassCard(
+      margin: EdgeInsets.zero,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '数据备份',
+            '面板数据备份',
             style: TextStyle(
               fontSize: 16,
               fontWeight: _globalFw,
-              color: CyberColors.titleWhite,
+              color: ref.watch(themeProvider).themeColor.titleColor(),
             ),
           ),
           const SizedBox(height: 4),
           Text(
             '将青龙面板数据打包为 .tgz 压缩包，保存到本地',
-            style: TextStyle(fontSize: 12, color: CyberColors.descColor),
+            style: TextStyle(
+              fontSize: 12,
+              color: ref.watch(themeProvider).themeColor.descColor(),
+            ),
           ),
           const SizedBox(height: 14),
           Text(
             '备份内容（基础数据固定包含，不可取消）',
-            style: TextStyle(fontSize: 13, color: CyberColors.descColor),
+            style: TextStyle(
+              fontSize: 13,
+              color: ref.watch(themeProvider).themeColor.descColor(),
+            ),
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -143,7 +477,6 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             children:
                 _backupOptions.entries.map((entry) {
                   final isBase = entry.key == _baseKey;
-                  // 基础数据固定选中不可取消（对齐网页版），其余可勾选
                   final selected = isBase || _selected.contains(entry.key);
                   return SelectableChip(
                     label: entry.value,
@@ -165,33 +498,15 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                 }).toList(),
           ),
           const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: GlassCard(
-              sigma: 10,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              onTap: _processing ? null : _doBackup,
-              child: Center(
-                child: Text(
-                  '开始备份',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: _globalFw,
-                    color: CyberColors.cyan,
-                  ),
-                ),
-              ),
-            ),
-          ),
+          _primaryButton('开始备份', _doTgzBackup),
         ],
       ),
     );
   }
 
-  /// 恢复区域
-  Widget _buildRestoreSection() {
+  Widget _buildTgzRestoreSection() {
     return GlassCard(
-      sigma: 10,
+      margin: EdgeInsets.zero,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -201,62 +516,37 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             style: TextStyle(
               fontSize: 16,
               fontWeight: _globalFw,
-              color: CyberColors.titleWhite,
+              color: ref.watch(themeProvider).themeColor.titleColor(),
             ),
           ),
           const SizedBox(height: 4),
           Text(
             '选择本地 .tgz 备份文件上传恢复，恢复后会自动重载系统',
-            style: TextStyle(fontSize: 12, color: CyberColors.descColor),
-          ),
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: GlassCard(
-              sigma: 10,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              onTap: _processing ? null : _doRestore,
-              child: Center(
-                child: Text(
-                  '选择文件恢复',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: _globalFw,
-                    color: CyberColors.cyan,
-                  ),
-                ),
-              ),
+            style: TextStyle(
+              fontSize: 12,
+              color: ref.watch(themeProvider).themeColor.descColor(),
             ),
           ),
+          const SizedBox(height: 14),
+          _primaryButton('选择文件恢复', _doTgzRestore),
         ],
       ),
     );
   }
 
-  /// 备份目录统一解析（导出与扫描必须同源，否则扫不到刚导出的包）：
-  /// Android 优先公共 Download/qinglong_backup，不可写回退应用专属外部目录；
-  /// 非 Android 走 downloadFilePath（iOS = 文档目录），行为不变
-  Future<Directory> _resolveBackupDirectory(FileUtil fileUtil) async {
-    final Directory? pub = await resolveAndroidBackupDirectory();
-    if (pub != null) {
-      return pub;
-    }
-    final basePath = await fileUtil.downloadFilePath;
-    return Directory('$basePath${Platform.pathSeparator}qinglong_backup');
-  }
-
-  /// 执行备份
-  Future<void> _doBackup() async {
+  Future<void> _doTgzBackup() async {
     setState(() {
       _processing = true;
       _statusText = '正在生成备份...';
     });
 
     try {
-      final fileUtil = FileUtil(SingleAccountPageState.of(context)?.index ?? 0);
-      // Android 优先公共 Download/qinglong_backup（文件管理器可见）；
-      // 不可写或非 Android 回退原应用专属外部目录，iOS 行为不变
-      final backupDir = await _resolveBackupDirectory(fileUtil);
+      QlProgressOverlay.show(context, status: "导出面板数据");
+      final fileUtil = FileUtil(_index);
+      final basePath = await fileUtil.downloadFilePath;
+      final backupDir = Directory(
+        '$basePath${Platform.pathSeparator}qinglong_backup',
+      );
       if (!await backupDir.exists()) {
         await backupDir.create(recursive: true);
       }
@@ -269,20 +559,27 @@ class _BackupPageState extends ConsumerState<BackupPage> {
 
       final typeList = _selected.toList();
 
-      final error = await SingleAccountPageState.ofApi(
-        context,
-      ).exportData(savePath, type: typeList);
+      final error = await SingleAccountPageState.ofApi(context).exportData(
+        savePath,
+        type: typeList,
+        onReceiveProgress:
+            (received, total) => QlProgressOverlay.update(
+              status: "导出面板数据",
+              progress: total > 0 ? received / total : null,
+            ),
+      );
 
       if (!mounted) return;
+      QlProgressOverlay.dismiss();
 
       if (error == null) {
-        if (mounted)
+        if (mounted) {
           setState(() {
             _processing = false;
             _statusText = '备份成功\n$savePath';
           });
+        }
         '备份成功'.toast();
-        // 弹出操作面板：分享/完成
         if (mounted) {
           await _showBackupResultSheet(savePath, isSuccess: true);
         }
@@ -291,31 +588,32 @@ class _BackupPageState extends ConsumerState<BackupPage> {
       }
     } catch (e) {
       if (!mounted) return;
-      setState(() => _statusText = '备份失败：$e');
+      setState(() {
+        _processing = false;
+        _statusText = '备份失败：$e';
+      });
     } finally {
       if (mounted) setState(() => _processing = false);
     }
   }
 
-  /// 执行恢复：先选择文件来源（最近备份/文件管理器）
-  Future<void> _doRestore() async {
-    // 先让用户选择来源
+  Future<void> _doTgzRestore() async {
     final source = await _showRestoreSourceSheet();
     if (source == null) return;
 
     String? selectedPath;
 
     if (source == 'recent') {
-      // 扫描备份目录的 .tgz 文件
       setState(() {
         _processing = true;
         _statusText = '正在扫描备份文件...';
       });
       try {
-        final fileUtil = FileUtil(
-          SingleAccountPageState.of(context)?.index ?? 0,
+        final fileUtil = FileUtil(_index);
+        final basePath = await fileUtil.downloadFilePath;
+        final backupDir = Directory(
+          '$basePath${Platform.pathSeparator}qinglong_backup',
         );
-        final backupDir = await _resolveBackupDirectory(fileUtil);
 
         final tgzFiles = <File>[];
         if (await backupDir.exists()) {
@@ -334,7 +632,6 @@ class _BackupPageState extends ConsumerState<BackupPage> {
           return;
         }
 
-        // 按修改时间倒序排列
         tgzFiles.sort(
           (a, b) => b.statSync().modified.compareTo(a.statSync().modified),
         );
@@ -349,7 +646,6 @@ class _BackupPageState extends ConsumerState<BackupPage> {
         return;
       }
     } else if (source == 'manager') {
-      // 调用系统文件管理器选择 .tgz 文件（项目自有 FilePickerUtils）
       try {
         final picked = await FilePickerUtils.pickFile();
         if (picked == null || picked.path == null) return;
@@ -368,11 +664,10 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     }
 
     if (selectedPath == null) return;
-    await _performRestore(selectedPath);
+    await _performTgzRestore(selectedPath);
   }
 
-  /// 实际执行恢复上传 + 系统重载
-  Future<void> _performRestore(String selectedPath) async {
+  Future<void> _performTgzRestore(String selectedPath) async {
     setState(() {
       _processing = true;
       _statusText = '正在上传恢复...';
@@ -380,11 +675,18 @@ class _BackupPageState extends ConsumerState<BackupPage> {
 
     try {
       final api = SingleAccountPageState.ofApi(context);
-
-      // 1. 上传 .tgz 文件
-      final importResult = await api.importData(selectedPath);
+      QlProgressOverlay.show(context, status: "导入面板");
+      final importResult = await api.importData(
+        selectedPath,
+        onSendProgress:
+            (sent, total) => QlProgressOverlay.update(
+              status: "导入面板",
+              progress: total > 0 ? sent / total : null,
+            ),
+      );
 
       if (!mounted) return;
+      QlProgressOverlay.dismiss();
 
       if (!importResult.success) {
         setState(() {
@@ -394,7 +696,6 @@ class _BackupPageState extends ConsumerState<BackupPage> {
         return;
       }
 
-      // 2. 重载系统使配置生效
       setState(() => _statusText = '正在重载系统...');
       final reloadResult = await api.reloadSystem('data');
 
@@ -420,7 +721,6 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     }
   }
 
-  /// 选择恢复来源：最近备份 / 从文件管理器选择
   Future<String?> _showRestoreSourceSheet() async {
     return showSpringSheet<String>(
       context: context,
@@ -431,13 +731,9 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             color: Colors.transparent,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
-          child: OptimizedFrostedGlass(
-            sigma: 10,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            forceOpaqueSolid: true,
+          child: GlowSheetContainer(
+            isCyber: isCyber,
             child: Container(
-              color: (isCyber ? CyberColors.bg : AppleColors.bgSecondary)
-                  .withOpacity(0.85),
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
               child: SafeArea(
                 top: false,
@@ -449,7 +745,11 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: CyberColors.descColor.withOpacity(0.5),
+                        color: ref
+                            .watch(themeProvider)
+                            .themeColor
+                            .descColor()
+                            .withOpacity(0.5),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -533,7 +833,6 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     );
   }
 
-  /// 备份完成后的操作面板：分享文件 / 完成
   Future<void> _showBackupResultSheet(
     String savePath, {
     required bool isSuccess,
@@ -548,13 +847,9 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             color: Colors.transparent,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
-          child: OptimizedFrostedGlass(
-            sigma: 10,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            forceOpaqueSolid: true,
+          child: GlowSheetContainer(
+            isCyber: isCyber,
             child: Container(
-              color: (isCyber ? CyberColors.bg : AppleColors.bgSecondary)
-                  .withOpacity(0.85),
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
               child: SafeArea(
                 top: false,
@@ -566,7 +861,11 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: CyberColors.descColor.withOpacity(0.5),
+                        color: ref
+                            .watch(themeProvider)
+                            .themeColor
+                            .descColor()
+                            .withOpacity(0.5),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -577,7 +876,9 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                               ? CupertinoIcons.checkmark_circle_fill
                               : CupertinoIcons.xmark_circle_fill,
                           color:
-                              isSuccess ? CyberColors.cyan : Colors.redAccent,
+                              isSuccess
+                                  ? ref.watch(themeProvider).primaryColor
+                                  : Colors.redAccent,
                           size: 22,
                         ),
                         const SizedBox(width: 8),
@@ -619,34 +920,42 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                     if (isSuccess)
                       SizedBox(
                         width: double.infinity,
-                        child: GlassCard(
-                          sigma: 10,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        child: GestureDetector(
                           onTap: () async {
                             Navigator.pop(context);
                             await Share.shareXFiles([
                               XFile(savePath),
                             ], text: '青龙面板备份文件');
                           },
-                          child: Center(
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  CupertinoIcons.share,
-                                  size: 18,
-                                  color: CyberColors.cyan,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  '分享/保存到文件管理器',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: _globalFw,
-                                    color: CyberColors.cyan,
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            decoration: BoxDecoration(
+                              color: ref.watch(themeProvider).primaryColor,
+                              borderRadius: BorderRadius.circular(
+                                AppleColors.radiusButton,
+                              ),
+                            ),
+                            child: Center(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    CupertinoIcons.share,
+                                    size: 18,
+                                    color: Colors.white,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '分享/保存到文件管理器',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: _globalFw,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -678,7 +987,6 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     );
   }
 
-  /// 文件选择 BottomSheet（85% 高度，确保长文件名显示完整）
   Future<String?> _showFileSelectSheet(List<File> files) async {
     return showSpringSheet<String>(
       context: context,
@@ -690,22 +998,21 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             color: Colors.transparent,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
-          child: OptimizedFrostedGlass(
-            sigma: 10,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            forceOpaqueSolid: true,
+          child: GlowSheetContainer(
+            isCyber: isCyber,
             child: Container(
-              color: (isCyber ? CyberColors.bg : AppleColors.bgSecondary)
-                  .withOpacity(0.85),
               child: Column(
                 children: [
-                  // 顶部拖拽条
                   Container(
                     margin: const EdgeInsets.only(top: 8, bottom: 4),
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: CyberColors.descColor.withOpacity(0.5),
+                      color: ref
+                          .watch(themeProvider)
+                          .themeColor
+                          .descColor()
+                          .withOpacity(0.5),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -743,7 +1050,6 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                     ),
                   ),
                   const Divider(height: 1),
-                  // 文件列表
                   Expanded(
                     child: ListView.separated(
                       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -834,4 +1140,24 @@ class _BackupPageState extends ConsumerState<BackupPage> {
       },
     );
   }
+}
+
+Map<String, int> dirStatSync(String dirPath) {
+  int fileNum = 0;
+  int totalSize = 0;
+  var dir = Directory(dirPath);
+  try {
+    if (dir.existsSync()) {
+      dir.listSync(recursive: true, followLinks: false).forEach((
+        FileSystemEntity entity,
+      ) {
+        if (entity is File) {
+          fileNum++;
+          totalSize += entity.lengthSync();
+        }
+      });
+    }
+  } catch (e) {}
+
+  return {'fileNum': fileNum, 'size': totalSize};
 }

@@ -9,6 +9,7 @@ import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/glass_dialog.dart';
@@ -117,19 +118,13 @@ class _ScriptEditPageState extends ConsumerState<ScriptEditPage> {
       padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
       child: Row(
         children: [
-          Expanded(
-            child: SearchCell(controller: _searchTextCtrl),
-          ),
+          Expanded(child: SearchCell(controller: _searchTextCtrl)),
           const SizedBox(width: 4),
           CupertinoButton(
             padding: EdgeInsets.zero,
             minSize: 0,
             onPressed: _onSearchPrev,
-            child: Icon(
-              CupertinoIcons.chevron_up,
-              size: 20,
-              color: iconColor,
-            ),
+            child: Icon(CupertinoIcons.chevron_up, size: 20, color: iconColor),
           ),
           CupertinoButton(
             padding: EdgeInsets.zero,
@@ -327,10 +322,10 @@ class _ScriptEditPageState extends ConsumerState<ScriptEditPage> {
     return isCyber ? CyberBackground(child: scaffold) : scaffold;
   }
 
-  /// 退出确认弹窗（赛博模式用高斯模糊弹窗，非赛博用CupertinoAlertDialog）
+  /// 退出确认弹窗（赛博模式用 cyber 弹窗，其余用统一确认弹窗）
   void _showExitConfirm(bool isCyber) {
     if (isCyber) {
-      showCyberConfirmDialog(
+      showConfirmDialog(
         context,
         title: "温馨提示",
         content: "你编辑的内容还没用提交,确定退出吗?",
@@ -340,33 +335,17 @@ class _ScriptEditPageState extends ConsumerState<ScriptEditPage> {
           Navigator.of(context).pop();
         }
       });
-    } else {
-      showGlassDialog(
-        context: context,
-        useRootNavigator: false,
-        title: const Text("温馨提示"),
-        content: const Text("你编辑的内容还没用提交,确定退出吗?"),
-        actions: [
-          GlassDialogAction(
-            child: const Text("取消"),
-            textStyle: const TextStyle(color: Color(0xff999999)),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-          ),
-          GlassDialogAction(
-            child: const Text("确定"),
-            textStyle: TextStyle(
-              color: ref.watch(themeProvider).primaryColor,
-            ),
-            onPressed: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).pop();
-            },
-          ),
-        ],
-      );
+      return;
     }
+    showConfirmDialog(
+      context,
+      title: "温馨提示",
+      content: "你编辑的内容还没用提交,确定退出吗?",
+      confirmLabel: "确定",
+    ).then((confirmed) {
+      if (confirmed != true) return;
+      Navigator.of(context).pop();
+    });
   }
 
   GlobalKey<CodeMirrorViewState> codeKey = GlobalKey();

@@ -12,6 +12,7 @@ import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
@@ -687,8 +688,14 @@ class _JdckPageState extends ConsumerState<JdckPage> {
           animation: curved,
           builder: (context, _) {
             final t = curved.value;
-            final maskBaseSigma = SpUtil.getDouble(spCardBlurSigma, defValue: 4);
-            final cardBaseSigma = SpUtil.getDouble(spCardBlurSigma, defValue: 4);
+            final maskBaseSigma = SpUtil.getDouble(
+              spCardBlurSigma,
+              defValue: 4,
+            );
+            final cardBaseSigma = SpUtil.getDouble(
+              spCardBlurSigma,
+              defValue: 4,
+            );
             return Material(
               color: Colors.transparent,
               child: Stack(
@@ -1241,86 +1248,21 @@ class _JdckPageState extends ConsumerState<JdckPage> {
 
   void _showDeleteConfirmDialog() {
     if (_selectedPhone == null) return;
-    final textColor = _dialogTextColor();
-    final subTextColor = _dialogSubTextColor();
-
-    _showBlurDialog(
-      builder:
-          (dialogContext) => Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 4, bottom: 4),
-                child: Text(
-                  '确认删除',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: textColor,
-                    letterSpacing: 0.5,
-                    height: 1.2,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Padding(
-                padding: const EdgeInsets.only(left: 4),
-                child: Text(
-                  '确定要删除账号 $_selectedPhone 吗？',
-                  style: TextStyle(
-                    color: subTextColor,
-                    fontSize: 15,
-                    height: 1.5,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 28),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(dialogContext),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: textColor,
-                        side: BorderSide(color: subTextColor.withOpacity(0.3)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text('取消'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          _phoneSet.remove(_selectedPhone);
-                          _selectedPhone =
-                              _phoneSet.isNotEmpty ? _phoneSet.first : null;
-                        });
-                        _savePhones();
-                        Navigator.pop(dialogContext);
-                        '删除成功'.toast();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.danger,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text('删除'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-    );
+    showConfirmDialog(
+      context,
+      title: '确认删除',
+      content: '确定要删除账号 $_selectedPhone 吗？',
+      danger: true,
+      confirmLabel: '删除',
+    ).then((confirmed) {
+      if (confirmed != true) return;
+      setState(() {
+        _phoneSet.remove(_selectedPhone);
+        _selectedPhone = _phoneSet.isNotEmpty ? _phoneSet.first : null;
+      });
+      _savePhones();
+      '删除成功'.toast();
+    });
   }
 
   // ==================== 弹窗：备份与恢复 ====================

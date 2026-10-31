@@ -227,6 +227,39 @@ class SystemBean {
     }
   }
 
+  // 2.24.0：面板安全升级任务化（PUT /system/update 下载暂存 → GET /system/update-status
+  // 轮询 → PUT /system/reload {type:'system'} 应用），旧版 ql update 流程易因依赖
+  // 未装完导致面板无法启动，客户端只对 2.24.0+ 开放应用内升级
+  bool isUpperVersion2_24_0() {
+    try {
+      List<String>? version1 = version?.split("\.");
+
+      String f = version1?[0] ?? "2";
+      String s = version1?[1] ?? "10";
+      String t = version1?[2] ?? "0";
+
+      if (f.length == 1) {
+        f = "0$f";
+      }
+      if (s.length == 1) {
+        s = "0$s";
+      }
+      if (t.length == 1) {
+        t = "0$t";
+      }
+
+      String tempSum = "$f$s$t";
+
+      if ((int.tryParse(tempSum) ?? 1) >= 022400) {
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     data['version'] = this.version;

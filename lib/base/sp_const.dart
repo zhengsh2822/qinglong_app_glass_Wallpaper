@@ -33,6 +33,7 @@ const String spSingleInstance = "spSingleInstance";
 
 // 模糊参数调节：背景模糊和卡片模糊单独调节
 const String spBgBlurSigma = "spBgBlurSigma"; // 背景模糊值（路由级 WallpaperBackground），默认 6
+const String spBlurEffect = "spBlurEffect"; // 毛玻璃开关（主题版键，确认弹窗读取兼容）
 const String spCardBlurSigma = "spCardBlurSigma"; // 卡片模糊值（GlassCard 等），默认 4
 const String spCardSolidOpacity = "spCardSolidOpacity"; // 卡片纯色不透明度（卡片模糊=0 时生效），默认 0.45
 const String spCardSolidColor = "spCardSolidColor"; // 卡片纯色自定义颜色（-1=随主题自动白/黑），用于不同壁纸适配
@@ -43,3 +44,16 @@ const String spGithubLastReleaseNo = "spGithubLastReleaseNo"; // 已确认过的
 const String spGithubLastRemindTime = "spGithubLastRemindTime";
 // 冷启动主动提醒时"已提醒过"的 GitHub 安装包文件名序号（release_N）
 const String spGithubLastRemindNo = "spGithubLastRemindNo";
+
+// ==== WebDAV 云备份（青龙 2.x 客户端，方案见 docs/云备份方案.md）====
+const String spWebDavUrl =
+    "spWebDavUrl"; // 服务器地址，如 https://dav.jianguoyun.com/dav/
+const String spWebDavUser = "spWebDavUser"; // 账号
+const String spWebDavPassword = "spWebDavPassword"; // 应用密码（坚果云为专用应用密码）
+const String spWebDavDir = "spWebDavDir"; // 远程目录，默认 /qinglong_app_backup
+const String spWebDavEncryptPass = "spWebDavEncryptPass"; // 备份加密口令
+const String spWebDavAuto = "spWebDavAuto"; // 自动备份开关，默认关
+const String spWebDavLastBackTime = "spWebDavLastBackTime"; // 上次手动备份时间
+const String spWebDavLastAutoBackTime =
+    "spWebDavLastAutoBackTime";
+

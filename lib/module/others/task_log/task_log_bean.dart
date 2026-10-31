@@ -1,5 +1,3 @@
-
-
 class TaskLogBean {
   String? name;
   bool? isDir;

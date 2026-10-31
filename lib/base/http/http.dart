@@ -356,14 +356,22 @@ class Http {
   Future<String?> downloadFile(
     String uri,
     Map<String, dynamic> body,
-    String savePath,
-  ) async {
+    String savePath, {
+    void Function(int received, int total)? onReceiveProgress,
+    Duration receiveTimeout = const Duration(minutes: 30),
+  }) async {
     try {
       _init();
       final response = await _dio!.put(
         uri,
         data: body,
-        options: Options(responseType: ResponseType.bytes),
+        options: Options(
+          responseType: ResponseType.bytes,
+          // 全选备份的 .tgz 打包+传输可达 GB 级/数分钟以上，
+          // 全局 30s receiveTimeout 会掐断正常传输
+          receiveTimeout: receiveTimeout,
+        ),
+        onReceiveProgress: onReceiveProgress,
       );
 
       // 检查响应是否为二进制流（导出成功）还是 JSON（导出失败）
@@ -597,6 +605,8 @@ class Http {
     String filePath,
     String fieldName, {
     bool reloginRetry = false,
+    void Function(int sent, int total)? onSendProgress,
+    Duration sendTimeout = const Duration(minutes: 30),
   }) async {
     try {
       _init();
@@ -604,7 +614,16 @@ class Http {
         fieldName: await MultipartFile.fromFile(filePath),
       });
 
-      final response = await _dio!.put(uri, data: formdata);
+      final response = await _dio!.put(
+        uri,
+        data: formdata,
+        options: Options(
+          // 全选备份的 .tgz 上传可达 GB 级，全局 15s sendTimeout 会掐断
+          sendTimeout: sendTimeout,
+          receiveTimeout: sendTimeout,
+        ),
+        onSendProgress: onSendProgress,
+      );
 
       _invalidateRelatedCache(uri);
 

@@ -11,6 +11,7 @@ import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/card_transition_source.dart';
 import 'package:qinglong_app/module/subscribe/subscribe_detail_page.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
@@ -686,7 +687,7 @@ class TaskItemCell extends StatelessWidget {
   void _delSubscribe(BuildContext context1, WidgetRef ref) {
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
     if (isCyber) {
-      showCyberConfirmDialog(
+      showConfirmDialog(
         context1,
         title: '确认删除',
         content: '确认删除订阅 ${bean["name"] ?? ""} 吗',
@@ -704,44 +705,22 @@ class TaskItemCell extends StatelessWidget {
       });
       return;
     }
-    showCupertinoDialog(
-      context: context1,
-      useRootNavigator: false,
-      builder:
-          (context) => CupertinoAlertDialog(
-            title: const Text("确认删除"),
-            content: Text("确认删除订阅 ${bean["name"] ?? ""} 吗"),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text(
-                  "取消",
-                  style: TextStyle(color: Color(0xff999999)),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              CupertinoDialogAction(
-                child: Text(
-                  "确定",
-                  style: TextStyle(
-                    color: ref.watch(themeProvider).primaryColor,
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  ref
-                      .read(
-                        SingleAccountPageState.ofSubscribeProvider(context1)(
-                          getProviderName(context1),
-                        ),
-                      )
-                      .delSubscribe(context1, bean["id"]);
-                },
-              ),
-            ],
-          ),
-    );
+    showConfirmDialog(
+      context1,
+      title: "确认删除",
+      content: "确认删除订阅 ${bean["name"] ?? ""} 吗",
+      danger: true,
+    ).then((confirmed) {
+      if (confirmed != true) return;
+      ref
+          .read(
+            SingleAccountPageState.ofSubscribeProvider(context1)(
+              getProviderName(context1),
+            ),
+          )
+          .delSubscribe(context1, bean["id"]);
+    });
+    ;
   }
 
   void _enableSubscribe(BuildContext context, int disabled) {

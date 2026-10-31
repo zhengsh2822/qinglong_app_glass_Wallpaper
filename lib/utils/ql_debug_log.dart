@@ -13,9 +13,12 @@ class QlDebugLog {
   static File? _file;
   static Future<void> _queue = Future.value();
 
+  /// 临时诊断开关：release 构建也放行（WebDAV 卡死排查期使用，定位后关闭）
+  static bool releaseLogging = false;
+
   /// 挂接全局错误收集（Flutter 框架异常 + 未捕获异步异常）。
   static void init() {
-    if (!kDebugMode) return;
+    if (!kDebugMode && !releaseLogging) return;
     FlutterError.onError = (details) {
       write('FLUTTER ERROR: ${details.exception}\n${details.stack}');
       FlutterError.presentError(details);
@@ -27,7 +30,7 @@ class QlDebugLog {
   }
 
   static void write(String message) {
-    if (!kDebugMode) return;
+    if (!kDebugMode && !releaseLogging) return;
     debugPrint(message);
     _queue = _queue.then((_) async {
       try {

@@ -48,8 +48,9 @@ class AppKeyViewModel extends BaseViewModel {
   }
 
   Future<void> delAppKey(BuildContext context, dynamic id) async {
-    HttpResponse<NullResponse> result =
-        await SingleAccountPageState.ofApi(context).deleteAppKey([id]);
+    HttpResponse<NullResponse> result = await SingleAccountPageState.ofApi(
+      context,
+    ).deleteAppKey([id]);
     if (result.success) {
       "删除成功".toast();
       loadData(context, false);
@@ -59,8 +60,9 @@ class AppKeyViewModel extends BaseViewModel {
   }
 
   Future<void> resetAppKey(BuildContext context, dynamic id) async {
-    HttpResponse<NullResponse> result =
-        await SingleAccountPageState.ofApi(context).resetAppKey(id);
+    HttpResponse<NullResponse> result = await SingleAccountPageState.ofApi(
+      context,
+    ).resetAppKey(id);
     if (result.success) {
       "重置成功".toast();
       loadData(context, false);

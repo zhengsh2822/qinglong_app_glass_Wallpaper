@@ -7,6 +7,7 @@ import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/ui/glass_dialog.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
 import '../../code_editor/editor.dart';
@@ -80,33 +81,14 @@ class _ScriptAddPageState extends ConsumerState<ScriptAddPage> {
           if (preResult == result) {
             Navigator.of(context).pop();
           } else {
-            showGlassDialog(
-              context: context,
-              useRootNavigator: false,
-              title: const Text("温馨提示"),
-              content: const Text("你新增的内容还没用提交确定退出吗?"),
-              actions: [
-                GlassDialogAction(
-                  child: const Text("取消"),
-                  textStyle: const TextStyle(
-                    color: Color(0xff999999),
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
-                GlassDialogAction(
-                  child: const Text("确定"),
-                  textStyle: TextStyle(
-                    color: ref.watch(themeProvider).primaryColor,
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ],
-            );
+            showConfirmDialog(
+              context,
+              title: "温馨提示",
+              content: "你新增的内容还没用提交,确定退出吗?",
+            ).then((confirmed) {
+              if (confirmed != true) return;
+              Navigator.of(context).pop();
+            });
           }
         },
         title: '新增${widget.title}',
@@ -118,11 +100,9 @@ class _ScriptAddPageState extends ConsumerState<ScriptAddPage> {
               try {
                 await EasyLoading.show(status: " 提交中");
                 HttpResponse<NullResponse> response =
-                    await SingleAccountPageState.ofApi(context).addScript(
-                  widget.title,
-                  widget.path,
-                  result,
-                );
+                    await SingleAccountPageState.ofApi(
+                      context,
+                    ).addScript(widget.title, widget.path, result);
                 await EasyLoading.dismiss();
                 if (response.success) {
                   "提交成功".toast();
@@ -134,10 +114,8 @@ class _ScriptAddPageState extends ConsumerState<ScriptAddPage> {
                 EasyLoading.dismiss();
               }
             },
-            child:  Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 15,
-              ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 15),
               child: Center(
                 child: Text(
                   "提交",
@@ -148,7 +126,7 @@ class _ScriptAddPageState extends ConsumerState<ScriptAddPage> {
                 ),
               ),
             ),
-          )
+          ),
         ],
       ),
       body: SafeArea(
