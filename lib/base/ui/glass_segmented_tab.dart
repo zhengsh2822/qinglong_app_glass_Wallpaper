@@ -708,9 +708,10 @@ class _LiquidTabBarSliderState extends State<_LiquidTabBarSlider>
         final double sx = (1 + dew).clamp(0.7, 1.3) * pressScale;
         final double sy = (1 - dew).clamp(0.7, 1.3) * pressScale;
 
-        // 顶部 tab 大胶囊：100% 不透明固定纯色（白/黑），不模糊、不跟随卡片纯色调节
+        // 顶部 tab 大胶囊：100% 不透明固定纯色（白/黑）。sigma 恒 0：
+        // forceOpaqueSolid 纯色本就盖住模糊结果，实时 BackdropFilter 无意义且耗 GPU
         final Widget capsule = OptimizedFrostedGlass(
-          sigma: sigma,
+          sigma: 0,
           borderRadius: BorderRadius.circular(22),
           forceOpaqueSolid: true,
           child: Container(

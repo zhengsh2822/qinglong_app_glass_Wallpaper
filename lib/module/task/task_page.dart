@@ -183,7 +183,6 @@ class TaskPageState extends ConsumerState<TaskPage>
   final ValueNotifier<double> _tabTravel = ValueNotifier<double>(0);
 
   void _onInnerTabChanged() {
-    _tabTravel.value = _tabController!.index.toDouble();
     // 轨道切换需要立即拿到新目标页（景深豁免/层级/TickerMode），index 一变就 setState；
     // Slidable 关闭走 SlidableCloseNotifier 信号（原 TabBarView 动画中断问题已不存在，
     // 不再用 _slidableResetKey 重建子树的方式，页面滚动位置得以保留）
