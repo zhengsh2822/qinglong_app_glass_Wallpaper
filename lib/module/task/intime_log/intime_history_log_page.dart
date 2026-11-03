@@ -48,7 +48,12 @@ class _InTimeHistoryLogPageState extends State<InTimeHistoryLogPage>
       content = response.bean;
       setState(() {});
     } else {
+      // 拉取失败也落地空态（toast 一次），避免永久加载
       (response.message ?? "").toast();
+      if (content == null) {
+        content = "";
+      }
+      if (mounted) setState(() {});
     }
   }
 
@@ -99,15 +104,16 @@ class _InTimeHistoryLogPageState extends State<InTimeHistoryLogPage>
         title: widget.title,
       ),
       body: GlassPageBackground(
-        child: (content == null)
-            ? const Center(child: LoadingWidget())
-            : CupertinoScrollbar(
-                child: LogTextView(
-                  content: content,
-                  accountIndex:
-                      SingleAccountPageState.of(context)?.index ?? 0,
+        child:
+            (content == null)
+                ? const Center(child: LoadingWidget())
+                : CupertinoScrollbar(
+                  child: LogTextView(
+                    content: content,
+                    accountIndex:
+                        SingleAccountPageState.of(context)?.index ?? 0,
+                  ),
                 ),
-              ),
       ),
     );
   }

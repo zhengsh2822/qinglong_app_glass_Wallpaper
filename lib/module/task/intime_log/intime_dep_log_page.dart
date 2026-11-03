@@ -64,6 +64,8 @@ class _InTimeDepLogPageState extends State<InTimeDepLogPage>
             "已删除".toast();
             stopPauseableTimer();
             canRequest = false;
+            content = "";
+            if (mounted) setState(() {});
           }
           return;
         }
@@ -85,6 +87,12 @@ class _InTimeDepLogPageState extends State<InTimeDepLogPage>
         }
       } catch (e) {}
       setState(() {});
+    } else {
+      // 拉取失败（依赖已删除等）落地空态，避免永久加载；轮询继续后台重试
+      if (content == null) {
+        content = "";
+      }
+      if (mounted) setState(() {});
     }
     isRequest = false;
   }
@@ -137,7 +145,8 @@ class _InTimeDepLogPageState extends State<InTimeDepLogPage>
                         padding: EdgeInsets.only(
                           left: 15,
                           right: 15,
-                          bottom: MediaQuery.of(context).viewPadding.bottom + 20,
+                          bottom:
+                              MediaQuery.of(context).viewPadding.bottom + 20,
                         ),
                         child: Text(
                           content!,

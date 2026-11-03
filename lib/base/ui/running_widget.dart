@@ -6,7 +6,10 @@ import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 
 class RunningWidget extends ConsumerWidget {
-  const RunningWidget({Key? key}) : super(key: key);
+  /// 徽章文案：默认「运行中」；依赖管理卡片传「安装中」等场景化文案
+  final String text;
+
+  const RunningWidget({Key? key, this.text = "运行中"}) : super(key: key);
 
   @override
   Widget build(BuildContext context, ref) {
@@ -30,17 +33,11 @@ class RunningWidget extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           // RepaintBoundary 隔离 LoadingWidget 无限动画，避免向上冒泡触发列表重绘
-          RepaintBoundary(
-            child: LoadingWidget(color: color, size: 12),
-          ),
+          RepaintBoundary(child: LoadingWidget(color: color, size: 12)),
           const SizedBox(width: 3),
           Text(
-            "运行中",
-            style: TextStyle(
-              color: color,
-              fontSize: 9,
-              fontFamily: 'MiSans',
-            ),
+            text,
+            style: TextStyle(color: color, fontSize: 9, fontFamily: 'MiSans'),
           ),
         ],
       ),

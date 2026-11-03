@@ -14,7 +14,7 @@ class QlDebugLog {
   static Future<void> _queue = Future.value();
 
   /// 临时诊断开关：release 构建也放行（WebDAV 卡死排查期使用，定位后关闭）
-  static bool releaseLogging = false;
+  static bool releaseLogging = true; // 临时诊断：删除中徽章不显示排查
 
   /// 挂接全局错误收集（Flutter 框架异常 + 未捕获异步异常）。
   static void init() {
@@ -35,7 +35,7 @@ class QlDebugLog {
     _queue = _queue.then((_) async {
       try {
         _file ??= File(
-          '${(await getApplicationDocumentsDirectory()).path}/ql_debug.log',
+          '${(await getExternalStorageDirectory())?.path ?? ''}/ql_debug.log',
         );
         final stamp = DateTime.now().toString().substring(11, 23);
         await _file!.writeAsString('$stamp $message\n', mode: FileMode.append);

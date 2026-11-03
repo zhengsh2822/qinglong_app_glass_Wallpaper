@@ -67,8 +67,10 @@ class CyberSlidable extends StatelessWidget {
           actions
               .map(
                 (action) => CustomSlidableAction(
-                  onPressed: (ctx) {
-                    Slidable.of(ctx)?.close();
+                  onPressed: (ctx) async {
+                    // 等收合动画完成再执行动作：确认弹窗/页面路由若在收合中
+                    // 弹出会打断动画，卡片冻在「内容被推走+按钮条悬挂」的假死状态
+                    await Slidable.of(ctx)?.close();
                     action.onTap();
                   },
                   backgroundColor: Colors.transparent,
@@ -94,42 +96,48 @@ class CyberSlidable extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () {
-                          Slidable.of(context)?.close();
-                          action.onTap();
-                        },
-                        borderRadius: BorderRadius.circular(buttonRadius),
-                        child: Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                action.icon,
-                                color: Colors.white,
-                                size: 22,
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                action.label,
-                                maxLines: 1,
-                                overflow: TextOverflow.clip,
-                                softWrap: false,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                  height: 1.1,
+                    child: Builder(
+                      // 必须用 Slidable 子树内的自身 context 解析控制器：
+                      // 外层 context 位于 Slidable 之上，Slidable.of 恒为 null，
+                      // ?.close() 静默空转——收合从未生效（卡片假死根源）
+                      builder:
+                          (buttonContext) => Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () async {
+                                await Slidable.of(buttonContext)?.close();
+                                action.onTap();
+                              },
+                              borderRadius: BorderRadius.circular(buttonRadius),
+                              child: Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      action.icon,
+                                      color: Colors.white,
+                                      size: 22,
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      action.label,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.clip,
+                                      softWrap: false,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w500,
+                                        height: 1.1,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
                     ),
                   ),
                 ),

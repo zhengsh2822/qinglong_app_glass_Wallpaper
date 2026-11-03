@@ -88,6 +88,9 @@ class _InTimeLogPageState extends ConsumerState<InTimeLogPage>
       );
       if (found != null &&
           found.isNotEmpty &&
+          // 同一依赖本次会话只尝试一次：面板安装异步生效，运行中任务会
+          // 持续打印同一条缺依赖错误，无去重会陷入 安装→再报错 死循环
+          _autoInstallTried.add(found) &&
           widget.command != null &&
           (widget.command!.endsWith(".js") ||
               widget.command!.endsWith(".ts") ||
@@ -123,10 +126,19 @@ class _InTimeLogPageState extends ConsumerState<InTimeLogPage>
         hasToastedFailed = true;
         response.message?.toast();
       }
+      // 拉取失败也落地空态（toast 一次），避免永久加载
+      content = "";
     }
+    if (!mounted) return;
+    setState(() {});
   }
 
   bool hasToastedFailed = false;
+
+  /// 本次会话已尝试自动安装的依赖（面板安装是异步的，任务日志会持续打印
+  /// 同一条缺依赖错误——不去重会导致 安装→重启→再报错 的无限循环，
+  /// 每 2s 一轮打满主线程直接 ANR 卡死）
+  final Set<String> _autoInstallTried = {};
 
   @override
   void dispose() {
@@ -173,16 +185,17 @@ class _InTimeLogPageState extends ConsumerState<InTimeLogPage>
             title: widget.title,
           ),
           body: GlassPageBackground(
-            child: (content == null)
-                ? const Center(child: LoadingWidget())
-                : CupertinoScrollbar(
-                    child: LogTextView(
-                      content: content,
-                      accountIndex:
-                          SingleAccountPageState.of(context)?.index ?? 0,
-                      scrollController: controller,
+            child:
+                (content == null)
+                    ? const Center(child: LoadingWidget())
+                    : CupertinoScrollbar(
+                      child: LogTextView(
+                        content: content,
+                        accountIndex:
+                            SingleAccountPageState.of(context)?.index ?? 0,
+                        scrollController: controller,
+                      ),
                     ),
-                  ),
           ),
         );
       },

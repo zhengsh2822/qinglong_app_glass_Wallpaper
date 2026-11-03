@@ -222,52 +222,27 @@ class DependcyPageState extends ConsumerState<DependencyPage>
                       ),
                     )
                     .then((value) async {
-                      if (value != null &&
-                          value is Map<String, dynamic> &&
-                          value.isNotEmpty) {
-                        await ref
-                            .read(
-                              SingleAccountPageState.ofDependencyProvider(
-                                context,
-                              )(getProviderName(context)).notifier,
-                            )
-                            .loadData(
-                              context,
-                              types[0].name.toLowerCase(),
-                              false,
-                            );
-                        await ref
-                            .read(
-                              SingleAccountPageState.ofDependencyProvider(
-                                context,
-                              )(getProviderName(context)).notifier,
-                            )
-                            .loadData(
-                              context,
-                              types[1].name.toLowerCase(),
-                              false,
-                            );
-                        await ref
-                            .read(
-                              SingleAccountPageState.ofDependencyProvider(
-                                context,
-                              )(getProviderName(context)).notifier,
-                            )
-                            .loadData(
-                              context,
-                              types[2].name.toLowerCase(),
-                              false,
-                            );
-
-                        var bean = DependencyBean.fromJson(value);
-                        showLog(
-                          context,
-                          bean.name ?? "",
-                          ref,
-                          bean.sId,
-                          bean.id,
-                        );
+                      if (value == null || value is! Map<String, dynamic>) {
+                        return;
                       }
+                      final model = ref.read(
+                        SingleAccountPageState.ofDependencyProvider(context)(
+                          getProviderName(context),
+                        ).notifier,
+                      );
+                      // 乐观插入：新依赖卡片（安装中）立即出现，不等网络刷新
+                      // （多选新增返回空 Map，直接走下面的并行刷新）
+                      if (value.isNotEmpty) {
+                        model.insertOptimistic(value);
+                      }
+                      if (!mounted) return;
+                      // 并行刷新三类列表校准真实状态，并联动安装状态轮询；
+                      // 不自动跳转依赖日志页——日志想看就点卡片或滑「日志」
+                      await Future.wait([
+                        model.loadData(context, types[0].name.toLowerCase()),
+                        model.loadData(context, types[1].name.toLowerCase()),
+                        model.loadData(context, types[2].name.toLowerCase()),
+                      ]);
                     });
               },
             ),
@@ -580,13 +555,30 @@ class DependcyPageState extends ConsumerState<DependencyPage>
                   .where((element) => checkedIds.contains(element.mustId))
                   .map((e) => e.id)
                   .toList();
+          List<String?> keys =
+              ref
+                  .read(
+                    SingleAccountPageState.ofDependencyProvider(context)(
+                      getProviderName(context),
+                    ).notifier,
+                  )
+                  .getListByType(_tabController!.index)
+                  .where((element) => checkedIds.contains(element.mustId))
+                  .map((e) => e.mustId)
+                  .toList();
           ref
               .read(
                 SingleAccountPageState.ofDependencyProvider(context)(
                   getProviderName(context),
                 ).notifier,
               )
-              .del(context, types[_tabController!.index].name, sids, ids);
+              .del(
+                context,
+                types[_tabController!.index].name,
+                sids,
+                ids,
+                keys: keys,
+              );
         }
       });
       setState(() {});
@@ -746,6 +738,17 @@ class DependencyCell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
+    // watch 视图模型本体（不能 watch .notifier——那不订阅 notifyListeners），
+    // 编辑模式批量删除的「删除中」徽章依赖这条订阅
+    final bool remoteDeleting = ref
+        .watch(
+          SingleAccountPageState.ofDependencyProvider(context)(
+            getProviderName(context),
+          ),
+        )
+        .deletingKeys
+        .contains(bean.mustId);
+    final bool deleting = remoteDeleting;
     // 卡片内容行：真实卡片与共享转场源共用（两处布局必须一致）
     final Widget depRow = Row(
       children: [
@@ -803,17 +806,22 @@ class DependencyCell extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(width: 5),
-                    bean.status == 1
-                        ? StatusWidget(
-                          title: "已安装",
-                          color: ref.watch(themeProvider).primaryColor,
+                    deleting
+                        ? const StatusWidget(
+                          title: "删除中",
+                          color: Color(0xffFB5858),
                         )
-                        : (bean.status == 2
-                            ? const StatusWidget(
-                              title: "安装失败",
-                              color: Color(0xffFB5858),
+                        : (bean.status == 1
+                            ? StatusWidget(
+                              title: "已安装",
+                              color: ref.watch(themeProvider).primaryColor,
                             )
-                            : const RunningWidget()),
+                            : (bean.status == 2
+                                ? const StatusWidget(
+                                  title: "安装失败",
+                                  color: Color(0xffFB5858),
+                                )
+                                : const RunningWidget(text: "安装中"))),
                     Expanded(
                       child: Align(
                         alignment: Alignment.centerRight,
@@ -853,6 +861,11 @@ class DependencyCell extends ConsumerWidget {
       child: depRow,
     );
 
+    // 删除中的卡片：禁点禁滑，只展示「删除中」徽章，等删除完成后列表刷新消失
+    if (deleting) {
+      cardContent = IgnorePointer(child: cardContent);
+    }
+
     // 统一用 GlassListItemCard 实现毛玻璃效果，替代手写的 BackdropFilter+Container
     // 解决：1.非赛博模式 BackdropFilter 在白色 Container 内部导致模糊层级错误
     //      2.列表项重复 BackdropFilter 导致滚动卡顿（GlassListItemCard 自带 RepaintBoundary）
@@ -861,7 +874,7 @@ class DependencyCell extends ConsumerWidget {
         isCyber
             ? CyberSlidable(
               slidableKey: ValueKey(bean.mustId),
-              enabled: !editMode,
+              enabled: !editMode && !deleting,
               endActions: [
                 CyberSlideAction(
                   label: '重装',
@@ -913,7 +926,7 @@ class DependencyCell extends ConsumerWidget {
             )
             : Slidable(
               key: ValueKey(bean.mustId),
-              enabled: !editMode,
+              enabled: !editMode && !deleting,
               endActionPane: ActionPane(
                 motion: const ScrollMotion(),
                 extentRatio: 0.55,
@@ -1055,16 +1068,20 @@ class DependencyCell extends ConsumerWidget {
         content: "确认删除依赖 ${bean.name ?? ""} 吗",
         danger: true,
       ).then((confirmed) async {
-        if (confirmed == true) {
-          await ref
-              .read(
-                SingleAccountPageState.ofDependencyProvider(context1)(
-                  getProviderName(context1),
-                ),
-              )
-              .del(context1, type.name.toLowerCase(), [sId], [id]);
-          showLog(context1, bean.name ?? "", ref, sId, id);
-        }
+        if (confirmed != true || !context1.mounted) return;
+        await ref
+            .read(
+              SingleAccountPageState.ofDependencyProvider(context1)(
+                getProviderName(context1),
+              ).notifier,
+            )
+            .del(
+              context1,
+              type.name.toLowerCase(),
+              [sId],
+              [id],
+              keys: [bean.mustId],
+            );
       });
       return;
     }
@@ -1074,16 +1091,20 @@ class DependencyCell extends ConsumerWidget {
       content: "确认删除依赖 ${bean.name ?? ""} 吗",
       danger: true,
     ).then((confirmed) async {
-      if (confirmed != true) return;
+      if (confirmed != true || !context1.mounted) return;
       await ref
           .read(
             SingleAccountPageState.ofDependencyProvider(context1)(
               getProviderName(context1),
-            ),
+            ).notifier,
           )
-          .del(context1, type.name.toLowerCase(), [sId], [id]);
-      showLog(context1, bean.name ?? "", ref, sId, id);
+          .del(
+            context1,
+            type.name.toLowerCase(),
+            [sId],
+            [id],
+            keys: [bean.mustId],
+          );
     });
-    ;
   }
 }

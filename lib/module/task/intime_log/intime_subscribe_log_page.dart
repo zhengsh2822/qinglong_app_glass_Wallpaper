@@ -8,6 +8,7 @@ import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
+import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
@@ -82,6 +83,11 @@ class _InTimeSubscribeLogPageState extends State<InTimeSubscribeLogPage>
         });
       }
       setState(() {});
+    } else {
+      // 拉取失败（订阅已删除等）落地空态，避免永久加载
+      (response.message ?? "").toast();
+      content = "";
+      if (mounted) setState(() {});
     }
     isRequest = false;
   }
@@ -135,7 +141,8 @@ class _InTimeSubscribeLogPageState extends State<InTimeSubscribeLogPage>
                         padding: EdgeInsets.only(
                           left: 15,
                           right: 15,
-                          bottom: MediaQuery.of(context).viewPadding.bottom + 20,
+                          bottom:
+                              MediaQuery.of(context).viewPadding.bottom + 20,
                         ),
                         child: Text(
                           content!,

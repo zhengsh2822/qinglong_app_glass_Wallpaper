@@ -75,43 +75,49 @@ class AppSlideButton extends StatelessWidget {
                   ]
                   : null,
         ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {
-              // 关闭 Slidable
-              Slidable.of(context)?.close();
-              onTap();
-            },
-            borderRadius: BorderRadius.circular(cornerRadius),
-            child: Center(
-              child:
-                  label == null
-                      ? Icon(icon, color: Colors.white, size: iconSize)
-                      : Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(icon, color: Colors.white, size: iconSize),
-                          if (label != null) ...[
-                            const SizedBox(height: 2),
-                            Text(
-                              label!,
-                              maxLines: 1,
-                              overflow: TextOverflow.clip,
-                              softWrap: false,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                                height: 1.1,
-                              ),
+        child: Builder(
+          // 必须用自身 buildContext（位于 Slidable 子树内）解析控制器：
+          // 外部传入的 context 在 Slidable 之上，Slidable.of 恒为 null，
+          // ?.close() 静默空转——收合从未生效，卡片冻在开启态（假死根源）。
+          // 且等收合动画完成再执行动作，避免路由弹出打断动画
+          builder:
+              (buildContext) => Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () async {
+                    await Slidable.of(buildContext)?.close();
+                    onTap();
+                  },
+                  borderRadius: BorderRadius.circular(cornerRadius),
+                  child: Center(
+                    child:
+                        label == null
+                            ? Icon(icon, color: Colors.white, size: iconSize)
+                            : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(icon, color: Colors.white, size: iconSize),
+                                if (label != null) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    label!,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.clip,
+                                    softWrap: false,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                      height: 1.1,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
-                          ],
-                        ],
-                      ),
-            ),
-          ),
+                  ),
+                ),
+              ),
         ),
       ),
     );

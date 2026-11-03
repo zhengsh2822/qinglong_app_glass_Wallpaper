@@ -103,11 +103,14 @@ class Http {
       // 即使 silentReLogin 失败（如未记住密码），Dio 已重建，重试可能直接成功
       if (result.needRelogin && !reloginRetry) {
         await _handleTokenExpired();
-        return get<T>(uri, json,
-            compute: compute,
-            serializationName: serializationName,
-            useCache: false,
-            reloginRetry: true);
+        return get<T>(
+          uri,
+          json,
+          compute: compute,
+          serializationName: serializationName,
+          useCache: false,
+          reloginRetry: true,
+        );
       }
 
       // 重试仍失败且 needRelogin=true：说明 token 确实失效，跳转登录页
@@ -118,7 +121,9 @@ class Http {
       if (useCache && result.success) {
         // 优先使用调用方显式传入的 ttl,否则按 URI 推断分级 TTL
         final effectiveTtl = ttl ?? CacheTtl.forUri(uri);
-        HttpCache(index).set<HttpResponse<T>>(cacheKey, result, ttl: effectiveTtl);
+        HttpCache(
+          index,
+        ).set<HttpResponse<T>>(cacheKey, result, ttl: effectiveTtl);
       }
 
       return result;
@@ -127,11 +132,14 @@ class Http {
       // 401 也走静默刷新重试
       if (result.needRelogin && !reloginRetry) {
         await _handleTokenExpired();
-        return get<T>(uri, json,
-            compute: compute,
-            serializationName: serializationName,
-            useCache: false,
-            reloginRetry: true);
+        return get<T>(
+          uri,
+          json,
+          compute: compute,
+          serializationName: serializationName,
+          useCache: false,
+          reloginRetry: true,
+        );
       }
       if (result.needRelogin && reloginRetry) {
         exitLogin();
@@ -192,10 +200,15 @@ class Http {
     bool compute = true,
     String serializationName = "data",
     bool reloginRetry = false,
+    Duration? receiveTimeout,
   }) async {
     try {
       _init();
-      var response = await _dio!.post(uri, data: json);
+      var response = await _dio!.post(
+        uri,
+        data: json,
+        options: Options(receiveTimeout: receiveTimeout),
+      );
 
       _invalidateRelatedCache(uri);
 
@@ -204,10 +217,13 @@ class Http {
       // token 失效 / 解析异常 / Dio 死连接：重建 Dio + 静默刷新 + 重试一次
       if (result.needRelogin && !reloginRetry) {
         await _handleTokenExpired();
-        return post<T>(uri, json,
-            compute: compute,
-            serializationName: serializationName,
-            reloginRetry: true);
+        return post<T>(
+          uri,
+          json,
+          compute: compute,
+          serializationName: serializationName,
+          reloginRetry: true,
+        );
       }
       if (result.needRelogin && reloginRetry) {
         exitLogin();
@@ -218,10 +234,13 @@ class Http {
       final result = exceptionHandler<T>(e, uri);
       if (result.needRelogin && !reloginRetry) {
         await _handleTokenExpired();
-        return post<T>(uri, json,
-            compute: compute,
-            serializationName: serializationName,
-            reloginRetry: true);
+        return post<T>(
+          uri,
+          json,
+          compute: compute,
+          serializationName: serializationName,
+          reloginRetry: true,
+        );
       }
       if (result.needRelogin && reloginRetry) {
         exitLogin();
@@ -236,10 +255,15 @@ class Http {
     bool compute = true,
     String serializationName = "data",
     bool reloginRetry = false,
+    Duration? receiveTimeout,
   }) async {
     try {
       _init();
-      var response = await _dio!.delete(uri, data: json);
+      var response = await _dio!.delete(
+        uri,
+        data: json,
+        options: Options(receiveTimeout: receiveTimeout),
+      );
 
       _invalidateRelatedCache(uri);
 
@@ -248,10 +272,13 @@ class Http {
       // token 失效 / 解析异常 / Dio 死连接：重建 Dio + 静默刷新 + 重试一次
       if (result.needRelogin && !reloginRetry) {
         await _handleTokenExpired();
-        return delete<T>(uri, json,
-            compute: compute,
-            serializationName: serializationName,
-            reloginRetry: true);
+        return delete<T>(
+          uri,
+          json,
+          compute: compute,
+          serializationName: serializationName,
+          reloginRetry: true,
+        );
       }
       if (result.needRelogin && reloginRetry) {
         exitLogin();
@@ -262,10 +289,13 @@ class Http {
       final result = exceptionHandler<T>(e, uri);
       if (result.needRelogin && !reloginRetry) {
         await _handleTokenExpired();
-        return delete<T>(uri, json,
-            compute: compute,
-            serializationName: serializationName,
-            reloginRetry: true);
+        return delete<T>(
+          uri,
+          json,
+          compute: compute,
+          serializationName: serializationName,
+          reloginRetry: true,
+        );
       }
       if (result.needRelogin && reloginRetry) {
         exitLogin();
@@ -316,12 +346,15 @@ class Http {
       // token 失效 / 解析异常 / Dio 死连接：重建 Dio + 静默刷新 + 重试一次
       if (result.needRelogin && !reloginRetry) {
         await _handleTokenExpired();
-        return put<T>(uri, json,
-            compute: compute,
-            serializationName: serializationName,
-            reloginRetry: true,
-            rawResponse: rawResponse,
-            receiveTimeout: receiveTimeout);
+        return put<T>(
+          uri,
+          json,
+          compute: compute,
+          serializationName: serializationName,
+          reloginRetry: true,
+          rawResponse: rawResponse,
+          receiveTimeout: receiveTimeout,
+        );
       }
       if (result.needRelogin && reloginRetry) {
         exitLogin();
@@ -336,12 +369,15 @@ class Http {
       final result = exceptionHandler<T>(e, uri);
       if (result.needRelogin && !reloginRetry) {
         await _handleTokenExpired();
-        return put<T>(uri, json,
-            compute: compute,
-            serializationName: serializationName,
-            reloginRetry: true,
-            rawResponse: rawResponse,
-            receiveTimeout: receiveTimeout);
+        return put<T>(
+          uri,
+          json,
+          compute: compute,
+          serializationName: serializationName,
+          reloginRetry: true,
+          rawResponse: rawResponse,
+          receiveTimeout: receiveTimeout,
+        );
       }
       if (result.needRelogin && reloginRetry) {
         exitLogin();
@@ -734,8 +770,10 @@ class Http {
       getIt<UserInfoViewModel>(
         instanceName: index.toString(),
       ).exitLoginFocus(index);
-      navigatorKey.currentState
-          ?.pushNamedAndRemoveUntil(Routes.routeLogin, (route) => false);
+      navigatorKey.currentState?.pushNamedAndRemoveUntil(
+        Routes.routeLogin,
+        (route) => false,
+      );
     } else {
       // 用户取消，复位标志允许下次再问
       pushedLoginPage = false;
@@ -770,8 +808,7 @@ class Http {
   /// 青龙 Express 对未匹配的路径会落到 `app.get('*')` 的前端 SPA 兜底，
   /// 返回 HTTP 200 + index.html。若面板的版本号（/ql/version.yaml）与实际
   /// 运行代码不一致（更新未生效/部分更新），新接口就会这样"假装成功"。
-  static const String _apiNotExistMessage =
-      "接口不存在：面板返回网页而非数据，请确认面板已真正更新到对应版本";
+  static const String _apiNotExistMessage = "接口不存在：面板返回网页而非数据，请确认面板已真正更新到对应版本";
 
   /// 判断该响应是否属于 API 命名空间（/api 或 /open）。
   ///
@@ -789,9 +826,7 @@ class Http {
 
   /// 判断本地是否有足够凭证进行静默刷新
   bool _canSilentRelogin() {
-    final userInfo = getIt<UserInfoViewModel>(
-      instanceName: index.toString(),
-    );
+    final userInfo = getIt<UserInfoViewModel>(instanceName: index.toString());
     return userInfo.userName != null &&
         userInfo.userName!.isNotEmpty &&
         userInfo.passWord != null &&
@@ -810,33 +845,33 @@ class Http {
       // 无凭证（未记住密码），无法静默刷新
       if (!_canSilentRelogin()) return false;
 
-      final userInfo = getIt<UserInfoViewModel>(
-        instanceName: index.toString(),
-      );
+      final userInfo = getIt<UserInfoViewModel>(instanceName: index.toString());
 
       // 直接用 Dio 发请求，绕过 decodeResponse 的 HTML 检测，避免递归
       // secret 登录用户用 client_id 方式，密码登录用户用账号密码方式
       final isSecretLogin = userInfo.useSecretLogined;
 
-      final rawResponse = isSecretLogin
-          ? await _dio!.get(
-              Url.loginByClientId,
-              queryParameters: {
-                'client_id': userInfo.userName,
-                'client_secret': userInfo.passWord,
-              },
-            )
-          : await _dio!.post(
-              Url.login,
-              data: {
-                'username': userInfo.userName,
-                'password': userInfo.passWord,
-              },
-            );
+      final rawResponse =
+          isSecretLogin
+              ? await _dio!.get(
+                Url.loginByClientId,
+                queryParameters: {
+                  'client_id': userInfo.userName,
+                  'client_secret': userInfo.passWord,
+                },
+              )
+              : await _dio!.post(
+                Url.login,
+                data: {
+                  'username': userInfo.userName,
+                  'password': userInfo.passWord,
+                },
+              );
 
-      final data = rawResponse.data is String
-          ? jsonDecode(rawResponse.data)
-          : rawResponse.data;
+      final data =
+          rawResponse.data is String
+              ? jsonDecode(rawResponse.data)
+              : rawResponse.data;
 
       if (data is Map &&
           data['code'] == 200 &&
@@ -908,7 +943,8 @@ class Http {
       // 网络错误（死连接 / 超时 / 连接失败）：标记 needRelogin 触发重建 Dio + 重试
       // 长时间不活动后 Dio keep-alive 连接失效，表现为 connectionTimeout / receiveTimeout / connectionError
       // 重建 Dio 清空连接池后重试即可恢复，无需用户重启 app
-      final isNetworkError = e.type == DioExceptionType.connectionTimeout ||
+      final isNetworkError =
+          e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.sendTimeout ||
           e.type == DioExceptionType.receiveTimeout ||
           e.type == DioExceptionType.connectionError ||
@@ -1097,9 +1133,10 @@ class Http {
         // 格式异常也可能是 token 过期（服务器返回非 HTML 的非 JSON 内容）
         // 或 Dio 连接池失效导致响应乱码/截断
         // 标记 needRelogin 触发重建 Dio + 静默刷新 + 重试
-        final preview = rawData is String
-            ? (rawData.length > 200 ? rawData.substring(0, 200) : rawData)
-            : rawData.toString();
+        final preview =
+            rawData is String
+                ? (rawData.length > 200 ? rawData.substring(0, 200) : rawData)
+                : rawData.toString();
         logger.e('decodeResponse 格式异常，响应内容预览: $preview');
         return HttpResponse<T>(
           success: false,
@@ -1124,6 +1161,7 @@ class HttpResponse<T> {
   String? message;
   late int code;
   T? bean;
+
   /// 标记响应被识别为 token 失效（HTML 登录页 / 401），需触发静默刷新
   bool needRelogin;
 
@@ -1153,11 +1191,8 @@ class GetBytesResult {
     this.bodyPreview = '',
   });
 
-  factory GetBytesResult.success(List<int> bytes) => GetBytesResult._(
-    success: true,
-    code: 200,
-    bytes: bytes,
-  );
+  factory GetBytesResult.success(List<int> bytes) =>
+      GetBytesResult._(success: true, code: 200, bytes: bytes);
 
   factory GetBytesResult.fail({
     required int code,

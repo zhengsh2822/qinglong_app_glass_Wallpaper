@@ -794,6 +794,7 @@ class Api {
       ).put<NullResponse>(
         getIt<Url>(instanceName: index.toString()).dependenciesReinstall,
         sId,
+        receiveTimeout: const Duration(minutes: 30),
       );
     } else {
       return await getIt<Http>(
@@ -801,6 +802,7 @@ class Api {
       ).put<NullResponse>(
         getIt<Url>(instanceName: index.toString()).dependenciesReinstall,
         id,
+        receiveTimeout: const Duration(minutes: 30),
       );
     }
   }
@@ -924,6 +926,9 @@ class Api {
     return await getIt<Http>(instanceName: index.toString()).post<String>(
       getIt<Url>(instanceName: index.toString()).dependencies,
       list,
+      // 面板安装依赖（pnpm/pip）在设备端 chroot 面板上很慢，30s 全局超时会
+      // 触发 needRelogin 误判 → 重试再超时 → exitLogin 误踢登录
+      receiveTimeout: const Duration(minutes: 30),
     );
   }
 
@@ -978,11 +983,19 @@ class Api {
     if (sIds != null && sIds.isNotEmpty && sIds[0] != null) {
       response = await getIt<Http>(
         instanceName: index.toString(),
-      ).delete<NullResponse>(url, sIds);
+      ).delete<NullResponse>(
+        url,
+        sIds,
+        receiveTimeout: const Duration(minutes: 10),
+      );
     } else {
       response = await getIt<Http>(
         instanceName: index.toString(),
-      ).delete<NullResponse>(url, ids);
+      ).delete<NullResponse>(
+        url,
+        ids,
+        receiveTimeout: const Duration(minutes: 10),
+      );
     }
 
     if (response.success == false && focus) {
