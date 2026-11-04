@@ -61,19 +61,16 @@ class WallpaperPageRoute<T> extends PageRoute<T> {
 
   @override
   TickerFuture didPush() {
-    QlDebugLog.write('[RTE] didPush classic=$_classic');
     return super.didPush();
   }
 
   @override
   bool didPop(dynamic result) {
-    QlDebugLog.write('[RTE] didPop classic=$_classic');
     return super.didPop(result);
   }
 
   @override
   void dispose() {
-    QlDebugLog.write('[RTE] dispose classic=$_classic');
     super.dispose();
   }
 

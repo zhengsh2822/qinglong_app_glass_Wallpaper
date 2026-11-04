@@ -35,7 +35,7 @@ class QlDebugLog {
     _queue = _queue.then((_) async {
       try {
         _file ??= File(
-          '${(await getExternalStorageDirectory())?.path ?? ''}/ql_debug.log',
+          '${(await getApplicationDocumentsDirectory()).path}/ql_debug.log',
         );
         final stamp = DateTime.now().toString().substring(11, 23);
         await _file!.writeAsString('$stamp $message\n', mode: FileMode.append);
