@@ -18,11 +18,6 @@ import 'package:qinglong_app/utils/sp_utils.dart';
 /// 注意：继承 [PageRoute] 而不是 CupertinoPageRoute——后者构造函数
 /// `assert(opaque)`，而本路由 opaque=false（容器展开需要透出下层页面），
 /// debug 模式必崩；转场与右滑均已由 ContainerReveal 自定义，无 Cupertino 依赖。
-///
-/// 收回可打断（与展开打断对称）：
-/// - 收回阶段整页 IgnorePointer 之外，[ContainerCollapseTracker] 记录收回中的
-///   本类路由；同来源卡片在收回完成前被重新点击时，新路由从旧收回进度
-///   无缝续播（install 时同帧移除旧路由，避免双窗口叠影）。
 class WallpaperPageRoute<T> extends PageRoute<T> {
   final double? blurSigma;
   final Color? blurTintColor;
@@ -46,20 +41,6 @@ class WallpaperPageRoute<T> extends PageRoute<T> {
   /// 构造时捕获的点击来源（由根部 PageTapScope 记录）。
   final TapOriginData? _tapOrigin;
 
-  /// 最近一次进入收回中的本类路由（由 [ContainerCollapseTracker] 维护），
-  /// 供「收回中重开同来源」无缝续播。
-  static WallpaperPageRoute<dynamic>? _collapsing;
-
-  /// 收回被打断重开时的起始进度（0~1，构造时从旧路由捕获）：
-  /// createAnimationController 设为初值，didPush 的 forward() 从此续播。
-  double _initialRevealProgress = 0;
-
-  /// 被本路由接管的收回中旧路由（install 时同帧移除，避免双窗口叠影）。
-  WallpaperPageRoute<dynamic>? _interrupted;
-
-  /// 来源标识：同卡片重开判定用（Rect/Offset 均为值相等）。
-  Object? get _originKey => sourceRect ?? _tapOrigin?.rect ?? _tapOrigin?.point;
-
   WallpaperPageRoute({
     required this.builder,
     this.title,
@@ -74,20 +55,7 @@ class WallpaperPageRoute<T> extends PageRoute<T> {
     this.sourceHighlightOpacity = 0,
     this.sourceBorderColor = Colors.transparent,
   }) : _classic = SpUtil.getBool(spClassicPageTransition, defValue: false),
-       _tapOrigin = PageTapOrigin.lastFresh {
-    // 收回打断：同来源的容器展开正在收回 → 新路由从旧进度无缝续播
-    final WallpaperPageRoute<dynamic>? collapsing = _collapsing;
-    final Animation<double>? anim = collapsing?.animation;
-    if (collapsing != null &&
-        !collapsing._classic &&
-        anim != null &&
-        anim.status == AnimationStatus.reverse &&
-        anim.value > 0 &&
-        collapsing._originKey == _originKey) {
-      _initialRevealProgress = anim.value;
-      _interrupted = collapsing;
-    }
-  }
+       _tapOrigin = PageTapOrigin.lastFresh;
 
   @override
   bool get opaque => false;
@@ -112,17 +80,6 @@ class WallpaperPageRoute<T> extends PageRoute<T> {
 
   @override
   bool get barrierDismissible => false;
-
-  @override
-  void install() {
-    super.install();
-    if (_interrupted != null) {
-      // push 与 removeRoute 同帧：新路由首帧即渲染旧收回位置的窗口，
-      // 旧路由立刻消失，视觉零差异
-      navigator?.removeRoute(_interrupted!);
-      _interrupted = null;
-    }
-  }
 
   @override
   Widget buildPage(
@@ -160,10 +117,6 @@ class WallpaperPageRoute<T> extends PageRoute<T> {
   /// 上层路由提供下层变换，与下层页面自身路由类型无关；SDK 会自动抑制下层
   /// 原有 secondary 变换，不会双重叠加。容器展开模式返回 null，下层保持
   /// 原行为（容器转场不依赖下层变换）。
-  // 注意：不能直接返回 static 方法引用——Flutter didChangeNext 里
-  // `nextRoute.delegatedTransition != delegatedTransition` 用引用相等判定，
-  // 同类路由（首页与二级页都是本类且同为 classic）会因引用相同而跳过委托，
-  // 视差失效。每次返回新闭包绕过该判定，确保下层 always 接收视差变换。
   @override
   DelegatedTransitionBuilder? get delegatedTransition =>
       _classic
@@ -311,28 +264,5 @@ class WallpaperPageRoute<T> extends PageRoute<T> {
       width: 64,
       height: 64,
     );
-  }
-}
-
-/// 注册到每账号 Navigator.navigatorObservers：记录收回中的本类路由，
-/// 供「收回中重开同来源」无缝续播（收回打断，与展开打断对称）。
-///
-/// 展开支持打断是 Flutter 原生能力（推入中 pop，controller 从当前值反向）；
-/// 收回原本不行——收回中的页面盖在下层上吃输入，重开也是双窗口叠影。
-/// 配合 WallpaperPageRoute 构造器的同来源检测（initialRevealProgress +
-/// install 时 removeRoute 旧路由）实现无缝续播。
-class ContainerCollapseTracker extends NavigatorObserver {
-  @override
-  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    if (route is WallpaperPageRoute<dynamic> && !route._classic) {
-      WallpaperPageRoute._collapsing = route;
-    }
-  }
-
-  @override
-  void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    if (identical(WallpaperPageRoute._collapsing, route)) {
-      WallpaperPageRoute._collapsing = null;
-    }
   }
 }

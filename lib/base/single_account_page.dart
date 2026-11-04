@@ -249,12 +249,7 @@ class SingleAccountPageState extends State<SingleAccountPage> {
           // 键盘动画与退场动画时间重叠被吸收。必须挂在本自建 Navigator 上——
           // MaterialApp.navigatorObservers 只对默认 Navigator 生效，业务页面
           // 全部在本 Navigator 内，挂错位置 observer 不会触发（实测仍掉帧）
-          // ContainerCollapseTracker：记录收回中的容器展开路由，供收回打断
-          // 重开时无缝续播（wallpaper_page_route.dart）
-          observers: [
-            KeyboardDismissNavigatorObserver(),
-            ContainerCollapseTracker(),
-          ],
+          observers: [KeyboardDismissNavigatorObserver()],
           onGenerateRoute: (setting) {
             return Routes.generateRoute(setting);
           },
