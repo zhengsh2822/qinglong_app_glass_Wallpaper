@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart' show TickerFuture;
 
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/ui/container_reveal.dart';
 import 'package:qinglong_app/base/ui/page_tap_origin.dart';
 import 'package:qinglong_app/base/ui/wallpaper_background.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
+import 'package:qinglong_app/utils/ql_debug_log.dart';
 
 /// 自带壁纸背景 + 统一容器转场的路由。
 ///
@@ -56,6 +58,24 @@ class WallpaperPageRoute<T> extends PageRoute<T> {
     this.sourceBorderColor = Colors.transparent,
   }) : _classic = SpUtil.getBool(spClassicPageTransition, defValue: false),
        _tapOrigin = PageTapOrigin.lastFresh;
+
+  @override
+  TickerFuture didPush() {
+    QlDebugLog.write('[RTE] didPush classic=$_classic');
+    return super.didPush();
+  }
+
+  @override
+  bool didPop(dynamic result) {
+    QlDebugLog.write('[RTE] didPop classic=$_classic');
+    return super.didPop(result);
+  }
+
+  @override
+  void dispose() {
+    QlDebugLog.write('[RTE] dispose classic=$_classic');
+    super.dispose();
+  }
 
   @override
   bool get opaque => false;
@@ -206,6 +226,11 @@ class WallpaperPageRoute<T> extends PageRoute<T> {
         sourceBlurSigma > 0.01
             ? sourceBlurSigma
             : SpUtil.getDouble(spCardBlurSigma, defValue: 10);
+    // pageBackground：收回完成帧（animation=0）的容器底色。路由移除后该帧
+    // 因合成层清理延迟还会显示 ~0.3s——垫上 scaffoldBackgroundColor 后完成帧
+    // 与首页卡片视觉一致，残留不可见（主题版同款参数，壁纸版此前漏传导致
+    // 二级页内容透在壁纸上显形 = "卡片闪烁/残留"）。
+    final Color pageBackground = Theme.of(context).scaffoldBackgroundColor;
     // 收回阶段整页 IgnorePointer：正在溶解的面板不应再吃输入，否则收回
     // 期间点下层页面无响应（表现=收回不支持打断）。展开与静止阶段保持
     // 可交互（展开中可打断返回）。
@@ -224,6 +249,7 @@ class WallpaperPageRoute<T> extends PageRoute<T> {
         sourceBlurSigma: frostSigma,
         sourceHighlightOpacity: sourceHighlightOpacity,
         sourceBorderColor: sourceBorderColor,
+        pageBackground: pageBackground,
         // pageFade 保持 null：页面层透明度会破坏卡片实时模糊（见 buildPage 注释），
         // 内容在展开窗口内以全透明度直接呈现。
         // reverseFade：收回方向内容随窗口收缩逐渐淡出，避免路由移除瞬间
