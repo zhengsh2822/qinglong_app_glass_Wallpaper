@@ -137,6 +137,21 @@ class WallpaperPageRoute<T> extends PageRoute<T> {
     //    采到隔离层内的空内容，透明度到 1.0（完全展开）才恢复。
     // 代价是转场期间毛玻璃实时渲染（成本与首页滚动同级，容器转场不缩放
     // 页面，可承受）；壁纸仍在 ContainerReveal 的壁纸层随窗口渐显。
+    // 经典模式没有 ContainerReveal 壳——页面自身透明，必须垫壁纸背景层
+    // （跟随路由的 blurSigma/blurTint 参数），否则页面全黑无背景。
+    if (_classic) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          WallpaperBackground(
+            overrideBlurSigma: blurSigma,
+            overrideBlurTint: blurTintColor,
+            cacheBlur: true,
+          ),
+          builder(context),
+        ],
+      );
+    }
     return builder(context);
   }
 
@@ -145,9 +160,27 @@ class WallpaperPageRoute<T> extends PageRoute<T> {
   /// 上层路由提供下层变换，与下层页面自身路由类型无关；SDK 会自动抑制下层
   /// 原有 secondary 变换，不会双重叠加。容器展开模式返回 null，下层保持
   /// 原行为（容器转场不依赖下层变换）。
+  // 注意：不能直接返回 static 方法引用——Flutter didChangeNext 里
+  // `nextRoute.delegatedTransition != delegatedTransition` 用引用相等判定，
+  // 同类路由（首页与二级页都是本类且同为 classic）会因引用相同而跳过委托，
+  // 视差失效。每次返回新闭包绕过该判定，确保下层 always 接收视差变换。
   @override
   DelegatedTransitionBuilder? get delegatedTransition =>
-      _classic ? _classicDelegatedTransition : null;
+      _classic
+          ? (
+            context,
+            animation,
+            secondaryAnimation,
+            allowSnapshotting,
+            child,
+          ) => _classicDelegatedTransition(
+            context,
+            animation,
+            secondaryAnimation,
+            allowSnapshotting,
+            child,
+          )
+          : null;
 
   static Widget? _classicDelegatedTransition(
     BuildContext context,

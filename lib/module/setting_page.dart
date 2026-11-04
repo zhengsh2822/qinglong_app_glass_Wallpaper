@@ -79,19 +79,6 @@ class _SettingPageState extends ConsumerState<SettingPage> {
                         ),
                         settingsDivider,
                         SettingsSwitchRow(
-                          icon: CupertinoIcons.arrow_right_circle,
-                          title: "经典页面转场（右侧滑入）",
-                          value: SpUtil.getBool(
-                            spClassicPageTransition,
-                            defValue: false,
-                          ),
-                          onChanged: (open) async {
-                            await SpUtil.putBool(spClassicPageTransition, open);
-                            setState(() {});
-                          },
-                        ),
-                        settingsDivider,
-                        SettingsSwitchRow(
                           icon: CupertinoIcons.wand_stars_inverse,
                           title: "单实例模式",
                           value: SpUtil.getBool(
@@ -135,6 +122,19 @@ class _SettingPageState extends ConsumerState<SettingPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  SettingsSwitchRow(
+                    icon: CupertinoIcons.arrow_right_circle,
+                    title: "经典页面转场（右侧滑入）",
+                    value: SpUtil.getBool(
+                      spClassicPageTransition,
+                      defValue: false,
+                    ),
+                    onChanged: (open) async {
+                      await SpUtil.putBool(spClassicPageTransition, open);
+                      setState(() {});
+                    },
+                  ),
+                  settingsDivider,
                   SettingsSwitchRow(
                     icon: CupertinoIcons.doc_text,
                     title: "任务自动弹出日志",

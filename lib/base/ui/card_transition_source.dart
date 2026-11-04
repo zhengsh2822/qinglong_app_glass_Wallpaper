@@ -67,8 +67,17 @@ class _CardTransitionSourceState extends State<CardTransitionSource> {
     // 卡片内容快照：隐藏真实卡片前构建，与卡片内部布局保持一致。
     final Widget sourceChild = widget.sourceBuilder(context);
 
+    // 经典转场（右滑入）不从卡片展开，源卡片保持原位可见——
+    // 仅容器展开模式隐藏源卡片（经典模式隐藏会导致卡片在二级页期间消失）
+    final bool classic = SpUtil.getBool(
+      spClassicPageTransition,
+      defValue: false,
+    );
+
     HapticFeedback.lightImpact();
-    setState(() => _opening = true);
+    if (!classic) {
+      setState(() => _opening = true);
+    }
 
     Navigator.of(context)
         .push(
