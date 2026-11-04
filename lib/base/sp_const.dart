@@ -35,6 +35,10 @@ const String spSingleInstance = "spSingleInstance";
 const String spBgBlurSigma = "spBgBlurSigma"; // 背景模糊值（路由级 WallpaperBackground），默认 6
 const String spBlurEffect = "spBlurEffect"; // 毛玻璃开关（主题版键，确认弹窗读取兼容）
 const String spCardBlurSigma = "spCardBlurSigma"; // 卡片模糊值（GlassCard 等），默认 4
+
+// 页面转场动画（bool，默认 false=容器展开：从点击卡片展开/返回收回原处）
+// true = 经典右侧滑入（Cupertino 同款视差压暗）
+const String spClassicPageTransition = "spClassicPageTransition";
 const String spCardSolidOpacity = "spCardSolidOpacity"; // 卡片纯色不透明度（卡片模糊=0 时生效），默认 0.45
 const String spCardSolidColor = "spCardSolidColor"; // 卡片纯色自定义颜色（-1=随主题自动白/黑），用于不同壁纸适配
 const String spGithubLastReleaseTime = "spGithubLastReleaseTime"; // 已确认过的 GitHub 最新 release 发布时间(epoch 毫秒)，用于"获取新版安装包"时间对比（版本号不变，靠时间判断）
