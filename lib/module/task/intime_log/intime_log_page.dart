@@ -14,6 +14,7 @@ import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/base/ui/log_text_view.dart';
+import 'package:qinglong_app/base/ui/log_scroll_button.dart';
 import 'package:qinglong_app/module/scan_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
@@ -107,17 +108,7 @@ class _InTimeLogPageState extends ConsumerState<InTimeLogPage>
         }
       }
       if (alwaysAuthScroll) {
-        if (!mounted) return;
-        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-          if (!mounted) return;
-          if ((controller?.hasClients ?? false)) {
-            controller!.animateTo(
-              controller!.position.maxScrollExtent,
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.linear,
-            );
-          }
-        });
+        scrollLogToBottom(controller);
       }
       if (!mounted) return;
       setState(() {});
@@ -164,6 +155,11 @@ class _InTimeLogPageState extends ConsumerState<InTimeLogPage>
               setState(() {
                 alwaysAuthScroll = !alwaysAuthScroll;
               });
+              // 开启瞬间立即滚底：日志不再变化时（任务已结束）轮询的
+              // changed 条件永远不满足，只切标记会表现为「点击开启无效」
+              if (alwaysAuthScroll) {
+                scrollLogToBottom(controller);
+              }
             },
             elevation: 2,
             child: Icon(

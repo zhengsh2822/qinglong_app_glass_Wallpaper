@@ -11,6 +11,7 @@ import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
+import 'package:qinglong_app/base/ui/log_scroll_button.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/pauseable_timer_mixin.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
@@ -76,11 +77,7 @@ class _InTimeSubscribeLogPageState extends State<InTimeSubscribeLogPage>
       }
       content = newContent;
       if (alwaysAuthScroll) {
-        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-          if ((controller?.hasClients ?? false)) {
-            controller!.jumpTo(controller!.position.maxScrollExtent);
-          }
-        });
+        scrollLogToBottom(controller, animate: false);
       }
       setState(() {});
     } else {
@@ -110,6 +107,10 @@ class _InTimeSubscribeLogPageState extends State<InTimeSubscribeLogPage>
               setState(() {
                 alwaysAuthScroll = !alwaysAuthScroll;
               });
+              // 开启瞬间立即滚底，与实时日志页行为一致
+              if (alwaysAuthScroll) {
+                scrollLogToBottom(controller);
+              }
             },
             elevation: 2,
             child: Icon(
