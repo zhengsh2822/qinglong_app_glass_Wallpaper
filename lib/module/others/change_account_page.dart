@@ -320,11 +320,9 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
         final viewModel = getIt<MultiAccountUserInfoViewModel>();
         // 仅当没有其它槽位使用同一 host 时才清理历史记录：
         // 否则会连带删掉同 host 的其它账号历史（本次实机复现：两个槽位同 host）
-        final bool sharedByOtherSlot =
-            viewModel.tokenBeans
-                .asMap()
-                .entries
-                .any((e) => e.key != index && e.value.host == model.host);
+        final bool sharedByOtherSlot = viewModel.tokenBeans.asMap().entries.any(
+          (e) => e.key != index && e.value.host == model.host,
+        );
         if (!sharedByOtherSlot) {
           viewModel.removeHistoryAccount(model.host);
         }
@@ -421,9 +419,9 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
         _addAccountKey.currentContext?.findRenderObject() as RenderBox?;
     if (box == null || !box.hasSize) {
       // 兜底：保持原行为
-      context
-          .findAncestorStateOfType<MultiAccountPageState>()
-          ?.updateIndex(index);
+      context.findAncestorStateOfType<MultiAccountPageState>()?.updateIndex(
+        index,
+      );
       Navigator.of(context).pop();
       return;
     }
