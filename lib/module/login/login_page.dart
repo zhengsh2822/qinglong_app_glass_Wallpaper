@@ -12,6 +12,9 @@ import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/spring_sheet.dart';
 import 'package:qinglong_app/base/ui/account_page_transition.dart';
+import 'package:qinglong_app/base/ui/container_transform_route.dart';
+import 'package:qinglong_app/base/ui/wallpaper_background.dart';
+import 'package:qinglong_app/module/home/home_page.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
@@ -209,13 +212,32 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     if (widget.fromAddNewAccount || !hasLoggedInAccount) {
       return content;
     }
+    // 未登录槽位的初始登录页：返回 → 账号切换页（容器展开，与进入路径对称）。
+    // 原逻辑 push routeHomePage 会在未登录层渲染空首页（观感=退出登录）。
+    if (!widget.fromAddNewAccount) {
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) {
+            _openAccountPageFromHeader();
+          }
+        },
+        child: content,
+      );
+    }
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) {
-          Navigator.of(
-            context,
-          ).pushNamedAndRemoveUntil(Routes.routeHomePage, (p) => false);
+          final Size screen = MediaQuery.of(context).size;
+          Navigator.of(context).pushReplacement(
+            ContainerTransformRoute(
+              sourceRect: Rect.fromLTWH(0, 0, screen.width, screen.height),
+              background: const WallpaperBackground(cacheBlur: true),
+              pageBackground: const Color(0xFF080A0D),
+              pageBuilder: (context, animation) => const HomePage(),
+            ),
+          );
         }
       },
       child: content,
@@ -521,15 +543,22 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           padding: const EdgeInsets.symmetric(horizontal: 40),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: canClick
-                  ? [
-                      ref.watch(themeProvider).primaryColor,
-                      ref.watch(themeProvider).primaryColor,
-                    ]
-                  : [
-                      ref.watch(themeProvider).primaryColor.withValues(alpha: 0.6),
-                      ref.watch(themeProvider).primaryColor.withValues(alpha: 0.6),
-                    ],
+              colors:
+                  canClick
+                      ? [
+                        ref.watch(themeProvider).primaryColor,
+                        ref.watch(themeProvider).primaryColor,
+                      ]
+                      : [
+                        ref
+                            .watch(themeProvider)
+                            .primaryColor
+                            .withValues(alpha: 0.6),
+                        ref
+                            .watch(themeProvider)
+                            .primaryColor
+                            .withValues(alpha: 0.6),
+                      ],
             ),
             borderRadius: BorderRadius.all(
               Radius.circular(AppleColors.radiusButton),
@@ -647,70 +676,74 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
           forceOpaqueSolid: true,
           child: Container(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.7,
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.7,
+            ),
+            decoration: BoxDecoration(
+              color: sheetBg,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(18),
               ),
-              decoration: BoxDecoration(
-                color: sheetBg,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-              ),
-              child: SafeArea(
-                top: false,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // 拖拽条
-                    Container(
-                      margin: const EdgeInsets.only(top: 12, bottom: 8),
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color:
-                            isCyber
-                                ? CyberColors.cyan.withValues(alpha: 0.3)
-                                : Colors.grey[400],
-                        borderRadius: BorderRadius.circular(2),
-                      ),
+            ),
+            child: SafeArea(
+              top: false,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // 拖拽条
+                  Container(
+                    margin: const EdgeInsets.only(top: 12, bottom: 8),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color:
+                          isCyber
+                              ? CyberColors.cyan.withValues(alpha: 0.3)
+                              : Colors.grey[400],
+                      borderRadius: BorderRadius.circular(2),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 12,
-                        horizontal: 20,
-                      ),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          "历史账号",
-                          style: TextStyle(
-                            fontSize: 16,
-                            // 弹窗卡片标题跟随全局字体粗细
-                            fontWeight: FontWeight(ref.read(textWeightProvider)),
-                            color:
-                                isCyber
-                                    ? CyberColors.cyan
-                                    : ref
-                                        .read(themeProvider)
-                                        .themeColor
-                                        .titleColor(),
-                            fontFamily: 'MiSans',
-                          ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 20,
+                    ),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        "历史账号",
+                        style: TextStyle(
+                          fontSize: 16,
+                          // 弹窗卡片标题跟随全局字体粗细
+                          fontWeight: FontWeight(ref.read(textWeightProvider)),
+                          color:
+                              isCyber
+                                  ? CyberColors.cyan
+                                  : ref
+                                      .read(themeProvider)
+                                      .themeColor
+                                      .titleColor(),
+                          fontFamily: 'MiSans',
                         ),
                       ),
                     ),
-                    Flexible(
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        padding: const EdgeInsets.only(bottom: 20),
-                        itemCount: accounts.length,
-                        itemBuilder:
-                            (context, index) =>
-                                _buildHistoryAccountCard(accounts[index], isCyber),
-                      ),
+                  ),
+                  Flexible(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.only(bottom: 20),
+                      itemCount: accounts.length,
+                      itemBuilder:
+                          (context, index) => _buildHistoryAccountCard(
+                            accounts[index],
+                            isCyber,
+                          ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
+          ),
         );
       },
     );
@@ -764,9 +797,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         color:
                             isCyber
                                 ? CyberColors.descColor
-                                : (isDark
-                                    ? Colors.white54
-                                    : Colors.black45),
+                                : (isDark ? Colors.white54 : Colors.black45),
                       ),
                     ],
                   ),
@@ -782,10 +813,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     color:
                         isCyber
                             ? CyberColors.descColor
-                            : ref
-                                .read(themeProvider)
-                                .themeColor
-                                .descColor(),
+                            : ref.read(themeProvider).themeColor.descColor(),
                     fontSize: 13,
                   ),
                 ),
@@ -796,8 +824,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () {
-              getIt<MultiAccountUserInfoViewModel>()
-                  .removeHistoryAccount(bean.host);
+              getIt<MultiAccountUserInfoViewModel>().removeHistoryAccount(
+                bean.host,
+              );
               Navigator.of(context).pop();
               setState(() {});
             },
@@ -897,7 +926,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       if (widget.targetAccountIndex != null) {
         _finishAddAccount(widget.targetAccountIndex!);
       } else {
-        Navigator.of(context).pushReplacementNamed(Routes.routeHomePage);
+        final Size screen = MediaQuery.of(context).size;
+        Navigator.of(context).pushReplacement(
+          ContainerTransformRoute(
+            sourceRect: Rect.fromLTWH(0, 0, screen.width, screen.height),
+            background: const WallpaperBackground(cacheBlur: true),
+            pageBackground: const Color(0xFF080A0D),
+            pageBuilder: (context, animation) => const HomePage(),
+          ),
+        );
       }
     } else if (response == LoginHelper.failed) {
       loginFailed();
@@ -915,11 +952,23 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     if (getIt.isRegistered<GlobalKey<NavigatorState>>(instanceName: name)) {
       getIt<GlobalKey<NavigatorState>>(
         instanceName: name,
-      ).currentState?.pushReplacementNamed(Routes.routeHomePage);
+      ).currentState?.pushReplacement(
+        ContainerTransformRoute(
+          sourceRect: Rect.fromLTWH(
+            0,
+            0,
+            MediaQuery.of(context).size.width,
+            MediaQuery.of(context).size.height,
+          ),
+          background: const WallpaperBackground(cacheBlur: true),
+          pageBackground: const Color(0xFF080A0D),
+          pageBuilder: (context, animation) => const HomePage(),
+        ),
+      );
     }
-    context
-        .findAncestorStateOfType<MultiAccountPageState>()
-        ?.updateIndex(targetIndex);
+    context.findAncestorStateOfType<MultiAccountPageState>()?.updateIndex(
+      targetIndex,
+    );
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 

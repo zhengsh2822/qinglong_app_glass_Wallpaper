@@ -307,6 +307,8 @@ class AppKeyItemCell extends StatelessWidget {
             onTap: () {
               Navigator.of(context).push(
                 WallpaperPageRoute(
+                  blurSigma: 6,
+                  blurTintColor: CyberColors.bg.withOpacity(0.50),
                   builder: (context) => AppKeyDetailDetailPage(bean),
                 ),
               );

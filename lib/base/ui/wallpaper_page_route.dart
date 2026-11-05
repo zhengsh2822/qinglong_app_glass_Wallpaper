@@ -40,6 +40,10 @@ class WallpaperPageRoute<T> extends PageRoute<T> {
   /// 是否走经典右侧滑入（构造时读一次 SP，本次路由生命周期内不变）。
   final bool _classic;
 
+  // 经典模式边缘侧滑返回状态
+  bool _classicBackDragging = false;
+  double? _classicBackDragVelocity;
+
   /// 构造时捕获的点击来源（由根部 PageTapScope 记录）。
   final TapOriginData? _tapOrigin;
 
@@ -61,17 +65,20 @@ class WallpaperPageRoute<T> extends PageRoute<T> {
 
   @override
   TickerFuture didPush() {
+    QlDebugLog.write('[RTE] didPush classic=$_classic');
     return super.didPush();
   }
 
   @override
   bool didPop(dynamic result) {
+    QlDebugLog.write('[RTE] didPop classic=$_classic');
     return super.didPop(result);
   }
 
   @override
-  void dispose() {
-    super.dispose();
+  void didPopNext(Route<dynamic> nextRoute) {
+    QlDebugLog.write('[RTE] didPopNext classic=$_classic');
+    super.didPopNext(nextRoute);
   }
 
   @override
@@ -204,14 +211,36 @@ class WallpaperPageRoute<T> extends PageRoute<T> {
     // 经典模式：右侧滑入/滑出（复刻 CupertinoPageRoute 节奏），返回时
     // 随动画反向自动滑回右侧，无需单独处理 pop
     if (_classic) {
-      return SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(1, 0),
-          end: Offset.zero,
-        ).animate(
-          CurvedAnimation(parent: animation, curve: Curves.linearToEaseOut),
-        ),
-        child: child,
+      // 经典模式补边缘侧滑返回手势（CupertinoPageRoute 同款体验）：
+      // 自定义 SlideTransition 不含 Cupertino 的 BackGestureDetector，
+      // 不补的话二级页无法侧滑返回（返回键仍可用）
+      final Size screen = MediaQuery.sizeOf(context);
+      final double dragW = 20.0;
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(1, 0),
+              end: Offset.zero,
+            ).animate(
+              CurvedAnimation(parent: animation, curve: Curves.linearToEaseOut),
+            ),
+            child: child,
+          ),
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: dragW,
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onHorizontalDragStart: _classicBackDragStart,
+              onHorizontalDragUpdate: (d) => _classicBackDragUpdate(d, screen),
+              onHorizontalDragEnd: _classicBackDragEnd,
+            ),
+          ),
+        ],
       );
     }
 
@@ -255,6 +284,40 @@ class WallpaperPageRoute<T> extends PageRoute<T> {
         child: child,
       ),
     );
+  }
+
+  // ── 经典模式边缘侧滑返回 ────────────────────────────────
+  void _classicBackDragStart(DragStartDetails details) {
+    if (!((_classicBackDragVelocity ?? 0) != 0)) {
+      _classicBackDragVelocity = 0;
+    }
+    _classicBackDragging = true;
+    navigator?.didStartUserGesture();
+  }
+
+  void _classicBackDragUpdate(DragUpdateDetails details, Size screen) {
+    if (!_classicBackDragging) return;
+    final double delta = details.delta.dx / screen.width;
+    controller?.value = ((controller?.value ?? 1) - delta).clamp(0.0, 1.0);
+    _classicBackDragVelocity = details.delta.dx;
+  }
+
+  void _classicBackDragEnd(DragEndDetails details) {
+    if (!_classicBackDragging) return;
+    _classicBackDragging = false;
+    final double v = controller?.value ?? 1;
+    final bool shouldPop = v < 0.5 || details.velocity.pixelsPerSecond.dx > 500;
+    if (shouldPop) {
+      navigator?.pop();
+    } else {
+      // 回弹：未过半则滑回原位
+      controller?.animateTo(
+        1,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOutCubic,
+      );
+    }
+    navigator?.didStopUserGesture();
   }
 
   Rect _resolveOrigin(Size screen) {
