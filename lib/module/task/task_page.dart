@@ -1027,13 +1027,30 @@ class TaskItemCell extends StatelessWidget {
       // 复用 CyberSlidable 组件（与 appkey_page/change_account_page 一致），
       // 它的 CustomSlidableAction 用 Material elevation 渲染赛博按钮光晕，
       // 配合主卡片 BackdropFilter 形成"光折射到主卡片"效果
+      // 「房子」在外：毛玻璃+描边固定不动，Slidable 只滑内容，
+      // ActionPane 按钮落在卡片底板上（与主题版"同一房子"统一）
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: 12),
-        child: CyberSlidable(
-          slidableKey: ValueKey(bean.sId),
-          enabled: !editMode,
-          borderRadius: 18,
-          startActions: [
+        child: OptimizedFrostedGlass(
+          sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
+          borderRadius: BorderRadius.circular(18),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color:
+                    bean.isPinned == 1
+                        ? CyberColors.cyan.withValues(alpha: 0.85)
+                        : CyberColors.cardStroke,
+                width: bean.isPinned == 1 ? 1.2 : 1,
+              ),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(17),
+              child: CyberSlidable(
+                slidableKey: ValueKey(bean.sId),
+                enabled: !editMode,
+                startActions: [
             CyberSlideAction(
               label: bean.status! == 1 ? '运行' : '停止',
               icon:
@@ -1113,13 +1130,16 @@ class TaskItemCell extends StatelessWidget {
               },
             ),
           ],
-          // 卡片共享展开：点击卡片 → 卡片隐藏 → 容器从卡片矩形展开详情页
+          // 卡片共享展开：点击卡片 → 内容在卡片底板上滑动露出按钮
           child: CardTransitionSource(
             child: _buildCardChild(context),
             sourceBuilder: (ctx) => _buildCardContent(context),
             pageBuilder: (context) => TaskDetailPage(bean),
             blurSigma: 6,
             blurTintColor: CyberColors.bg.withOpacity(0.50),
+          ),
+              ),
+            ),
           ),
         ),
       );
@@ -1255,35 +1275,17 @@ class TaskItemCell extends StatelessWidget {
     );
   }
 
-  /// 构建卡片主体内容（不含外层 margin/decoration，由调用方提供）
+  /// 构建卡片内容（纯内容，毛玻璃/描边已上移到外壳层）
   Widget _buildCardChild(BuildContext context) {
-    // 统一毛玻璃封装：sigma<=0 时自动退化为纯色（无 BackdropFilter）
-    return OptimizedFrostedGlass(
-      sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
+    return Material(
+      color: Colors.transparent,
       borderRadius: BorderRadius.circular(18),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color:
-                bean.isPinned == 1
-                    ? CyberColors.cyan.withValues(alpha: 0.85)
-                    : CyberColors.cardStroke,
-            width: bean.isPinned == 1 ? 1.2 : 1,
-          ),
-        ),
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(18),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(18),
-            // 非编辑模式由外层 CardTransitionSource 接管点击（内层 onTap
-            // 为 null 不参与手势仲裁），编辑模式保留勾选行为
-            onTap: editMode ? () => checkedCallback(bean.sId ?? "") : null,
-            child: _buildCardContent(context),
-          ),
-        ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        // 非编辑模式由外层 CardTransitionSource 接管点击（内层 onTap
+        // 为 null 不参与手势仲裁），编辑模式保留勾选行为
+        onTap: editMode ? () => checkedCallback(bean.sId ?? "") : null,
+        child: _buildCardContent(context),
       ),
     );
   }

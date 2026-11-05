@@ -232,90 +232,90 @@ class AppKeyItemCell extends StatelessWidget {
     return Container(
       // 固定宽度：左右留白 16，卡片撑满剩余宽度（杜绝自适应宽窄不一）
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      child: CyberSlidable(
-        slidableKey: ValueKey(getAppKeyId(bean)),
-        borderRadius: 18,
-        endActions: [
-          CyberSlideAction(
-            label: '编辑',
-            icon: CupertinoIcons.pencil_outline,
-            color: const Color(0xFF00F0FF),
-            onTap: () {
-              Navigator.of(context)
-                  .push(
-                    WallpaperPageRoute(
-                      blurSigma: 6,
-                      blurTintColor: CyberColors.bg.withOpacity(0.50),
-                      builder: (context) => AddAppKeyPage(bean: bean),
-                    ),
-                  )
-                  .then((value) {
-                    if (value != null && value == true) {
-                      ref
-                          .read(
-                            SingleAccountPageState.ofAppKeyProvider(context)(
-                              getProviderName(context),
-                            ),
-                          )
-                          .loadData(context);
-                    }
+      // 「房子」在外：毛玻璃+描边固定不动，Slidable 只滑内容
+      child: OptimizedFrostedGlass(
+        sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: CyberColors.cardStroke, width: 1),
+          ),
+          child: CyberSlidable(
+            slidableKey: ValueKey(getAppKeyId(bean)),
+            borderRadius: 18,
+            endActions: [
+              CyberSlideAction(
+                label: '编辑',
+                icon: CupertinoIcons.pencil_outline,
+                color: const Color(0xFF00F0FF),
+                onTap: () {
+                  Navigator.of(context)
+                      .push(
+                        WallpaperPageRoute(
+                          blurSigma: 6,
+                          blurTintColor: CyberColors.bg.withOpacity(0.50),
+                          builder: (context) => AddAppKeyPage(bean: bean),
+                        ),
+                      )
+                      .then((value) {
+                        if (value != null && value == true) {
+                          ref
+                              .read(
+                                SingleAccountPageState.ofAppKeyProvider(
+                                  context,
+                                )(getProviderName(context)),
+                              )
+                              .loadData(context);
+                        }
+                      });
+                },
+              ),
+              CyberSlideAction(
+                label: '重置',
+                icon: CupertinoIcons.arrow_2_circlepath,
+                color: const Color(0xFFA356D6),
+                onTap: () {
+                  WidgetsBinding.instance.endOfFrame.then((value) {
+                    _reset(context);
                   });
-            },
+                },
+              ),
+              CyberSlideAction(
+                label: '删除',
+                icon: CupertinoIcons.delete,
+                color: const Color(0xFFFF3D5C),
+                onTap: () {
+                  WidgetsBinding.instance.endOfFrame.then((value) {
+                    _del(context, ref);
+                  });
+                },
+              ),
+            ],
+            child: _buildCardChild(context),
           ),
-          CyberSlideAction(
-            label: '重置',
-            icon: CupertinoIcons.arrow_2_circlepath,
-            color: const Color(0xFFA356D6),
-            onTap: () {
-              WidgetsBinding.instance.endOfFrame.then((value) {
-                _reset(context);
-              });
-            },
-          ),
-          CyberSlideAction(
-            label: '删除',
-            icon: CupertinoIcons.delete,
-            color: const Color(0xFFFF3D5C),
-            onTap: () {
-              WidgetsBinding.instance.endOfFrame.then((value) {
-                _del(context, ref);
-              });
-            },
-          ),
-        ],
-        child: _buildCardChild(context),
+        ),
       ),
     );
   }
 
   /// 卡片主体：统一毛玻璃封装（sigma<=0 时退化为纯色）+ 边框光晕（与定时任务一致）
   Widget _buildCardChild(BuildContext context) {
-    return OptimizedFrostedGlass(
-      sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
+    return Material(
+      color: Colors.transparent,
       borderRadius: BorderRadius.circular(18),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: CyberColors.cardStroke, width: 1),
-        ),
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(18),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(18),
-            onTap: () {
-              Navigator.of(context).push(
-                WallpaperPageRoute(
-                  blurSigma: 6,
-                  blurTintColor: CyberColors.bg.withOpacity(0.50),
-                  builder: (context) => AppKeyDetailDetailPage(bean),
-                ),
-              );
-            },
-            child: _buildCardContent(context),
-          ),
-        ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () {
+          Navigator.of(context).push(
+            WallpaperPageRoute(
+              blurSigma: 6,
+              blurTintColor: CyberColors.bg.withOpacity(0.50),
+              builder: (context) => AppKeyDetailDetailPage(bean),
+            ),
+          );
+        },
+        child: _buildCardContent(context),
       ),
     );
   }
