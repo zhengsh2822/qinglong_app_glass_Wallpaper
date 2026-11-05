@@ -173,12 +173,28 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
                         item = GestureDetector(
                           behavior: HitTestBehavior.opaque,
                           onTap: () {
-                            context
-                                .findAncestorStateOfType<
-                                  MultiAccountPageState
-                                >()
-                                ?.updateIndex(slot);
+                            // 切层时 IndexedStack 首次光栅化新账号层是长帧
+                            // （透明页面+壁纸+毛玻璃全量），若在收回动画期间
+                            // 切层会挤占收回动画（卡成闪切）。顺序改为：
+                            // 先收回（动画期间保持旧账号层，全程流畅），
+                            // 收回完成后再切层——长帧只在"我的"页静止时
+                            // 发生一次，观感从"收回动画卡死"变为"页面轻微
+                            // 内容跳变"。
+                            final navState =
+                                context
+                                    .findAncestorStateOfType<
+                                      MultiAccountPageState
+                                    >();
+                            // pop 是 void，收回动画 480ms——动画完成后切层
                             Navigator.of(context).pop();
+                            Future.delayed(
+                              const Duration(milliseconds: 480),
+                              () {
+                                if (navState != null && navState.mounted) {
+                                  navState.updateIndex(slot);
+                                }
+                              },
+                            );
                           },
                           child: _buildAccountCard(userInfo, slot, isCyber),
                         );
