@@ -9,7 +9,6 @@ import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/module/home/system_bean.dart';
 import 'package:qinglong_app/module/task/task_bean.dart';
@@ -174,6 +173,7 @@ Future<bool> _deleteByTempTask(BuildContext context, String name) async {
     (addResult.message ?? '创建临时任务失败').toast();
     return false;
   }
+  if (!context.mounted) return false;
 
   final String? id = await _findTaskId(context, taskName);
   if (id == null || id.isEmpty) {
@@ -214,6 +214,7 @@ Future<bool> _deleteByTempTask(BuildContext context, String name) async {
 
   // 清理临时任务，避免残留在任务列表（放在复核之后，防止提前删除打断正在执行的 rm）
   await api.delTask([id]);
+  if (!context.mounted) return false;
 
   // 兜底：任务机制在本面板不可用时，改用纯 HTTP 的"另存为"链路删除
   // （借面板自身的 rmPath 删掉 origin，完全不依赖调度器）

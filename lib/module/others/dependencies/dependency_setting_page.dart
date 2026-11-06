@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -27,7 +26,7 @@ import 'package:qinglong_app/utils/extension.dart';
 /// 传空字符串保存表示清除设置。
 /// Node/Linux 镜像源更新会触发重装已安装依赖，耗时较长，用 Loading 遮罩提示。
 class DependencySettingPage extends ConsumerStatefulWidget {
-  const DependencySettingPage({Key? key}) : super(key: key);
+  const DependencySettingPage({super.key});
 
   @override
   ConsumerState<DependencySettingPage> createState() =>
@@ -170,7 +169,7 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
           final raw = r.message?.isNotEmpty == true ? r.message : 'code=${r.code}';
           detailLines.add('  ✗ 失败: $raw');
         }
-      } catch (e, st) {
+      } catch (e) {
         detailLines.add('  ✗ 异常: $e');
         results.add(HttpResponse<String>(success: false, code: -9999, message: e.toString()));
       }
@@ -256,7 +255,7 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
               ),
               const SizedBox(height: 16),
               CupertinoButton(
-                color: CyberColors.cyan.withOpacity(0.15),
+                color: CyberColors.cyan.withValues(alpha: 0.15),
                 onPressed: _loadConfig,
                 child: Text(
                   '重试',

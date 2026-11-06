@@ -15,10 +15,10 @@ import 'package:qinglong_app/utils/utils.dart';
 class EnvDetailPage extends ConsumerStatefulWidget {
   final EnvBean envBean;
 
-  const EnvDetailPage(this.envBean, {Key? key}) : super(key: key);
+  const EnvDetailPage(this.envBean, {super.key});
 
   @override
-  _TaskDetailPageState createState() => _TaskDetailPageState();
+  ConsumerState<EnvDetailPage> createState() => _TaskDetailPageState();
 }
 
 class _TaskDetailPageState extends ConsumerState<EnvDetailPage> {
@@ -126,6 +126,7 @@ class _TaskDetailPageState extends ConsumerState<EnvDetailPage> {
       content: "确认删除环境变量 ${widget.envBean.name ?? ""} 吗",
       danger: true,
     ).then((confirmed) async {
+      if (!context1.mounted) return;
       if (confirmed != true) return;
       await ref
           .read(
@@ -134,6 +135,7 @@ class _TaskDetailPageState extends ConsumerState<EnvDetailPage> {
             ),
           )
           .delEnv(context1, widget.envBean.sId!);
+      if (!context1.mounted) return;
       Navigator.of(context1).pop();
     });
   }
@@ -147,13 +149,13 @@ class EnvDetailCell extends ConsumerWidget {
   final Function? taped;
 
   const EnvDetailCell({
-    Key? key,
+    super.key,
     required this.title,
     this.desc,
     this.icon,
     this.hideDivide = false,
     this.taped,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

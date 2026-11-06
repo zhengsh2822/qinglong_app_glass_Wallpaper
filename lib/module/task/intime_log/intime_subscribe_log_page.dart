@@ -1,5 +1,3 @@
-import 'dart:async';
-import 'dart:ui';
 
 import 'package:qinglong_app/utils/share_utils.dart';
 import 'package:flutter/cupertino.dart';
@@ -27,11 +25,11 @@ class InTimeSubscribeLogPage extends StatefulWidget {
     this.cronId,
     this.needTimer,
     this.title, {
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
-  _InTimeSubscribeLogPageState createState() => _InTimeSubscribeLogPageState();
+  State<InTimeSubscribeLogPage> createState() => _InTimeSubscribeLogPageState();
 }
 
 class _InTimeSubscribeLogPageState extends State<InTimeSubscribeLogPage>

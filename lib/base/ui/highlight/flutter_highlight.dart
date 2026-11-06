@@ -2,7 +2,6 @@ import 'dart:ui' show BoxHeightStyle, BoxWidthStyle, Color;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:highlight/highlight.dart' show highlight, Node;
 
 /// Highlight Flutter Widget
@@ -91,9 +90,7 @@ class HighlightView extends StatelessWidget {
       fontFamily: _defaultFontFamily,
       color: theme[_rootKey]?.color ?? _defaultFontColor,
     );
-    if (textStyle != null) {
-      textStyle = textStyle.merge(textStyle);
-    }
+    textStyle = textStyle.merge(textStyle);
 
     return LayoutBuilder(
       builder:

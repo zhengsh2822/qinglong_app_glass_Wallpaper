@@ -57,11 +57,11 @@ class RadarScanPainter extends CustomPainter {
       startAngle: -math.pi / 2,
       endAngle: math.pi * 1.5,
       colors: [
-        primaryColor.withOpacity(0.0),
-        primaryColor.withOpacity(0.05),
-        primaryColor.withOpacity(0.18),
-        primaryColor.withOpacity(0.45),
-        primaryColor.withOpacity(0.0),
+        primaryColor.withValues(alpha: 0.0),
+        primaryColor.withValues(alpha: 0.05),
+        primaryColor.withValues(alpha: 0.18),
+        primaryColor.withValues(alpha: 0.45),
+        primaryColor.withValues(alpha: 0.0),
       ],
       stops: const [0.0, 0.55, 0.82, 0.95, 1.0],
       transform: const GradientRotation(0),
@@ -83,7 +83,7 @@ class RadarScanPainter extends CustomPainter {
   /// 同心圆网格
   void _paintConcentricRings(Canvas canvas, Offset center, double radius) {
     final ringPaint = Paint()
-      ..color = primaryColor.withOpacity(0.12)
+      ..color = primaryColor.withValues(alpha: 0.12)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
 
@@ -96,7 +96,7 @@ class RadarScanPainter extends CustomPainter {
   /// 十字扫描线
   void _paintCrossLines(Canvas canvas, Offset center, double radius) {
     final linePaint = Paint()
-      ..color = primaryColor.withOpacity(0.18)
+      ..color = primaryColor.withValues(alpha: 0.18)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
 
@@ -124,7 +124,7 @@ class RadarScanPainter extends CustomPainter {
 
     // 底层虚线轨道
     final trackPaint = Paint()
-      ..color = primaryColor.withOpacity(0.22)
+      ..color = primaryColor.withValues(alpha: 0.22)
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
@@ -150,9 +150,9 @@ class RadarScanPainter extends CustomPainter {
           startAngle: -math.pi / 2,
           endAngle: -math.pi / 2 + 2 * math.pi,
           colors: [
-            primaryColor.withOpacity(0.45),
+            primaryColor.withValues(alpha: 0.45),
             primaryColor,
-            primaryColor.withOpacity(0.85),
+            primaryColor.withValues(alpha: 0.85),
           ],
           stops: const [0.0, 0.6, 1.0],
         ).createShader(
@@ -181,7 +181,7 @@ class RadarScanPainter extends CustomPainter {
       canvas.drawCircle(
         headOffset,
         strokeWidth * 1.8,
-        Paint()..color = primaryColor.withOpacity(0.25),
+        Paint()..color = primaryColor.withValues(alpha: 0.25),
       );
     }
   }
@@ -192,8 +192,8 @@ class RadarScanPainter extends CustomPainter {
     final glowPaint = Paint()
       ..shader = RadialGradient(
         colors: [
-          primaryColor.withOpacity(0.55),
-          primaryColor.withOpacity(0.0),
+          primaryColor.withValues(alpha: 0.55),
+          primaryColor.withValues(alpha: 0.0),
         ],
       ).createShader(
         Rect.fromCircle(center: center, radius: glowRadius * 1.6),

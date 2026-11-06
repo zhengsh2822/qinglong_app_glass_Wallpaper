@@ -1,16 +1,16 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 
 class ViewModel extends ChangeNotifier {}
 
 class BaseViewModel extends ViewModel {
-  PageState currentState = PageState.LOADING;
+  PageState currentState = PageState.loading;
   String? failReason;
   String? failedToast;
 
   void loading({bool notify = false}) {
     failReason = null;
     failedToast = null;
-    currentState = PageState.LOADING;
+    currentState = PageState.loading;
     if (notify) {
       notifyListeners();
     }
@@ -19,14 +19,14 @@ class BaseViewModel extends ViewModel {
   void success({bool notify = true}) {
     failReason = null;
     failedToast = null;
-    currentState = PageState.CONTENT;
+    currentState = PageState.content;
     if (notify) {
       notifyListeners();
     }
   }
 
   void failed(String? reason, {bool notify = false}) {
-    currentState = PageState.FAILED;
+    currentState = PageState.failed;
     failReason = reason;
     failedToast = null;
     if (notify) {
@@ -35,7 +35,7 @@ class BaseViewModel extends ViewModel {
   }
 
   void failToast(String? reason, {bool notify = false}) {
-    currentState = PageState.CONTENT;
+    currentState = PageState.content;
     failedToast = reason;
     failReason = reason;
     if (notify) {
@@ -50,7 +50,7 @@ class BaseViewModel extends ViewModel {
   void empty({bool notify = false}) {
     failReason = null;
     failedToast = null;
-    currentState = PageState.EMPTY;
+    currentState = PageState.empty;
     if (notify) {
       notifyListeners();
     }
@@ -60,8 +60,8 @@ class BaseViewModel extends ViewModel {
 }
 
 enum PageState {
-  LOADING,
-  EMPTY,
-  CONTENT,
-  FAILED,
+  loading,
+  empty,
+  content,
+  failed,
 }

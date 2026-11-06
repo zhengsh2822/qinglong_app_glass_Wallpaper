@@ -257,7 +257,7 @@ class _BackupRestorePageState extends ConsumerState<BackupRestorePage>
                 ).asyncEnv(result.bean ?? [], focusUpdate: true);
                 SpUtil.putString(spEnvBackTime, ICloudUtils.now());
                 setState(() {});
-              } catch (e) {}
+              } catch (e) { /* ignore: failure is non-critical */ }
             },
           ),
           const Divider(height: 1, indent: 15),
@@ -341,7 +341,7 @@ class _BackupRestorePageState extends ConsumerState<BackupRestorePage>
                 ).asyncSubscribe(result.bean ?? "", focusUpdate: true);
                 SpUtil.putString(spSubscribeBackTime, ICloudUtils.now());
                 setState(() {});
-              } catch (e) {}
+              } catch (e) { /* ignore: failure is non-critical */ }
             },
           ),
           const Divider(height: 1, indent: 15),
@@ -391,7 +391,7 @@ class _BackupRestorePageState extends ConsumerState<BackupRestorePage>
       fileNum = result["fileNum"].toString();
       fileSizes = getFileSizeString(result["size"] ?? 0, 2);
       setState(() {});
-    } catch (e) {}
+    } catch (e) { /* ignore: failure is non-critical */ }
   }
 
   static String getFileSizeString(int bytes, int decimals) {
@@ -403,6 +403,7 @@ class _BackupRestorePageState extends ConsumerState<BackupRestorePage>
 
   void lookUpFiles() async {
     String path = await FileUtil(_index).sourcePath;
+    if (!mounted) return;
     Navigator.of(context).push(
       WallpaperPageRoute(builder: (context) => FileDirectoryPage(path: path)),
     );
@@ -559,6 +560,7 @@ class _BackupRestorePageState extends ConsumerState<BackupRestorePage>
 
       final typeList = _selected.toList();
 
+      if (!mounted) return;
       final error = await SingleAccountPageState.ofApi(context).exportData(
         savePath,
         type: typeList,
@@ -749,7 +751,7 @@ class _BackupRestorePageState extends ConsumerState<BackupRestorePage>
                             .watch(themeProvider)
                             .themeColor
                             .descColor()
-                            .withOpacity(0.5),
+                            .withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -865,7 +867,7 @@ class _BackupRestorePageState extends ConsumerState<BackupRestorePage>
                             .watch(themeProvider)
                             .themeColor
                             .descColor()
-                            .withOpacity(0.5),
+                            .withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -901,7 +903,7 @@ class _BackupRestorePageState extends ConsumerState<BackupRestorePage>
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: (isCyber ? CyberColors.cyan : AppleColors.accent)
-                            .withOpacity(0.08),
+                            .withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
@@ -1000,8 +1002,7 @@ class _BackupRestorePageState extends ConsumerState<BackupRestorePage>
           ),
           child: GlowSheetContainer(
             isCyber: isCyber,
-            child: Container(
-              child: Column(
+            child: Column(
                 children: [
                   Container(
                     margin: const EdgeInsets.only(top: 8, bottom: 4),
@@ -1012,7 +1013,7 @@ class _BackupRestorePageState extends ConsumerState<BackupRestorePage>
                           .watch(themeProvider)
                           .themeColor
                           .descColor()
-                          .withOpacity(0.5),
+                          .withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -1134,7 +1135,6 @@ class _BackupRestorePageState extends ConsumerState<BackupRestorePage>
                   ),
                 ],
               ),
-            ),
           ),
         );
       },
@@ -1157,7 +1157,7 @@ Map<String, int> dirStatSync(String dirPath) {
         }
       });
     }
-  } catch (e) {}
+  } catch (e) { /* ignore: failure is non-critical */ }
 
   return {'fileNum': fileNum, 'size': totalSize};
 }

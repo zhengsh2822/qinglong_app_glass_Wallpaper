@@ -49,6 +49,11 @@ dependencies:
   timezone: any
   image_picker: ^1.1.2
   http: ^1.6.0
+  # 代码中直接 import 的传递依赖，显式声明避免 depend_on_referenced_packages
+  # 版本取 pubspec.lock 已锁定的版本（本地已有缓存，无需重新下载）
+  path: ^1.9.1
+  vector_math: ^2.2.0
+  local_auth_android: ^1.0.52
   # 液态玻璃组件库（底部导航 + 顶部 tab），整体纳入版本库见 packages/，与主题版对齐
   liquid_glass_easy:
     path: packages/liquid_glass_easy

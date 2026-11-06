@@ -205,7 +205,7 @@ class _ImagePathCardState extends ConsumerState<_ImagePathCard> {
     final theme = ref.watch(themeProvider);
     final isCyber = theme.themeMode == modeCyber;
     final accent = theme.primaryColor;
-    final borderColor = accent.withOpacity(isCyber ? 0.55 : 0.35);
+    final borderColor = accent.withValues(alpha: isCyber ? 0.55 : 0.35);
     final textColor = isCyber
         ? CupertinoColors.white
         : CupertinoColors.label.resolveFrom(context);
@@ -222,7 +222,7 @@ class _ImagePathCardState extends ConsumerState<_ImagePathCard> {
           onTap: _showActionSheet,
           child: Container(
             decoration: BoxDecoration(
-              color: accent.withOpacity(0.08),
+              color: accent.withValues(alpha: 0.08),
               border: Border.all(color: borderColor, width: 1),
               borderRadius: BorderRadius.circular(10),
             ),
@@ -238,7 +238,7 @@ class _ImagePathCardState extends ConsumerState<_ImagePathCard> {
                         : CupertinoColors.white,
                     borderRadius: BorderRadius.circular(6),
                     border: Border.all(
-                      color: borderColor.withOpacity(0.4),
+                      color: borderColor.withValues(alpha: 0.4),
                       width: 0.5,
                     ),
                   ),
@@ -505,7 +505,7 @@ class _Base64ImageCardState extends State<_Base64ImageCard> {
               color: const Color(0xFF1A1A24),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: const Color(0xFF00CCCC).withOpacity(0.4),
+                color: const Color(0xFF00CCCC).withValues(alpha: 0.4),
                 width: 1,
               ),
             ),
@@ -608,7 +608,7 @@ class _AsciiArtCard extends StatelessWidget {
               color: const Color(0xFF1A1A24),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: const Color(0xFF00CCCC).withOpacity(0.4),
+                color: const Color(0xFF00CCCC).withValues(alpha: 0.4),
                 width: 1,
               ),
             ),

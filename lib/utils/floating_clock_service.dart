@@ -20,21 +20,21 @@ class FloatingClockService {
   static Future<void> requestOverlayPermission() async {
     try {
       await _channel.invokeMethod('requestOverlayPermission');
-    } on PlatformException {}
+    } on PlatformException { /* ignore: failure is non-critical */ }
   }
 
   /// 启动悬浮时钟
   static Future<void> startFloating() async {
     try {
       await _channel.invokeMethod('startFloating');
-    } on PlatformException {}
+    } on PlatformException { /* ignore: failure is non-critical */ }
   }
 
   /// 停止悬浮时钟
   static Future<void> stopFloating() async {
     try {
       await _channel.invokeMethod('stopFloating');
-    } on PlatformException {}
+    } on PlatformException { /* ignore: failure is non-critical */ }
   }
 
   /// 切换悬浮时钟：有权限则启动，无权限则请求权限

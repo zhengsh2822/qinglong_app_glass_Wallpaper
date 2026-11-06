@@ -31,24 +31,10 @@ abstract class Cron {
   CronIterator<TZDateTime> parse(String cronString, String locationName, [TZDateTime? startTime]);
 }
 
-const String _regex0to59 = "([1-5]?[0-9])";
-const String _regex0to23 = "([1]?[0-9]|[2][0-3])";
-const String _regex1to31 = "([1-9]|[12][0-9]|[3][01])";
-const String _regex1to12 = "([1-9]|[1][012])";
-const String _regex0to7 = "([0-7])";
-
-const String _minutesRegex = "((($_regex0to59[,])+$_regex0to59)|$_regex0to59([-]$_regex0to59)?|[*]([/]$_regex0to59)?)";
-const String _hoursRegex = "((($_regex0to23[,])+$_regex0to23)|$_regex0to23([-]($_regex0to23))?|[*]([/]$_regex0to23)?)";
-const String _daysRegex = "((($_regex1to31[,])+$_regex1to31)|$_regex1to31([-]$_regex1to31)?|[*]([/]$_regex1to31)?)";
-const String _monthRegex = "((($_regex1to12[,])+$_regex1to12)|$_regex1to12([-]$_regex1to12)?|[*]([/]$_regex1to12)?)";
-const String _weekdaysRegex = "((($_regex0to7[,])+$_regex0to7)|$_regex0to7([-]$_regex0to7)?|[*]([/]$_regex0to7)?)";
-final RegExp _cronRegex = RegExp("^$_minutesRegex\\s+$_hoursRegex\\s+$_daysRegex\\s+$_monthRegex\\s+$_weekdaysRegex\$");
-
 class _Cron implements Cron {
   @override
   CronIterator<TZDateTime> parse(String cronString, String locationName, [TZDateTime? startTime]) {
     assert(cronString.isNotEmpty);
-    // assert(_cronRegex.hasMatch(cronString));
     var location = getLocation(locationName);
     startTime ??= TZDateTime.now(location);
     startTime = TZDateTime.from(startTime, location);

@@ -8,7 +8,7 @@ import '../base/theme.dart';
 
 
 class SupportMePage extends ConsumerStatefulWidget {
-  const SupportMePage({Key? key}) : super(key: key);
+  const SupportMePage({super.key});
 
   @override
   ConsumerState<SupportMePage> createState() => _SupportMePageState();
@@ -110,31 +110,31 @@ class _SupportMePageState extends ConsumerState<SupportMePage> with TickerProvid
           Expanded(
             child: TabBarView(
               physics: const NeverScrollableScrollPhysics(),
+              controller: tabController,
               children: [
                 Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 15,
+                    vertical: 15,
+                  ),
                   child: Image.asset(
                     "assets/images/support_me.png",
                     width: MediaQuery.of(context).size.width - 60,
                     height: MediaQuery.of(context).size.width - 60,
                   ),
+                ),
+                Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 15,
                     vertical: 15,
                   ),
-                ),
-                Padding(
                   child: Image.asset(
                     "assets/images/alipay.png",
                     fit: BoxFit.fitHeight,
                     width: MediaQuery.of(context).size.width - 60,
                   ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 15,
-                    vertical: 15,
-                  ),
                 ),
               ],
-              controller: tabController,
             ),
           ),
         ],

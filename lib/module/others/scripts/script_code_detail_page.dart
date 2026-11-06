@@ -6,11 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
-import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/highlight/selectable_code_view.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
-import 'package:qinglong_app/base/ui/glass_dialog.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/utils/extension.dart';
@@ -23,12 +21,12 @@ class ScriptCodeDetailPage extends ConsumerStatefulWidget {
   final String? absPath;
 
   const ScriptCodeDetailPage({
-    Key? key,
+    super.key,
     required this.title,
     required this.content,
     this.absPath,
     this.canRestore = false,
-  }) : super(key: key);
+  });
 
   @override
   ScriptCodeDetailPageState createState() => ScriptCodeDetailPageState();
@@ -102,6 +100,7 @@ class ScriptCodeDetailPageState extends ConsumerState<ScriptCodeDetailPage>
                     title: "温馨提示",
                     content: "确定还原吗?",
                   ).then((confirmed) async {
+                    if (!context.mounted) return;
                     if (confirmed != true) return;
                     if (widget.title.endsWith(".${FileUtil.env}")) {
                       getIt<ICloudUtils>(

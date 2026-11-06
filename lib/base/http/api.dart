@@ -6,17 +6,16 @@ import 'package:qinglong_app/module/env/env_bean.dart';
 import 'package:qinglong_app/module/home/system_bean.dart';
 import 'package:qinglong_app/module/login/login_bean.dart';
 import 'package:qinglong_app/module/login/user_bean.dart';
-import 'package:qinglong_app/module/others/LogDelBean.dart';
+import 'package:qinglong_app/module/others/log_del_bean.dart';
 import 'package:qinglong_app/module/others/dependencies/dependency_bean.dart';
 import 'package:qinglong_app/module/others/login_log/login_log_bean.dart';
 import 'package:qinglong_app/module/others/notify_log/notify_log_bean.dart';
-import 'package:qinglong_app/module/others/scripts/script_bean.dart';
 import 'package:qinglong_app/module/others/task_log/task_log_bean.dart';
 import 'package:qinglong_app/module/others/update/check_update_bean.dart';
 import 'package:qinglong_app/module/others/update/upgrade_status_bean.dart';
 import 'package:qinglong_app/module/task/task_bean.dart';
 
-import '../../module/task/TaskBean2.dart';
+import '../../module/task/task_bean2.dart';
 import '../ui/tree/models/script_data.dart';
 
 class Api {
@@ -672,11 +671,11 @@ class Api {
     if (systemBean.isUpperVersion2_13_0()) {
       return await getIt<Http>(
         instanceName: index.toString(),
-      ).get<String>(url.taskLogDetail + name + "?path=" + path, null);
+      ).get<String>('${url.taskLogDetail}$name?path=$path', null);
     }
     return await getIt<Http>(
       instanceName: index.toString(),
-    ).get<String>(url.taskLogDetail + path + "/" + name, null);
+    ).get<String>('${url.taskLogDetail}$path/$name', null);
   }
 
   Future<HttpResponse<List<ScriptData>>> scripts() async {
@@ -809,7 +808,7 @@ class Api {
 
   Future<HttpResponse<String>> dependencyLog(String id) async {
     return await getIt<Http>(instanceName: index.toString()).get<String>(
-      getIt<Url>(instanceName: index.toString()).dependencies + "/" + id,
+      '${getIt<Url>(instanceName: index.toString()).dependencies}/$id',
       null,
     );
   }

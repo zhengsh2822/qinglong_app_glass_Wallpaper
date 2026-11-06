@@ -6,7 +6,6 @@ import 'dart:collection' show Queue;
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:vector_math/vector_math_64.dart' show Vector3;
 
 /// A material widget that's displayed at the bottom of an app for selecting
@@ -110,7 +109,7 @@ class BottomNavigationBar2 extends StatefulWidget {
   /// [BottomNavigationBarType.fixed] and `false` when [type] is
   /// [BottomNavigationBarType.shifting].
   BottomNavigationBar2({
-    Key? key,
+    super.key,
     required this.items,
     this.onTap,
     this.onLongTap,
@@ -134,23 +133,21 @@ class BottomNavigationBar2 extends StatefulWidget {
     this.mouseCursor,
     this.enableFeedback,
     this.landscapeLayout,
-  }) : assert(items != null),
-       assert(items.length >= 2),
+  }) : assert(items.length >= 2),
        assert(
          items.every((BottomNavigationBarItem item) => item.label != null),
          'Every item must have a non-null label',
        ),
        assert(0 <= currentIndex && currentIndex < items.length),
        assert(elevation == null || elevation >= 0.0),
-       assert(iconSize != null && iconSize >= 0.0),
+       assert(iconSize >= 0.0),
        assert(
          selectedItemColor == null || fixedColor == null,
          'Either selectedItemColor or fixedColor can be specified, but not both',
        ),
-       assert(selectedFontSize != null && selectedFontSize >= 0.0),
-       assert(unselectedFontSize != null && unselectedFontSize >= 0.0),
-       selectedItemColor = selectedItemColor ?? fixedColor,
-       super(key: key);
+       assert(selectedFontSize >= 0.0),
+       assert(unselectedFontSize >= 0.0),
+       selectedItemColor = selectedItemColor ?? fixedColor;
 
   /// Defines the appearance of the button items that are arrayed within the
   /// bottom navigation bar.
@@ -268,16 +265,16 @@ class BottomNavigationBar2 extends StatefulWidget {
   /// items.
   ///
   /// If [mouseCursor] is a [MaterialStateProperty<MouseCursor>],
-  /// [MaterialStateProperty.resolve] is used for the following [MaterialState]s:
+  /// [WidgetStateProperty.resolve] is used for the following [WidgetState]s:
   ///
-  ///  * [MaterialState.selected].
+  ///  * [WidgetState.selected].
   ///
   /// If null, then the value of [BottomNavigationBarThemeData.mouseCursor] is used. If
-  /// that is also null, then [MaterialStateMouseCursor.clickable] is used.
+  /// that is also null, then [WidgetStateMouseCursor.clickable] is used.
   ///
   /// See also:
   ///
-  ///  * [MaterialStateMouseCursor], which can be used to create a [MouseCursor]
+  ///  * [WidgetStateMouseCursor], which can be used to create a [MouseCursor]
   ///    that is also a [MaterialStateProperty<MouseCursor>].
   final MouseCursor? mouseCursor;
 
@@ -353,13 +350,7 @@ class _BottomNavigationTile extends StatelessWidget {
     required this.mouseCursor,
     required this.enableFeedback,
     required this.layout,
-  }) : assert(type != null),
-       assert(item != null),
-       assert(animation != null),
-       assert(selected != null),
-       assert(selectedLabelStyle != null),
-       assert(unselectedLabelStyle != null),
-       assert(mouseCursor != null);
+  });
 
   final BottomNavigationBarType type;
   final BottomNavigationBarItem item;
@@ -407,10 +398,6 @@ class _BottomNavigationTile extends StatelessWidget {
       unselectedIconSize - selectedIconSize,
       0,
     );
-
-    // The effective tool tip message to be shown on the BottomNavigationBarItem.
-    final String? effectiveTooltip =
-        item.tooltip == '' ? null : item.tooltip ?? item.label;
 
     // Defines the padding for the animating icons + labels.
     //
@@ -517,11 +504,10 @@ class _BottomNavigationTile extends StatelessWidget {
 // icon-label column.
 class _Tile extends StatelessWidget {
   const _Tile({
-    Key? key,
     required this.layout,
     required this.icon,
     required this.label,
-  }) : super(key: key);
+  });
 
   final BottomNavigationBarLandscapeLayout layout;
   final Widget icon;
@@ -550,7 +536,6 @@ class _Tile extends StatelessWidget {
 
 class _TileIcon extends StatelessWidget {
   const _TileIcon({
-    Key? key,
     required this.colorTween,
     required this.animation,
     required this.iconSize,
@@ -558,9 +543,7 @@ class _TileIcon extends StatelessWidget {
     required this.item,
     required this.selectedIconTheme,
     required this.unselectedIconTheme,
-  }) : assert(selected != null),
-       assert(item != null),
-       super(key: key);
+  });
 
   final ColorTween colorTween;
   final Animation<double> animation;
@@ -596,7 +579,6 @@ class _TileIcon extends StatelessWidget {
 
 class _Label extends StatelessWidget {
   const _Label({
-    Key? key,
     required this.colorTween,
     required this.animation,
     required this.item,
@@ -604,14 +586,7 @@ class _Label extends StatelessWidget {
     required this.unselectedLabelStyle,
     required this.showSelectedLabels,
     required this.showUnselectedLabels,
-  }) : assert(colorTween != null),
-       assert(animation != null),
-       assert(item != null),
-       assert(selectedLabelStyle != null),
-       assert(unselectedLabelStyle != null),
-       assert(showSelectedLabels != null),
-       assert(showUnselectedLabels != null),
-       super(key: key);
+  });
 
   final ColorTween colorTween;
   final Animation<double> animation;
@@ -715,9 +690,12 @@ class _BottomNavigationBar2State extends State<BottomNavigationBar2>
   );
 
   void _resetState() {
-    for (final AnimationController controller in _controllers)
+    for (final AnimationController controller in _controllers) {
       controller.dispose();
-    for (final _Circle circle in _circles) circle.dispose();
+    }
+    for (final _Circle circle in _circles) {
+      circle.dispose();
+    }
     _circles.clear();
 
     _controllers = List<AnimationController>.generate(widget.items.length, (
@@ -781,9 +759,12 @@ class _BottomNavigationBar2State extends State<BottomNavigationBar2>
 
   @override
   void dispose() {
-    for (final AnimationController controller in _controllers)
+    for (final AnimationController controller in _controllers) {
       controller.dispose();
-    for (final _Circle circle in _circles) circle.dispose();
+    }
+    for (final _Circle circle in _circles) {
+      circle.dispose();
+    }
     super.dispose();
   }
 
@@ -839,8 +820,9 @@ class _BottomNavigationBar2State extends State<BottomNavigationBar2>
       _controllers[oldWidget.currentIndex].reverse();
       _controllers[widget.currentIndex].forward();
     } else {
-      if (_backgroundColor != widget.items[widget.currentIndex].backgroundColor)
+      if (_backgroundColor != widget.items[widget.currentIndex].backgroundColor) {
         _backgroundColor = widget.items[widget.currentIndex].backgroundColor;
+      }
     }
   }
 
@@ -858,7 +840,6 @@ class _BottomNavigationBar2State extends State<BottomNavigationBar2>
     final MaterialLocalizations localizations = MaterialLocalizations.of(
       context,
     );
-    assert(localizations != null);
 
     final ThemeData themeData = Theme.of(context);
     final BottomNavigationBarThemeData bottomTheme =
@@ -914,17 +895,17 @@ class _BottomNavigationBar2State extends State<BottomNavigationBar2>
 
     final List<Widget> tiles = <Widget>[];
     for (int i = 0; i < widget.items.length; i++) {
-      final Set<MaterialState> states = <MaterialState>{
-        if (i == widget.currentIndex) MaterialState.selected,
+      final Set<WidgetState> states = <WidgetState>{
+        if (i == widget.currentIndex) WidgetState.selected,
       };
 
       final MouseCursor effectiveMouseCursor =
-          MaterialStateProperty.resolveAs<MouseCursor?>(
+          WidgetStateProperty.resolveAs<MouseCursor?>(
             widget.mouseCursor,
             states,
           ) ??
           bottomTheme.mouseCursor?.resolve(states) ??
-          MaterialStateMouseCursor.clickable.resolve(states);
+          WidgetStateMouseCursor.clickable.resolve(states);
 
       tiles.add(
         _BottomNavigationTile(
@@ -977,7 +958,6 @@ class _BottomNavigationBar2State extends State<BottomNavigationBar2>
     assert(debugCheckHasDirectionality(context));
     assert(debugCheckHasMaterialLocalizations(context));
     assert(debugCheckHasMediaQuery(context));
-    assert(Overlay.of(context, debugRequiredFor: widget) != null);
 
     final BottomNavigationBarThemeData bottomTheme =
         BottomNavigationBarTheme.of(context);
@@ -1042,12 +1022,11 @@ class _BottomNavigationBar2State extends State<BottomNavigationBar2>
 // BottomNavigationBarLandscapeLayout.centered
 class _Bar extends StatelessWidget {
   const _Bar({
-    Key? key,
     required this.child,
     required this.layout,
     required this.elevation,
     required this.color,
-  }) : super(key: key);
+  });
 
   final Widget child;
   final BottomNavigationBarLandscapeLayout layout;
@@ -1077,9 +1056,7 @@ class _Circle {
     required this.index,
     required this.color,
     required TickerProvider vsync,
-  }) : assert(state != null),
-       assert(index != null),
-       assert(color != null) {
+  }) {
     controller = AnimationController(
       duration: kThemeAnimationDuration,
       vsync: vsync,
@@ -1125,9 +1102,7 @@ class _Circle {
 
 // Paints the animating color splash circles.
 class _RadialPainter extends CustomPainter {
-  _RadialPainter({required this.circles, required this.textDirection})
-    : assert(circles != null),
-      assert(textDirection != null);
+  _RadialPainter({required this.circles, required this.textDirection});
 
   final List<_Circle> circles;
   final TextDirection textDirection;
@@ -1147,8 +1122,9 @@ class _RadialPainter extends CustomPainter {
     if (textDirection != oldPainter.textDirection) return true;
     if (circles == oldPainter.circles) return false;
     if (circles.length != oldPainter.circles.length) return true;
-    for (int i = 0; i < circles.length; i += 1)
+    for (int i = 0; i < circles.length; i += 1) {
       if (circles[i] != oldPainter.circles[i]) return true;
+    }
     return false;
   }
 

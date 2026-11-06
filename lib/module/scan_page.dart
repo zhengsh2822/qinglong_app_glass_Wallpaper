@@ -8,7 +8,6 @@ import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/radar_scan_view.dart';
 import 'package:qinglong_app/module/others/dependencies/dependency_bean.dart';
@@ -20,7 +19,7 @@ import '../base/http/http.dart';
 import '../base/ui/button.dart';
 
 class ScanPage extends ConsumerStatefulWidget {
-  const ScanPage({Key? key}) : super(key: key);
+  const ScanPage({super.key});
 
   @override
   ConsumerState<ScanPage> createState() => ScanPageState();
@@ -56,6 +55,7 @@ class ScanPageState extends ConsumerState<ScanPage> {
                 content: '当前正在扫描文件,确定退出吗?',
                 danger: true,
               ).then((confirmed) {
+                if (!context.mounted) return;
                 if (confirmed == true) {
                   Navigator.of(context).pop();
                 }
@@ -69,7 +69,6 @@ class ScanPageState extends ConsumerState<ScanPage> {
             ).then((confirmed) {
               if (confirmed != true) return;
             });
-            ;
           }
         },
       ),
@@ -116,8 +115,9 @@ class ScanPageState extends ConsumerState<ScanPage> {
         String command = bean.command!.trim().split(" ").last;
         if (!command.endsWith(".js") &&
             !command.endsWith(".ts") &&
-            !command.endsWith(".py"))
+            !command.endsWith(".py")) {
           continue;
+        }
         totalCount++;
       }
       _totalCount = totalCount;
@@ -131,12 +131,14 @@ class ScanPageState extends ConsumerState<ScanPage> {
         String command = bean.command!.trim().split(" ").last;
         if (!command.endsWith(".js") &&
             !command.endsWith(".ts") &&
-            !command.endsWith(".py"))
+            !command.endsWith(".py")) {
           continue;
+        }
 
         _currentIndex++;
         if (mounted) setState(() {});
         _updateDescText("正在扫描: $command");
+        if (!mounted) return;
         HttpResponse<String> response = await SingleAccountPageState.ofApi(
           context,
         ).inTimeLog(bean.sId!);
@@ -331,7 +333,7 @@ class ScanPageState extends ConsumerState<ScanPage> {
     }
     return Opacity(
       opacity: 1.0,
-      child: ButtonWidget(title: title, onTap: onTap ?? () {}),
+      child: ButtonWidget(title: title, onTap: onTap),
     );
   }
 

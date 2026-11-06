@@ -12,7 +12,6 @@ import 'package:qinglong_app/module/icloud/icloud_file_page.dart';
 import 'package:qinglong_app/module/icloud/icloud_page.dart';
 import 'package:qinglong_app/module/login/login_page.dart';
 import 'package:qinglong_app/module/others/about_page.dart';
-import 'package:qinglong_app/module/others/change_account_page.dart';
 import 'package:qinglong_app/module/others/dependencies/add_dependency_page.dart';
 import 'package:qinglong_app/module/others/dependencies/dependency_page.dart';
 import 'package:qinglong_app/module/others/login_log/login_log_page.dart';
@@ -32,7 +31,6 @@ import 'package:qinglong_app/module/subscribe/subscribe_detail_page.dart';
 import 'package:qinglong_app/module/subscribe/subscribe_page.dart';
 import 'package:qinglong_app/module/task/task_bean.dart';
 import 'package:qinglong_app/module/task/task_detail/task_detail_page.dart';
-import 'package:qinglong_app/utils/sp_utils.dart';
 import 'package:qinglong_app/base/ui/wallpaper_page_route.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 
@@ -94,7 +92,7 @@ class Routes {
                 isSuccess: (settings.arguments as bool?) ?? true,
               ),
           blurSigma: 6,
-          blurTintColor: CyberColors.bg.withOpacity(0.50),
+          blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
         );
       case routeSetting:
         return WallpaperPageRoute(builder: (context) => const SettingPage());
@@ -105,7 +103,7 @@ class Routes {
         return WallpaperPageRoute(
           builder: (context) => const AddDependencyPage(),
           blurSigma: 6,
-          blurTintColor: CyberColors.bg.withOpacity(0.50),
+          blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
         );
       case routeAddEnv:
         if (settings.arguments != null) {
@@ -124,7 +122,7 @@ class Routes {
                 (settings.arguments as Map)["content"],
               ),
           blurSigma: 6,
-          blurTintColor: CyberColors.bg.withOpacity(0.50),
+          blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
         );
       case routeConfigDetail:
         return WallpaperPageRoute(
@@ -134,31 +132,31 @@ class Routes {
                 content: (settings.arguments as Map)["content"],
               ),
           blurSigma: 6,
-          blurTintColor: CyberColors.bg.withOpacity(0.50),
+          blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
         );
       case routeLoginLog:
         return WallpaperPageRoute(
           builder: (context) => const LoginLogPage(),
           blurSigma: 6,
-          blurTintColor: CyberColors.bg.withOpacity(0.50),
+          blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
         );
       case routeNotifyLog:
         return WallpaperPageRoute(
           builder: (context) => const NotifyLogPage(),
           blurSigma: 6,
-          blurTintColor: CyberColors.bg.withOpacity(0.50),
+          blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
         );
       case routeFileBackup:
         return WallpaperPageRoute(
           builder: (context) => const BackupHubPage(),
           blurSigma: 6,
-          blurTintColor: CyberColors.bg.withOpacity(0.50),
+          blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
         );
       case routeWebDav:
         return WallpaperPageRoute(
           builder: (context) => const WebDavPage(),
           blurSigma: 6,
-          blurTintColor: CyberColors.bg.withOpacity(0.50),
+          blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
         );
       case routeTaskLog:
         if (settings.arguments != null) {
@@ -168,20 +166,20 @@ class Routes {
                   searchText: (settings.arguments as Map)["search"],
                 ),
             blurSigma: 6,
-            blurTintColor: CyberColors.bg.withOpacity(0.50),
+            blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
           );
         } else {
           return WallpaperPageRoute(
             builder: (context) => TaskLogPage(),
             blurSigma: 6,
-            blurTintColor: CyberColors.bg.withOpacity(0.50),
+            blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
           );
         }
       case routeScript:
         return WallpaperPageRoute(
           builder: (context) => const ScriptPage(),
           blurSigma: 6,
-          blurTintColor: CyberColors.bg.withOpacity(0.50),
+          blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
         );
       case routeDependency:
         return WallpaperPageRoute(builder: (context) => const DependencyPage());
@@ -193,13 +191,13 @@ class Routes {
                 path: (settings.arguments as Map)["path"],
               ),
           blurSigma: 6,
-          blurTintColor: CyberColors.bg.withOpacity(0.50),
+          blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
         );
       case routeTaskDetail:
         return WallpaperPageRoute(
           builder: (context) => TaskDetailPage(settings.arguments as TaskBean),
           blurSigma: 6,
-          blurTintColor: CyberColors.bg.withOpacity(0.50),
+          blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
         );
       case routeSubscribeDetail:
         return WallpaperPageRoute(
@@ -208,13 +206,13 @@ class Routes {
                 settings.arguments as Map<String, dynamic>,
               ),
           blurSigma: 6,
-          blurTintColor: CyberColors.bg.withOpacity(0.50),
+          blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
         );
       case routeEnvDetail:
         return WallpaperPageRoute(
           builder: (context) => EnvDetailPage(settings.arguments as EnvBean),
           blurSigma: 6,
-          blurTintColor: CyberColors.bg.withOpacity(0.50),
+          blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
         );
       case routeUpdatePassword:
         return WallpaperPageRoute(
@@ -233,7 +231,7 @@ class Routes {
                 (settings.arguments as Map)["content"],
               ),
           blurSigma: 6,
-          blurTintColor: CyberColors.bg.withOpacity(0.50),
+          blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
         );
       case routeScriptAdd:
         return WallpaperPageRoute(
@@ -243,7 +241,7 @@ class Routes {
                 (settings.arguments as Map)["path"],
               ),
           blurSigma: 6,
-          blurTintColor: CyberColors.bg.withOpacity(0.50),
+          blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
         );
       case routeJdck:
         return WallpaperPageRoute(builder: (context) => const JdckPage());

@@ -23,7 +23,7 @@ import 'package:qinglong_app/utils/extension.dart';
 ///
 /// 策略字段：runningInstanceRetentionDays / cronStatRetentionDays（0 表示不清理，最大 3650）
 class StorageRetentionPage extends ConsumerStatefulWidget {
-  const StorageRetentionPage({Key? key}) : super(key: key);
+  const StorageRetentionPage({super.key});
 
   @override
   StorageRetentionPageState createState() => StorageRetentionPageState();
@@ -162,6 +162,7 @@ class StorageRetentionPageState extends ConsumerState<StorageRetentionPage> {
         ) ==
         true;
     if (!ok) return;
+    if (!mounted) return;
 
     EasyLoading.show(status: "清理中");
     final res = await SingleAccountPageState.ofApi(
@@ -418,7 +419,7 @@ class StorageRetentionPageState extends ConsumerState<StorageRetentionPage> {
         Transform.scale(
           scale: 0.8,
           child: CupertinoSwitch(
-            activeColor: ref.watch(themeProvider).primaryColor,
+            activeTrackColor: ref.watch(themeProvider).primaryColor,
             value: value,
             onChanged: onChanged,
           ),

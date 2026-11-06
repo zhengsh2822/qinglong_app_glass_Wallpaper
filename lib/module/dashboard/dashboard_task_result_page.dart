@@ -23,8 +23,7 @@ class DashboardTaskResultPage extends ConsumerStatefulWidget {
   /// true = 今日成功，false = 今日失败
   final bool isSuccess;
 
-  const DashboardTaskResultPage({Key? key, required this.isSuccess})
-    : super(key: key);
+  const DashboardTaskResultPage({super.key, required this.isSuccess});
 
   @override
   DashboardTaskResultPageState createState() => DashboardTaskResultPageState();
@@ -87,7 +86,7 @@ class DashboardTaskResultPageState extends ConsumerState<DashboardTaskResultPage
     Navigator.of(context).push(
       WallpaperPageRoute(
         blurSigma: 6,
-        blurTintColor: CyberColors.bg.withOpacity(0.50),
+        blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
         builder: (context) => InTimeLogPage('$id', true, name, command: command),
       ),
     );

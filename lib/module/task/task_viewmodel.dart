@@ -38,6 +38,7 @@ class TaskViewModel extends BaseViewModel {
     }
 
     final tasks = await _fetchTasks(context);
+    if (!context.mounted) return;
     if (tasks == null) {
       list.clear();
       failed(null, notify: true);
@@ -99,6 +100,7 @@ class TaskViewModel extends BaseViewModel {
   /// 一旦有任务开始/结束就正常刷新一次。供 TaskPage 定时轮询调用。
   Future<bool> pollRunning(BuildContext context) async {
     final tasks = await _fetchTasks(context);
+    if (!context.mounted) return false;
     if (tasks == null) return false;
 
     final newRunning =
@@ -212,6 +214,7 @@ class TaskViewModel extends BaseViewModel {
     HttpResponse<NullResponse> result = await SingleAccountPageState.ofApi(
       context,
     ).startTasks(crons);
+    if (!context.mounted) return;
     if (result.success) {
       loadData(context, false);
     } else {
@@ -223,6 +226,7 @@ class TaskViewModel extends BaseViewModel {
     HttpResponse<NullResponse> result = await SingleAccountPageState.ofApi(
       context,
     ).stopTasks(crons);
+    if (!context.mounted) return;
     if (result.success) {
       loadData(context, false);
     } else {
@@ -234,6 +238,7 @@ class TaskViewModel extends BaseViewModel {
     HttpResponse<NullResponse> result = await SingleAccountPageState.ofApi(
       context,
     ).delTask(id);
+    if (!context.mounted) return;
     if (result.success) {
       "删除成功".toast();
       loadData(context, false);
@@ -256,6 +261,7 @@ class TaskViewModel extends BaseViewModel {
         context,
       ).unpinTask(sId);
 
+      if (!context.mounted) return;
       if (response.success) {
         "取消置顶成功".toast();
         loadData(context, false);
@@ -267,6 +273,7 @@ class TaskViewModel extends BaseViewModel {
         context,
       ).pinTask(sId);
 
+      if (!context.mounted) return;
       if (response.success) {
         "置顶成功".toast();
         loadData(context, false);
@@ -286,6 +293,7 @@ class TaskViewModel extends BaseViewModel {
         context,
       ).disableTask(sId);
 
+      if (!context.mounted) return;
       if (response.success) {
         "禁用成功".toast();
         loadData(context, false);
@@ -297,6 +305,7 @@ class TaskViewModel extends BaseViewModel {
         context,
       ).enableTask(sId);
 
+      if (!context.mounted) return;
       if (response.success) {
         "启用成功".toast();
         loadData(context, false);

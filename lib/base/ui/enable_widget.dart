@@ -1,8 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:qinglong_app/base/theme.dart';
-import 'package:qinglong_app/base/ui/loading_widget.dart';
 
 
 

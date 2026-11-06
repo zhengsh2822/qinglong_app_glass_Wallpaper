@@ -10,7 +10,6 @@ import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/elastic_reorder_list.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/userinfo_viewmodel.dart';
 
@@ -18,10 +17,10 @@ import '../../base/commit_button.dart';
 import '../../main.dart';
 
 class SortAccountPage extends ConsumerStatefulWidget {
-  const SortAccountPage({Key? key}) : super(key: key);
+  const SortAccountPage({super.key});
 
   @override
-  _ChangeAccountPageState createState() => _ChangeAccountPageState();
+  ConsumerState<SortAccountPage> createState() => _ChangeAccountPageState();
 }
 
 class _ChangeAccountPageState extends ConsumerState<SortAccountPage> {
@@ -36,7 +35,7 @@ class _ChangeAccountPageState extends ConsumerState<SortAccountPage> {
       list.addAll(
         (jsonDecode(json) as List).map((e) => TokenBean.fromJson(e)).toList(),
       );
-    } catch (e) {}
+    } catch (e) { /* ignore: failure is non-critical */ }
 
     super.initState();
     FocusManager.instance.primaryFocus?.unfocus();

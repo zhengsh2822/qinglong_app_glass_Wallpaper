@@ -1627,10 +1627,10 @@ class _LiquidGlassAnimatedNavBarState extends State<LiquidGlassAnimatedNavBar>
                 widget.pressScale == null ? 1.0 : _pressScale.value;
             return Transform(
               transform: Matrix4.identity()
-                ..translate(barCX, barCY)
-                ..scale(s, s, 1.0)
-                ..translate(-barCX, -barCY)
-                ..translate(_navSlideDx, 0),
+                ..translateByDouble(barCX, barCY, 0, 1.0)
+                ..scaleByDouble(s, s, 1.0, 1.0)
+                ..translateByDouble(-barCX, -barCY, 0, 1.0)
+                ..translateByDouble(_navSlideDx, 0, 0, 1.0),
               child: IgnorePointer(
                 child: Material(
                   type: MaterialType.transparency,

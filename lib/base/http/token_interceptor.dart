@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:qinglong_app/base/http/url.dart';
-import 'package:qinglong_app/base/multi_account_userinfo_viewmodel.dart';
 import 'package:qinglong_app/main.dart';
 
 import '../userinfo_viewmodel.dart';
@@ -32,8 +31,7 @@ class TokenInterceptor extends Interceptor {
           getIt<UserInfoViewModel>(instanceName: index.toString())
               .token!
               .isNotEmpty) {
-        options.headers["Authorization"] = "Bearer " +
-            getIt<UserInfoViewModel>(instanceName: index.toString()).token!;
+        options.headers["Authorization"] = "Bearer ${getIt<UserInfoViewModel>(instanceName: index.toString()).token!}";
       }
     }
     return handler.next(options);

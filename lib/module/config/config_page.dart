@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -24,12 +23,11 @@ import 'package:qinglong_app/module/config/config_detail_page.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 import 'package:qinglong_app/utils/utils.dart';
 
-import '../home/home_page.dart';
 import 'config_viewmodel.dart';
 import 'package:qinglong_app/base/ui/wallpaper_page_route.dart';
 
 class ConfigPage extends ConsumerStatefulWidget {
-  const ConfigPage({Key? key}) : super(key: key);
+  const ConfigPage({super.key});
 
   @override
   ConfigPageState createState() => ConfigPageState();
@@ -81,6 +79,7 @@ class ConfigPageState extends ConsumerState<ConfigPage>
     HttpResponse<String> result = await SingleAccountPageState.ofApi(
       context,
     ).content("config.sh");
+    if (!context.mounted) return;
     if (result.success && result.bean != null) {
       configContent = result.bean;
 
@@ -94,6 +93,7 @@ class ConfigPageState extends ConsumerState<ConfigPage>
               arguments: {"title": "config.sh", "content": configContent},
             )
             .then((value) {
+              if (!context.mounted) return;
               loadConfigData(context);
             });
       }
@@ -140,6 +140,7 @@ class ConfigPageState extends ConsumerState<ConfigPage>
                     ),
                   )
                   .then((value) {
+                    if (!context.mounted) return;
                     if (value != null && value == true) {
                       ref
                           .read(
@@ -190,6 +191,7 @@ class ConfigPageState extends ConsumerState<ConfigPage>
                         )
                         .then((value) {
                           Future.delayed(const Duration(seconds: 1), () {
+                            if (!context.mounted) return;
                             loadConfigData(context);
                           });
                         });
@@ -215,6 +217,7 @@ class ConfigPageState extends ConsumerState<ConfigPage>
                     color: Theme.of(context).primaryColor,
                     onRefresh: () async {
                       await loadConfigData(context);
+                      if (!context.mounted) return;
                       return model.loadData(context, false);
                     },
                     child: ListView(
@@ -254,8 +257,7 @@ class ConfigCell extends ConsumerWidget {
   /// 详情页里删除成功返回 true 时回调（用于刷新列表）
   final VoidCallback? onDeleted;
 
-  const ConfigCell({Key? key, required this.bean, this.onDeleted})
-    : super(key: key);
+  const ConfigCell({super.key, required this.bean, this.onDeleted});
 
   @override
   Widget build(BuildContext context, ref) {
@@ -301,6 +303,14 @@ class ConfigCell extends ConsumerWidget {
             ),
             // 卡片共享展开：点击卡片 → 卡片隐藏 → 容器从卡片矩形展开详情页
             child: CardTransitionSource(
+              sourceBuilder: (ctx) => configContent,
+              pageBuilder: (context) => ConfigDetailPage(bean: bean),
+              blurSigma: 6,
+              blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
+              onResult: (value) {
+                // 详情页里删除成功会 pop(true)：回到列表时同步刷新
+                if (value == true) onDeleted?.call();
+              },
               child: OptimizedFrostedGlass(
                 sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
                 // 与 GlassCard/GlassListItemCard 一致：全透明仅模糊，
@@ -324,14 +334,6 @@ class ConfigCell extends ConsumerWidget {
                   ),
                 ),
               ),
-              sourceBuilder: (ctx) => configContent,
-              pageBuilder: (context) => ConfigDetailPage(bean: bean),
-              blurSigma: 6,
-              blurTintColor: CyberColors.bg.withOpacity(0.50),
-              onResult: (value) {
-                // 详情页里删除成功会 pop(true)：回到列表时同步刷新
-                if (value == true) onDeleted?.call();
-              },
             ),
           ),
           isCyber ? const SizedBox.shrink() : const SizedBox.shrink(),

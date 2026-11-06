@@ -1,9 +1,7 @@
 
 import 'dart:async';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 
 ///消息弹窗横幅
@@ -64,9 +62,7 @@ class Notify {
       ),
     );
 
-    if (overlayState != null) {
-      overlayState.insert(_overlayEntry!);
-    }
+    overlayState.insert(_overlayEntry!);
   }
 
   bool isShown() {

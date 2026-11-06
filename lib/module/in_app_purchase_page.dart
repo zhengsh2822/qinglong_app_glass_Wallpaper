@@ -7,8 +7,7 @@ import 'package:qinglong_app/base/ui/glass_card.dart';
 class InAppPurchasePage extends ConsumerStatefulWidget {
   final bool fromDirectly;
 
-  const InAppPurchasePage({Key? key, this.fromDirectly = false})
-    : super(key: key);
+  const InAppPurchasePage({super.key, this.fromDirectly = false});
 
   @override
   ConsumerState<InAppPurchasePage> createState() => _InAppPurchasePageState();
@@ -112,8 +111,7 @@ class BasicFuncWidget extends ConsumerWidget {
   final String title;
   final bool advance;
 
-  const BasicFuncWidget({Key? key, required this.title, this.advance = false})
-    : super(key: key);
+  const BasicFuncWidget({super.key, required this.title, this.advance = false});
 
   @override
   Widget build(BuildContext context, ref) {

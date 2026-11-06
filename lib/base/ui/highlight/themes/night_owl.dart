@@ -48,7 +48,7 @@ const nightOwlTheme = {
   'template-tag': TextStyle(color: Color(0xffc792ea)),
   'template-variable': TextStyle(color: Color(0xffaddb67)),
   'addition':
-      TextStyle(color: Color(0xffaddb67ff), fontStyle: FontStyle.italic),
+      TextStyle(color: Color(0xFFADDB67), fontStyle: FontStyle.italic),
   'deletion':
-      TextStyle(color: Color(0xffEF535090), fontStyle: FontStyle.italic),
+      TextStyle(color: Color(0x90EF5350), fontStyle: FontStyle.italic),
 };

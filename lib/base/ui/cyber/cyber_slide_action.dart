@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/app_corner.dart';
 
@@ -33,7 +32,7 @@ class AppSlideButton extends StatelessWidget {
   final bool cyberMode; // 赛博模式开关
 
   const AppSlideButton({
-    Key? key,
+    super.key,
     required this.context,
     required this.color,
     required this.icon,
@@ -49,7 +48,7 @@ class AppSlideButton extends StatelessWidget {
     this.glowBlur = 5,
     this.glowOpacity = 0.5,
     this.cyberMode = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext buildContext) {
@@ -57,7 +56,7 @@ class AppSlideButton extends StatelessWidget {
       radius: cornerRadius,
       side:
           cyberMode
-              ? BorderSide(color: color.withOpacity(0.7), width: 0.5)
+              ? BorderSide(color: color.withValues(alpha: 0.7), width: 0.5)
               : BorderSide.none,
     );
     final inner = Padding(
@@ -71,7 +70,7 @@ class AppSlideButton extends StatelessWidget {
               cyberMode
                   ? [
                     BoxShadow(
-                      color: color.withOpacity(glowOpacity),
+                      color: color.withValues(alpha: glowOpacity),
                       blurRadius: glowBlur,
                       spreadRadius: 0,
                     ),
@@ -136,31 +135,19 @@ class AppSlideButton extends StatelessWidget {
 /// 保留旧名以兼容现有调用
 class CyberSlideButton extends AppSlideButton {
   const CyberSlideButton({
-    Key? key,
-    required BuildContext context,
-    required Color color,
-    required IconData icon,
-    required VoidCallback onTap,
-    double iconSize = 22,
-    double cornerRadius = 10,
-    double width = 60,
-    double outerGap = 5,
-    double innerGap = 5,
-    double glowBlur = 5,
-    double glowOpacity = 0.5,
+    super.key,
+    required super.context,
+    required super.color,
+    required super.icon,
+    required super.onTap,
+    super.iconSize,
+    super.cornerRadius,
+    super.width,
+    super.outerGap,
+    super.innerGap,
+    super.glowBlur,
+    super.glowOpacity,
   }) : super(
-         key: key,
-         context: context,
-         color: color,
-         icon: icon,
-         onTap: onTap,
-         iconSize: iconSize,
-         cornerRadius: cornerRadius,
-         width: width,
-         outerGap: outerGap,
-         innerGap: innerGap,
-         glowBlur: glowBlur,
-         glowOpacity: glowOpacity,
          cyberMode: true,
        );
 }
@@ -178,11 +165,11 @@ class EditModeButton extends ConsumerWidget {
 
   const EditModeButton(
     this.title, {
-    Key? key,
+    super.key,
     required this.icon,
     required this.onTap,
     this.color,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -246,6 +233,7 @@ class EditModeButton extends ConsumerWidget {
       margin: const EdgeInsets.only(right: 15),
       child: CupertinoButton(
         padding: const EdgeInsets.symmetric(horizontal: 10),
+        onPressed: onTap,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -264,7 +252,6 @@ class EditModeButton extends ConsumerWidget {
             ),
           ],
         ),
-        onPressed: onTap,
       ),
     );
   }

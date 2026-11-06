@@ -6,8 +6,7 @@ class AbsUnderlineTabIndicator extends Decoration {
     this.wantWidth,
     this.borderSide = const BorderSide(width: 2.0, color: Colors.white),
     this.insets = EdgeInsets.zero,
-  }) : assert(borderSide != null),
-       assert(insets != null);
+  });
 
   final BorderSide borderSide;
   final double? wantWidth;
@@ -18,7 +17,7 @@ class AbsUnderlineTabIndicator extends Decoration {
   Decoration? lerpFrom(Decoration? a, double t) {
     if (a is UnderlineTabIndicator) {
       return UnderlineTabIndicator(
-        borderSide: BorderSide.lerp(a.borderSide, borderSide!, t),
+        borderSide: BorderSide.lerp(a.borderSide, borderSide, t),
         insets: EdgeInsetsGeometry.lerp(a.insets, insets, t)!,
       );
     }
@@ -29,7 +28,7 @@ class AbsUnderlineTabIndicator extends Decoration {
   Decoration? lerpTo(Decoration? b, double t) {
     if (b is UnderlineTabIndicator) {
       return UnderlineTabIndicator(
-        borderSide: BorderSide.lerp(borderSide!, b.borderSide, t),
+        borderSide: BorderSide.lerp(borderSide, b.borderSide, t),
         insets: EdgeInsetsGeometry.lerp(insets, b.insets, t)!,
       );
     }
@@ -37,7 +36,7 @@ class AbsUnderlineTabIndicator extends Decoration {
   }
 
   @override
-  _UnderlinePainter createBoxPainter([VoidCallback? onChanged]) {
+  BoxPainter createBoxPainter([VoidCallback? onChanged]) {
     return _UnderlinePainter(this, onChanged);
   }
 }
@@ -53,14 +52,14 @@ class _UnderlinePainter extends BoxPainter {
   EdgeInsetsGeometry get insets => decoration.insets;
 
   Rect _indicatorRectFor(Rect rect, TextDirection textDirection) {
-    final Rect indicator = insets!.resolve(textDirection).deflateRect(rect);
+    final Rect indicator = insets.resolve(textDirection).deflateRect(rect);
     //取中间坐标
     double cw = (indicator.left + indicator.right) / 2;
     return Rect.fromLTWH(
       cw - decoration.wantWidth! / 2,
-      indicator.bottom - borderSide!.width,
+      indicator.bottom - borderSide.width,
       decoration.wantWidth!,
-      borderSide!.width,
+      borderSide.width,
     );
   }
 
@@ -72,8 +71,8 @@ class _UnderlinePainter extends BoxPainter {
     final Rect indicator = _indicatorRectFor(
       rect,
       textDirection,
-    ).deflate(borderSide!.width / 2.0);
-    final Paint paint = borderSide!.toPaint()..strokeCap = StrokeCap.round;
+    ).deflate(borderSide.width / 2.0);
+    final Paint paint = borderSide.toPaint()..strokeCap = StrokeCap.round;
     canvas.drawLine(indicator.bottomLeft, indicator.bottomRight, paint);
   }
 }

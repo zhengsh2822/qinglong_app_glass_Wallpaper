@@ -63,7 +63,7 @@ class AnimatedEditModeOverlay {
             contentBuilder: builder,
           ),
     );
-    Overlay.of(context)?.insert(_entry!);
+    Overlay.of(context).insert(_entry!);
   }
 
   /// 收起底部功能页

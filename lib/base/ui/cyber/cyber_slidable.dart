@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/ui/app_corner.dart';
 
 /// 滑动操作按钮数据模型

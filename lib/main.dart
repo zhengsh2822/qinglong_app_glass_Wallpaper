@@ -1,6 +1,4 @@
 import 'dart:io';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -16,7 +14,6 @@ import 'package:qinglong_app/base/services/wallpaper_service.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
-import 'package:qinglong_app/base/ui/animated_indexed_switch.dart';
 import 'package:qinglong_app/base/ui/container_transform_route.dart';
 import 'package:qinglong_app/base/ui/keyboard_dismiss_observer.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
@@ -26,7 +23,6 @@ import 'package:qinglong_app/base/ui/wallpaper_background.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/ql_debug_log.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
-import 'package:qinglong_app/module/home/home_page.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:liquid_glass_easy/liquid_glass_easy.dart';
 import 'package:local_auth_android/local_auth_android.dart';
@@ -124,7 +120,7 @@ void main() async {
 }
 
 class QlApp extends ConsumerStatefulWidget {
-  const QlApp({Key? key}) : super(key: key);
+  const QlApp({super.key});
 
   @override
   ConsumerState<QlApp> createState() => QlAppState();
@@ -343,14 +339,12 @@ class ScrollPhysicsConfig extends ScrollBehavior {
       case TargetPlatform.linux:
       case TargetPlatform.windows:
         return const ClampingScrollPhysics();
-      default:
-        return const BouncingScrollPhysics();
     }
   }
 }
 
 class MultiAccountPage extends ConsumerStatefulWidget {
-  const MultiAccountPage({Key? key}) : super(key: key);
+  const MultiAccountPage({super.key});
 
   @override
   ConsumerState<MultiAccountPage> createState() => MultiAccountPageState();
@@ -404,10 +398,6 @@ class MultiAccountPageState extends ConsumerState<MultiAccountPage>
     _action = "";
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-  }
 
   @override
   void initState() {

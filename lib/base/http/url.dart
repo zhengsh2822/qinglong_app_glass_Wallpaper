@@ -118,7 +118,7 @@ class Url {
           ? "/open/configs/"
           : "/api/configs/";
 
-  /// 2.22+ 配置文件内容读取：/configs/detail?path=<name>
+  /// 2.22+ 配置文件内容读取：`/configs/detail?path=<name>`
   /// 旧 /configs/:file 在 2.22 已下线（返回业务码 410），响应结构不变
   get configDetail =>
       getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
@@ -175,7 +175,7 @@ class Url {
           ? "/open/logs/"
           : "/api/logs/";
 
-  /// 2.22+ 任务日志内容读取：/logs/detail?file=<name>&path=<path>
+  /// 2.22+ 任务日志内容读取：`/logs/detail?file=<name>&path=<path>`
   /// 旧 /logs/:file 在 2.22 已下线（返回业务码 410）；
   /// 新增 offset/limit/tail 参数，响应含 offset/nextOffset/total/truncated
   get logDetail =>

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -24,10 +23,10 @@ import 'add_appkey_page.dart';
 import 'package:qinglong_app/base/ui/wallpaper_page_route.dart';
 
 class AppKeyPage extends ConsumerStatefulWidget {
-  const AppKeyPage({Key? key}) : super(key: key);
+  const AppKeyPage({super.key});
 
   @override
-  _AppKeyPageState createState() => _AppKeyPageState();
+  ConsumerState<AppKeyPage> createState() => _AppKeyPageState();
 }
 
 class _AppKeyPageState extends ConsumerState<AppKeyPage> {
@@ -101,11 +100,12 @@ class _AppKeyPageState extends ConsumerState<AppKeyPage> {
                   .push(
                     WallpaperPageRoute(
                       blurSigma: 6,
-                      blurTintColor: CyberColors.bg.withOpacity(0.50),
+                      blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
                       builder: (context) => const AddAppKeyPage(bean: {}),
                     ),
                   )
                   .then((value) {
+                    if (!context.mounted) return;
                     if (value != null && value == true) {
                       ref
                           .read(
@@ -218,7 +218,7 @@ class AppKeyItemCell extends StatelessWidget {
   final Map<String, dynamic> bean;
   final WidgetRef ref;
 
-  const AppKeyItemCell(this.bean, this.ref, {Key? key}) : super(key: key);
+  const AppKeyItemCell(this.bean, this.ref, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -237,11 +237,12 @@ class AppKeyItemCell extends StatelessWidget {
                 .push(
                   WallpaperPageRoute(
                     blurSigma: 6,
-                    blurTintColor: CyberColors.bg.withOpacity(0.50),
+                    blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
                     builder: (context) => AddAppKeyPage(bean: bean),
                   ),
                 )
                 .then((value) {
+                  if (!context.mounted) return;
                   if (value != null && value == true) {
                     ref
                         .read(
@@ -260,6 +261,7 @@ class AppKeyItemCell extends StatelessWidget {
           color: const Color(0xFFA356D6),
           onTap: () {
             WidgetsBinding.instance.endOfFrame.then((value) {
+              if (!context.mounted) return;
               _reset(context);
             });
           },
@@ -270,6 +272,7 @@ class AppKeyItemCell extends StatelessWidget {
           color: const Color(0xFFFF3D5C),
           onTap: () {
             WidgetsBinding.instance.endOfFrame.then((value) {
+              if (!context.mounted) return;
               _del(context, ref);
             });
           },
@@ -290,7 +293,7 @@ class AppKeyItemCell extends StatelessWidget {
           Navigator.of(context).push(
             WallpaperPageRoute(
               blurSigma: 6,
-              blurTintColor: CyberColors.bg.withOpacity(0.50),
+              blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
               builder: (context) => AppKeyDetailDetailPage(bean),
             ),
           );
@@ -348,6 +351,7 @@ class AppKeyItemCell extends StatelessWidget {
         content: "确认删除应用 ${bean["name"] ?? ""} 吗",
         danger: true,
       ).then((confirmed) {
+        if (!context1.mounted) return;
         if (confirmed == true) {
           ref
               .read(
@@ -366,6 +370,7 @@ class AppKeyItemCell extends StatelessWidget {
       content: "确认删除应用 ${bean["name"] ?? ""} 吗",
       danger: true,
     ).then((confirmed) {
+      if (!context1.mounted) return;
       if (confirmed != true) return;
       ref
           .read(
@@ -375,7 +380,6 @@ class AppKeyItemCell extends StatelessWidget {
           )
           .delAppKey(context1, getAppKeyId(bean));
     });
-    ;
   }
 
   void _reset(BuildContext context) {
@@ -387,6 +391,7 @@ class AppKeyItemCell extends StatelessWidget {
         content: "重置Secret会让当前应用所有token失效",
         danger: true,
       ).then((confirmed) {
+        if (!context.mounted) return;
         if (confirmed == true) {
           ref
               .read(
@@ -404,6 +409,7 @@ class AppKeyItemCell extends StatelessWidget {
       title: "确认重置应用 ${bean["name"]} 的Secret吗",
       content: "重置Secret会让当前应用所有token失效",
     ).then((confirmed) {
+      if (!context.mounted) return;
       if (confirmed != true) return;
       ref
           .read(
@@ -413,7 +419,6 @@ class AppKeyItemCell extends StatelessWidget {
           )
           .resetAppKey(context, getAppKeyId(bean));
     });
-    ;
   }
 }
 

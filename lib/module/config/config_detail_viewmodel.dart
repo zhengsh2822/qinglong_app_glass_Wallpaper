@@ -2,9 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:qinglong_app/base/base_viewmodel.dart';
 import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
-import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/module/config/config_bean.dart';
-import 'package:qinglong_app/utils/icloud_utils.dart';
 
 class ConfigDetailViewModel extends BaseViewModel {
   String? content;

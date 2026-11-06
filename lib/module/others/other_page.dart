@@ -23,7 +23,6 @@ import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/wallpaper_background.dart';
 import 'package:qinglong_app/base/ui/wallpaper_page_route.dart';
 import 'package:qinglong_app/module/in_app_purchase_page.dart';
-import 'package:qinglong_app/module/backup/backup_hub_page.dart';
 import 'package:qinglong_app/module/others/blur_settings_page.dart';
 import 'package:qinglong_app/module/others/change_account_page.dart';
 import 'package:qinglong_app/module/others/client_ip_page.dart';
@@ -47,7 +46,7 @@ import '../task/task_page.dart';
 import '../update_max_account_page.dart';
 
 class OtherPage extends ConsumerStatefulWidget {
-  const OtherPage({Key? key}) : super(key: key);
+  const OtherPage({super.key});
 
   @override
   OtherPageState createState() => OtherPageState();
@@ -590,7 +589,7 @@ class OtherPageState extends ConsumerState<OtherPage>
                     WallpaperPageRoute(
                       builder: (context) => const ScanPage(),
                       blurSigma: 6,
-                      blurTintColor: CyberColors.bg.withOpacity(0.50),
+                      blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
                     ),
                   );
                 },
@@ -925,6 +924,7 @@ class OtherPageState extends ConsumerState<OtherPage>
   @override
   void onLazyLoad() async {
     var response = await SingleAccountPageState.ofApi(context).user();
+    if (!mounted) return;
 
     if (response.success) {
       userIcon = response.bean?.avatar;
@@ -1005,7 +1005,7 @@ class OtherPageState extends ConsumerState<OtherPage>
         poetData.addAll(response.data as Map<String, dynamic>);
         desc.value = poetData["data"]?["content"]?.toString() ?? "欢迎使用青龙客户端";
       }
-    } catch (e) {}
+    } catch (e) { /* ignore: failure is non-critical */ }
   }
 }
 

@@ -15,9 +15,9 @@ class FileDirectoryPage extends ConsumerStatefulWidget {
   final String path;
 
   const FileDirectoryPage({
-    Key? key,
+    super.key,
     required this.path,
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState<FileDirectoryPage> createState() => _FileDirectoryPageState();
@@ -51,12 +51,13 @@ class _FileDirectoryPageState extends ConsumerState<FileDirectoryPage> {
                       path: paths[index],
                     ),
                     blurSigma: 6,
-                    blurTintColor: CyberColors.bg.withOpacity(0.50),
+                    blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
                   ),
                 );
               } else {
                 try {
                   String content = await File(paths[index]).readAsString();
+                  if (!context.mounted) return;
                   Navigator.of(context).push(
                     WallpaperPageRoute(
                       builder: (context) => ScriptCodeDetailPage(
@@ -66,7 +67,7 @@ class _FileDirectoryPageState extends ConsumerState<FileDirectoryPage> {
                         canRestore: true,
                       ),
                       blurSigma: 6,
-                      blurTintColor: CyberColors.bg.withOpacity(0.50),
+                      blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
                     ),
                   );
                 } catch (e) {

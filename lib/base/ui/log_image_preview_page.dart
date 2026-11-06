@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -12,10 +11,10 @@ class LogImagePreviewPage extends StatelessWidget {
   final Uint8List bytes;
 
   const LogImagePreviewPage({
-    Key? key,
+    super.key,
     required this.path,
     required this.bytes,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

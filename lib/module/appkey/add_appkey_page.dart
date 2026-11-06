@@ -22,9 +22,9 @@ class AddAppKeyPage extends ConsumerStatefulWidget {
   final Map<String, dynamic> bean;
 
   const AddAppKeyPage({
-    Key? key,
+    super.key,
     required this.bean,
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState<AddAppKeyPage> createState() => _AddAppKeyPageState();
@@ -336,6 +336,7 @@ class _AddAppKeyPageState extends ConsumerState<AddAppKeyPage> {
       response = await SingleAccountPageState.ofApi(context).addAppKey(data);
     }
     EasyLoading.dismiss();
+    if (!mounted) return;
 
     if (response.success) {
       Navigator.of(context).pop(true);

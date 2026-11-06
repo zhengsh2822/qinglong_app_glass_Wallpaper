@@ -33,7 +33,9 @@ class ICloudUtils {
       if (list.isEmpty) return;
       if (SpUtil.getInt(spVIP, defValue: typeNormal) == typeNormal) return;
       if (SpUtil.getBool(spICloud, defValue: true) == false &&
-          focusUpdate == false) return;
+          focusUpdate == false) {
+        return;
+      }
 
       bool exist = await existContent(
           await FileUtil(index).getSubscribeDirectory(), list);
@@ -54,7 +56,7 @@ class ICloudUtils {
         }
       }
       return false;
-    } catch (e) {}
+    } catch (e) { /* ignore: failure is non-critical */ }
     return false;
   }
 
@@ -63,7 +65,9 @@ class ICloudUtils {
       if (list.isEmpty) return;
       if (SpUtil.getInt(spVIP, defValue: typeNormal) == typeNormal) return;
       if (SpUtil.getBool(spICloud, defValue: true) == false &&
-          focusUpdate == false) return;
+          focusUpdate == false) {
+        return;
+      }
       bool exist = await existContent(
           await FileUtil(index).getEnvDirectory(), jsonEncode(list));
 
@@ -80,19 +84,21 @@ class ICloudUtils {
     try {
       if (SpUtil.getInt(spVIP, defValue: typeNormal) == typeNormal) return;
 
-      if (content == null || content.isEmpty) return;
+      if (content.isEmpty) return;
       if (SpUtil.getBool(spICloud, defValue: true) == false &&
-          focusUpdate == false) return;
+          focusUpdate == false) {
+        return;
+      }
 
       bool exist = await existContent(
           await FileUtil(index)
-              .getConfigHolDirectory(title ?? "nameNotFound.sh"),
+              .getConfigHolDirectory(title),
           content);
 
       if (!exist) {
-        await FileUtil(index).writeConfig(title ?? "nameNotFound.sh", content);
+        await FileUtil(index).writeConfig(title, content);
       }
-    } catch (e) {}
+    } catch (e) { /* ignore: failure is non-critical */ }
   }
 
   void restoreEnv(String? path) async {
@@ -147,7 +153,7 @@ class ICloudUtils {
               title = temp[temp.length - 2];
             }
             _handleRestoreConfig(title, p);
-          } catch (e) {}
+          } catch (e) { /* ignore: failure is non-critical */ }
         }
       }
     } else {
@@ -159,7 +165,7 @@ class ICloudUtils {
           title = temp[temp.length - 2];
         }
         _handleRestoreConfig(title, path);
-      } catch (e) {}
+      } catch (e) { /* ignore: failure is non-critical */ }
     }
   }
 

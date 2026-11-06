@@ -30,10 +30,10 @@ import 'package:qinglong_app/base/ui/wallpaper_page_route.dart';
 class TaskLogPage extends ConsumerStatefulWidget {
   final String? searchText;
 
-  const TaskLogPage({Key? key, this.searchText}) : super(key: key);
+  const TaskLogPage({super.key, this.searchText});
 
   @override
-  _TaskLogPageState createState() => _TaskLogPageState();
+  ConsumerState<TaskLogPage> createState() => _TaskLogPageState();
 }
 
 class _TaskLogPageState extends ConsumerState<TaskLogPage>
@@ -203,7 +203,7 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                                       blurSigma: 6,
                                                       blurTintColor: CyberColors
                                                           .bg
-                                                          .withOpacity(0.50),
+                                                          .withValues(alpha: 0.50),
                                                       builder:
                                                           (context) =>
                                                               InTimeHistoryLogPage(
@@ -229,8 +229,8 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                                           blurSigma: 6,
                                                           blurTintColor:
                                                               CyberColors.bg
-                                                                  .withOpacity(
-                                                                    0.50,
+                                                                  .withValues(
+                                                                    alpha: 0.50,
                                                                   ),
                                                           builder:
                                                               (
@@ -290,8 +290,8 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                   Navigator.of(context).push(
                                     WallpaperPageRoute(
                                       blurSigma: 6,
-                                      blurTintColor: CyberColors.bg.withOpacity(
-                                        0.50,
+                                      blurTintColor: CyberColors.bg.withValues(
+                                        alpha: 0.50,
                                       ),
                                       builder:
                                           (context) => InTimeHistoryLogPage(

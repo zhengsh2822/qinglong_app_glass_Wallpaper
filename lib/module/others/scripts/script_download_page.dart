@@ -7,19 +7,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:qinglong_app/base/commit_button.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
-import 'package:qinglong_app/base/sp_const.dart';
-import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/module/subscribe/add_subscribe_page.dart';
 import 'package:path/path.dart';
 import 'package:qinglong_app/utils/download_dir_utils.dart';
 import 'package:qinglong_app/utils/extension.dart';
-import 'package:qinglong_app/utils/sp_utils.dart';
 
-import '../../../main.dart';
 
 class ScriptDownloadPage extends ConsumerStatefulWidget {
-  const ScriptDownloadPage({Key? key}) : super(key: key);
+  const ScriptDownloadPage({super.key});
 
   @override
   ConsumerState<ScriptDownloadPage> createState() => _ScriptDownloadPageState();
@@ -92,7 +88,7 @@ class _ScriptDownloadPageState extends ConsumerState<ScriptDownloadPage> {
     }
     EasyLoading.show(status: "下载中");
     try {
-      var _dio = Dio(
+      var dio = Dio(
         BaseOptions(
           connectTimeout: Duration(milliseconds: 50000),
           receiveTimeout: Duration(milliseconds: 50000),
@@ -100,7 +96,7 @@ class _ScriptDownloadPageState extends ConsumerState<ScriptDownloadPage> {
           contentType: "application/json",
         ),
       );
-      var response = await _dio.get(controller.text.trim());
+      var response = await dio.get(controller.text.trim());
       EasyLoading.dismiss();
       if (response.statusCode == 200) {
         final path = await _localPath;
@@ -112,6 +108,7 @@ class _ScriptDownloadPageState extends ConsumerState<ScriptDownloadPage> {
           f.deleteSync();
         }
         await f.writeAsString(response.data.toString());
+        if (!context.mounted) return;
         Navigator.of(context).pop({"path": f.path, "name": fileName});
       } else {
         response.statusMessage?.toast();

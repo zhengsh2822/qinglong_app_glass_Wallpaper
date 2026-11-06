@@ -26,7 +26,7 @@ class BaseStateWidget<T extends BaseViewModel> extends ConsumerStatefulWidget {
   });
 
   @override
-  _BaseStateWidgetState<T> createState() => _BaseStateWidgetState<T>();
+  ConsumerState<BaseStateWidget<T>> createState() => _BaseStateWidgetState<T>();
 }
 
 class _BaseStateWidgetState<T extends BaseViewModel>
@@ -41,18 +41,18 @@ class _BaseStateWidgetState<T extends BaseViewModel>
         viewModel.clearToast();
       });
     }
-    if (viewModel.currentState == PageState.CONTENT) {
+    if (viewModel.currentState == PageState.content) {
       return widget.builder(ref, viewModel, widget.child);
     }
 
-    if (viewModel.currentState == PageState.LOADING) {
+    if (viewModel.currentState == PageState.loading) {
       return Container(
         alignment: Alignment.center,
         child: const LoadingWidget(),
       );
     }
 
-    if (viewModel.currentState == PageState.FAILED) {
+    if (viewModel.currentState == PageState.failed) {
       return Container(
         alignment: Alignment.center,
         child: Column(
@@ -90,7 +90,7 @@ class _BaseStateWidgetState<T extends BaseViewModel>
       );
     }
 
-    if (viewModel.currentState == PageState.EMPTY) {
+    if (viewModel.currentState == PageState.empty) {
       return Container(
         alignment: Alignment.center,
         child: Column(

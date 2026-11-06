@@ -103,8 +103,8 @@ class GlassCard extends ConsumerWidget {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Colors.white.withOpacity(isDark ? 0.06 : 0.18),
-                Colors.white.withOpacity(0.0),
+                Colors.white.withValues(alpha: isDark ? 0.06 : 0.18),
+                Colors.white.withValues(alpha: 0.0),
               ],
               stops: const [0.0, 0.15],
             ),
@@ -196,8 +196,8 @@ class GlassListItemCard extends ConsumerWidget {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Colors.white.withOpacity(isDark ? 0.05 : 0.15),
-                Colors.white.withOpacity(0.0),
+                Colors.white.withValues(alpha: isDark ? 0.05 : 0.15),
+                Colors.white.withValues(alpha: 0.0),
               ],
               stops: const [0.0, 0.15],
             ),
@@ -300,8 +300,8 @@ class GlassAppBarContainer extends ConsumerWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Colors.white.withOpacity(isDark ? 0.06 : 0.18),
-              Colors.white.withOpacity(0.0),
+              Colors.white.withValues(alpha: isDark ? 0.06 : 0.18),
+              Colors.white.withValues(alpha: 0.0),
             ],
             stops: const [0.0, 0.5],
           ),

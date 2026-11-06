@@ -32,7 +32,7 @@ class TreeNode extends ConsumerStatefulWidget {
   const TreeNode({super.key, required this.node});
 
   @override
-  _TreeNodeState createState() => _TreeNodeState();
+  ConsumerState<TreeNode> createState() => _TreeNodeState();
 }
 
 class _TreeNodeState extends ConsumerState<TreeNode> with SingleTickerProviderStateMixin {

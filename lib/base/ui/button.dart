@@ -36,7 +36,7 @@ class ButtonWidget extends StatelessWidget {
                         : LinearGradient(
                           colors: [
                             primaryColor,
-                            primaryColor.withOpacity(0.85),
+                            primaryColor.withValues(alpha: 0.85),
                           ],
                         ),
               ),

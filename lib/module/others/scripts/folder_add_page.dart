@@ -11,8 +11,8 @@ import 'package:qinglong_app/utils/extension.dart';
 
 class FloderAddPage extends ConsumerStatefulWidget {
   const FloderAddPage({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   ConsumerState<FloderAddPage> createState() => ScriptUploadPageState();
@@ -110,6 +110,7 @@ class ScriptUploadPageState extends ConsumerState<FloderAddPage> {
       path,
     );
     EasyLoading.dismiss();
+    if (!context.mounted) return;
     if (temp.success) {
       "新增成功".toast();
       Navigator.of(context).pop(true);

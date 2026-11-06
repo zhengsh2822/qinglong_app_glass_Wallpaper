@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/commit_button.dart';
 import 'package:path/path.dart' as p;
 import 'package:qinglong_app/base/http/http.dart';
@@ -24,8 +23,7 @@ class AddTaskPage extends ConsumerStatefulWidget {
   final TaskBean? taskBean;
   final bool hideUploadFile;
 
-  const AddTaskPage({Key? key, this.taskBean, required this.hideUploadFile})
-    : super(key: key);
+  const AddTaskPage({super.key, this.taskBean, required this.hideUploadFile});
 
   @override
   ConsumerState<AddTaskPage> createState() => _AddTaskPageState();
@@ -138,7 +136,7 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage>
                         await launchUrl(
                           Uri.tryParse("https://crontab.guru/#$cron")!,
                         );
-                      } catch (e) {}
+                      } catch (e) { /* ignore: failure is non-critical */ }
                     },
                     child: Text(
                       "在线测试",
@@ -209,6 +207,7 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage>
       hideKeyboardFocus();
       if (fileKey.currentState != null && fileKey.currentState!.file != null) {
         String content = await fileKey.currentState!.file!.readAsString();
+        if (!mounted) return;
         HttpResponse<NullResponse> responseS =
             await SingleAccountPageState.ofApi(context).addScript(
               fileKey.currentState?.getFileName() ??
@@ -227,6 +226,7 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage>
       taskBean.schedule = _cronController.text.trim();
 
       await EasyLoading.show(status: "提交中");
+      if (!mounted) return;
       HttpResponse<NullResponse> response = await SingleAccountPageState.ofApi(
         context,
       ).addTask(
@@ -237,6 +237,7 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage>
         nId: taskBean.nId,
       );
       await EasyLoading.dismiss();
+      if (!mounted) return;
       if (response.success) {
         (widget.taskBean?.sId == null) ? "新增成功" : "修改成功".toast();
         ref

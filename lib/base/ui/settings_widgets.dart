@@ -130,7 +130,7 @@ class SettingsSwitchRow extends ConsumerWidget {
           Transform.scale(
             scale: 0.9,
             child: CupertinoSwitch(
-              activeColor: ref.watch(themeProvider).primaryColor,
+              activeTrackColor: ref.watch(themeProvider).primaryColor,
               value: value,
               onChanged: onChanged,
             ),
@@ -208,7 +208,7 @@ class SettingsTapRow extends ConsumerWidget {
             const Spacer(),
             if (effectiveTrailing != null) ...[
               const SizedBox(width: 5),
-              effectiveTrailing!,
+              effectiveTrailing,
             ],
           ],
         ),

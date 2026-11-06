@@ -1,12 +1,9 @@
 import 'package:flutter/cupertino.dart';
-import 'package:qinglong_app/base/http/api.dart';
 import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
-import 'package:qinglong_app/base/userinfo_viewmodel.dart';
 import 'package:qinglong_app/module/login/login_bean.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
-import '../main.dart';
 
 class LoginHelper {
   static int success = 0;
@@ -43,6 +40,7 @@ class LoginHelper {
         context,
       ).loginByClientId(userName, password);
     }
+    if (!context.mounted) return failed;
     if (response.success) {
       loginSuccess(context, response, userName, password);
       return success;
@@ -51,6 +49,7 @@ class LoginHelper {
       HttpResponse<LoginBean> oldResponse = await SingleAccountPageState.ofApi(
         context,
       ).loginOld(userName, password);
+      if (!context.mounted) return failed;
       if (oldResponse.success) {
         loginSuccess(context, oldResponse, userName, password);
         return success;
@@ -77,6 +76,7 @@ class LoginHelper {
     HttpResponse<LoginBean> response = await SingleAccountPageState.ofApi(
       context,
     ).loginTwo(userName, password, code);
+    if (!context.mounted) return failed;
     if (response.success) {
       loginSuccess(context, response, userName, password);
       return success;

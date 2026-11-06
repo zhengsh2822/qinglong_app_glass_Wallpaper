@@ -22,7 +22,7 @@ import 'package:qinglong_app/utils/sp_utils.dart';
 import '../base/ql_app_bar.dart';
 
 class SettingPage extends ConsumerStatefulWidget {
-  const SettingPage({Key? key}) : super(key: key);
+  const SettingPage({super.key});
 
   @override
   ConsumerState createState() => _SettingPageState();
@@ -212,6 +212,7 @@ class _SettingPageState extends ConsumerState<SettingPage> {
                       danger: true,
                       confirmLabel: '退出',
                     ).then((confirmed) {
+                      if (!context.mounted) return;
                       if (confirmed == true) {
                         SingleAccountPageState.ofUserInfo(context).updateToken(
                           SingleAccountPageState.of(context)?.index ?? 0,
@@ -247,6 +248,7 @@ class _SettingPageState extends ConsumerState<SettingPage> {
                       danger: true,
                       confirmLabel: '清空并退出',
                     ).then((confirmed) {
+                      if (!context.mounted) return;
                       if (confirmed == true) {
                         clearData(context);
                         Navigator.of(context).pushNamedAndRemoveUntil(
@@ -297,6 +299,7 @@ class _SettingPageState extends ConsumerState<SettingPage> {
     );
 
     if (result == null) return;
+    if (!context.mounted) return;
     final trimmed = result.trim();
     if (trimmed.isEmpty) return;
 

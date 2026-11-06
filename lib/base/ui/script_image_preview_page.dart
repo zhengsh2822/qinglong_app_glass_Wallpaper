@@ -37,11 +37,11 @@ class ScriptImagePreviewPage extends ConsumerWidget {
   final String? localPath;
 
   const ScriptImagePreviewPage({
-    Key? key,
+    super.key,
     required this.fileName,
     this.dirPath,
     this.localPath,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -90,12 +90,12 @@ class ScriptImagePreviewBody extends StatefulWidget {
   final String? localPath;
 
   const ScriptImagePreviewBody({
-    Key? key,
+    super.key,
     required this.accountIndex,
     required this.fileName,
     this.dirPath,
     this.localPath,
-  }) : super(key: key);
+  });
 
   @override
   State<ScriptImagePreviewBody> createState() =>

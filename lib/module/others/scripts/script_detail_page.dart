@@ -15,7 +15,6 @@ import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/highlight/selectable_code_view.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
@@ -36,11 +35,10 @@ class ScriptDetailPage extends ConsumerStatefulWidget {
   final String title;
   final String? path;
 
-  const ScriptDetailPage({Key? key, required this.title, this.path})
-    : super(key: key);
+  const ScriptDetailPage({super.key, required this.title, this.path});
 
   @override
-  _ScriptDetailPageState createState() => _ScriptDetailPageState();
+  ConsumerState<ScriptDetailPage> createState() => _ScriptDetailPageState();
 }
 
 class _ScriptDetailPageState extends ConsumerState<ScriptDetailPage>
@@ -145,7 +143,7 @@ class _ScriptDetailPageState extends ConsumerState<ScriptDetailPage>
         onTap: () async {
           try {
             String name = "${Random().nextInt(40000)}_${widget.title}";
-            var file = await FileUtil(0).writeDownloadFile(name, content ?? "");
+            await FileUtil(0).writeDownloadFile(name, content ?? "");
             "已写入Download/qinglong文件夹下,文件名$name".toast2();
           } catch (e) {
             e.toString().toast();
@@ -208,6 +206,7 @@ class _ScriptDetailPageState extends ConsumerState<ScriptDetailPage>
         context,
       ).delScript(widget.title, widget.path ?? "");
     }
+    if (!mounted) return;
     if (result.success) {
       "删除成功".toast();
       Navigator.of(context).pop(true);
@@ -251,6 +250,7 @@ class _ScriptDetailPageState extends ConsumerState<ScriptDetailPage>
                     padding: EdgeInsets.zero,
                     onPressed: () async {
                       await hideKeyboardFocus();
+                      if (!context.mounted) return;
                       showMoreOperate(context, actions);
                     },
                     child: Padding(

@@ -34,7 +34,7 @@ class KeyboardDismissNavigatorObserver extends NavigatorObserver {
   void _watch(Route<dynamic> route) {
     // 只有 TransitionRoute 才有 animation（手势返回/反向动画由它驱动）
     if (route is! TransitionRoute) return;
-    final anim = (route as TransitionRoute).animation;
+    final anim = (route).animation;
     if (anim == null || _listeners.containsKey(anim)) return;
     void listener() {
       if (anim.status == AnimationStatus.reverse) {

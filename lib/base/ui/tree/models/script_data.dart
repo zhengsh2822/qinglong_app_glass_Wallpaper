@@ -1,10 +1,7 @@
-import 'dart:convert';
-import 'dart:ui';
 
 import 'package:flutter/widgets.dart';
 
 import '../tree_node.dart';
-import '../utilities.dart';
 
 /// Defines the data used to display a [TreeNode].
 ///
@@ -39,7 +36,7 @@ class ScriptData {
     return ScriptData.fromMap(json);
   }
 
-  /// Creates a [ScriptData] from a Map<String, dynamic> map. The map
+  /// Creates a [ScriptData] from a `Map<String, dynamic>` map. The map
   /// should contain a "label" value. If the key value is
   /// missing, it generates a unique key.
   /// If the expanded value, if present, can be any 'truthful'
@@ -80,7 +77,7 @@ class ScriptData {
     return ScriptData(
       key: '$key',
       title: title ?? "",
-      type: type ?? "",
+      type: type,
       expanded: false,
       parent: parent ?? "",
       children: children,

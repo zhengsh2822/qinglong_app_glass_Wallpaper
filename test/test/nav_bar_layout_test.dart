@@ -23,7 +23,6 @@ void main() {
         debugShowCheckedModeBanner: false,
         theme: ThemeData.dark().copyWith(
           appBarTheme: const AppBarTheme(),
-          useMaterial3: false,
         ),
         home: Scaffold(
           appBar: AppBar(

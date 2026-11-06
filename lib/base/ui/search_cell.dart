@@ -13,7 +13,7 @@ import '../../utils/sp_utils.dart';
 class SearchCell extends ConsumerStatefulWidget {
   final TextEditingController controller;
 
-  const SearchCell({Key? key, required this.controller}) : super(key: key);
+  const SearchCell({super.key, required this.controller});
 
   @override
   ConsumerState createState() => _SearchCellState();
@@ -75,8 +75,8 @@ class _SearchCellState extends ConsumerState<SearchCell> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  bgColor.withOpacity(isCyber ? 0.5 : 0.85),
-                  bgEndColor.withOpacity(isCyber ? 0.5 : 0.85),
+                  bgColor.withValues(alpha: isCyber ? 0.5 : 0.85),
+                  bgEndColor.withValues(alpha: isCyber ? 0.5 : 0.85),
                 ],
               ),
         borderRadius: BorderRadius.circular(24),

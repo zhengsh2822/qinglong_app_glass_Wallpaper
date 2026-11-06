@@ -1,6 +1,5 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
@@ -22,8 +21,8 @@ class Utilities {
     caseSensitive: false,
   );
 
-  static const Color BLACK = Color.fromARGB(255, 0, 0, 0);
-  static const Color WHITE = Color.fromARGB(255, 255, 255, 255);
+  static const Color black = Color.fromARGB(255, 0, 0, 0);
+  static const Color white = Color.fromARGB(255, 255, 255, 255);
 
   static Color getColor(String value) {
     String colorValue = value;
@@ -642,14 +641,14 @@ class Utilities {
   }
 
   static String toRGBA(Color color) {
-    return 'rgba(${color.red},${color.green},${color.blue},${color.alpha / 255})';
+    return 'rgba(${(color.r * 255).round()},${(color.g * 255).round()},${(color.b * 255).round()},${color.a})';
   }
 
   static Color textColor(Color color) {
     if (color.computeLuminance() > 0.6) {
-      return BLACK;
+      return black;
     } else {
-      return WHITE;
+      return white;
     }
   }
 

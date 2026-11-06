@@ -1,9 +1,6 @@
-import 'dart:ui';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:qinglong_app/base/http/api.dart';
 import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
@@ -25,7 +22,7 @@ class TaskLogDetailPage extends ConsumerStatefulWidget {
   });
 
   @override
-  _TaskLogDetailPageState createState() => _TaskLogDetailPageState();
+  ConsumerState<TaskLogDetailPage> createState() => _TaskLogDetailPageState();
 }
 
 class _TaskLogDetailPageState extends ConsumerState<TaskLogDetailPage>

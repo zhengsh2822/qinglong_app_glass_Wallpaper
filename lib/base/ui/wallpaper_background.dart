@@ -104,7 +104,7 @@ class WallpaperBackground extends StatelessWidget {
         if (cfg.dimOpacity > 0)
           Positioned.fill(
             child: ColoredBox(
-              color: Colors.black.withOpacity(cfg.dimOpacity),
+              color: Colors.black.withValues(alpha: cfg.dimOpacity),
             ),
           ),
       ],

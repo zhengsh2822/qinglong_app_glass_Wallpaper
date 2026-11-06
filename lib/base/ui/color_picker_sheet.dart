@@ -90,7 +90,7 @@ class _ColorPickerSheetState extends ConsumerState<ColorPickerSheet> {
                       vertical: 5,
                     ),
                     decoration: BoxDecoration(
-                      color: theme.primaryColor.withOpacity(0.12),
+                      color: theme.primaryColor.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -107,7 +107,7 @@ class _ColorPickerSheetState extends ConsumerState<ColorPickerSheet> {
                   width: 28,
                   height: 28,
                   decoration: BoxDecoration(
-                    color: titleColor.withOpacity(0.08),
+                    color: titleColor.withValues(alpha: 0.08),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -202,7 +202,7 @@ class _ColorPreviewBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hex = color.value.toRadixString(16).padLeft(8, '0').toUpperCase();
+    final hex = color.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase();
     return Container(
       width: double.infinity,
       height: 80,
@@ -211,7 +211,7 @@ class _ColorPreviewBlock extends StatelessWidget {
         color: color,
         shadows: [
           BoxShadow(
-            color: color.withOpacity(0.3),
+            color: color.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -222,7 +222,7 @@ class _ColorPreviewBlock extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           decoration: ShapeDecoration(
             shape: appCornerBorder(radius: 8),
-            color: Colors.black.withOpacity(0.25),
+            color: Colors.black.withValues(alpha: 0.25),
           ),
           child: Text(
             '#${hex.substring(2)}',

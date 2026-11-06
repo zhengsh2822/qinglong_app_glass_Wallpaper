@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,7 +14,6 @@ import 'package:qinglong_app/base/ui/card_transition_source.dart';
 import 'package:qinglong_app/base/ui/glass_segmented_tab.dart';
 import 'package:qinglong_app/base/ui/animated_edit_mode_overlay.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
@@ -30,13 +28,12 @@ import 'package:qinglong_app/module/others/dependencies/add_dependency_page.dart
 import 'package:qinglong_app/module/others/dependencies/dependency_bean.dart';
 import 'package:qinglong_app/module/others/dependencies/dependency_viewmodel.dart';
 import 'package:qinglong_app/module/task/intime_log/intime_dep_log_page.dart';
-import 'package:qinglong_app/module/task/task_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/utils.dart';
 import 'package:qinglong_app/base/ui/wallpaper_page_route.dart';
 
 class DependencyPage extends ConsumerStatefulWidget {
-  const DependencyPage({Key? key}) : super(key: key);
+  const DependencyPage({super.key});
 
   @override
   DependcyPageState createState() => DependcyPageState();
@@ -45,9 +42,9 @@ class DependencyPage extends ConsumerStatefulWidget {
 class DependcyPageState extends ConsumerState<DependencyPage>
     with TickerProviderStateMixin {
   static List<DepedencyEnum> types = [
-    DepedencyEnum.NodeJS,
-    DepedencyEnum.Python3,
-    DepedencyEnum.Linux,
+    DepedencyEnum.nodeJs,
+    DepedencyEnum.python3,
+    DepedencyEnum.linux,
   ];
   ScrollController? controller;
 
@@ -57,7 +54,6 @@ class DependcyPageState extends ConsumerState<DependencyPage>
   TabController? _tabController;
   TextEditingController searchText = TextEditingController();
   Timer? _searchDebounce;
-  int _slidableResetKey = 0;
 
   @override
   void initState() {
@@ -91,9 +87,7 @@ class DependcyPageState extends ConsumerState<DependencyPage>
   }
 
   void _onSlidableClose() {
-    setState(() {
-      _slidableResetKey = SlidableCloseNotifier.value;
-    });
+    setState(() {});
   }
 
   void scrollToTop() {
@@ -222,6 +216,7 @@ class DependcyPageState extends ConsumerState<DependencyPage>
                       ),
                     )
                     .then((value) async {
+                      if (!context.mounted) return;
                       if (value == null || value is! Map<String, dynamic>) {
                         return;
                       }
@@ -235,13 +230,12 @@ class DependcyPageState extends ConsumerState<DependencyPage>
                       if (value.isNotEmpty) {
                         model.insertOptimistic(value);
                       }
-                      if (!mounted) return;
                       // 并行刷新三类列表校准真实状态，并联动安装状态轮询；
                       // 不自动跳转依赖日志页——日志想看就点卡片或滑「日志」
                       await Future.wait([
-                        model.loadData(context, types[0].name.toLowerCase()),
-                        model.loadData(context, types[1].name.toLowerCase()),
-                        model.loadData(context, types[2].name.toLowerCase()),
+                        model.loadData(context, types[0].apiType),
+                        model.loadData(context, types[1].apiType),
+                        model.loadData(context, types[2].apiType),
                       ]);
                     });
               },
@@ -250,9 +244,9 @@ class DependcyPageState extends ConsumerState<DependencyPage>
         ),
         body: BaseStateWidget<DependencyViewModel>(
           onReady: (model) {
-            model.loadData(context, types[0].name.toLowerCase());
-            model.loadData(context, types[1].name.toLowerCase());
-            model.loadData(context, types[2].name.toLowerCase());
+            model.loadData(context, types[0].apiType);
+            model.loadData(context, types[1].apiType);
+            model.loadData(context, types[2].apiType);
           },
           lazyLoad: true,
           model: SingleAccountPageState.ofDependencyProvider(context)(
@@ -302,9 +296,9 @@ class DependcyPageState extends ConsumerState<DependencyPage>
                           floating: false,
                           delegate: GlassSegmentedTabDelegate(
                             tabs: [
-                              DependcyPageState.types[0].name,
-                              DependcyPageState.types[1].name,
-                              DependcyPageState.types[2].name,
+                              DependcyPageState.types[0].label,
+                              DependcyPageState.types[1].label,
+                              DependcyPageState.types[2].label,
                             ],
                             tabController: _tabController!,
                             editMode: editMode,
@@ -323,7 +317,7 @@ class DependcyPageState extends ConsumerState<DependencyPage>
                       onRefresh: () async {
                         return model.loadData(
                           context,
-                          types[_tabController!.index].name,
+                          types[_tabController!.index].apiType,
                         );
                       },
                       child: SpringDepthPageTrack(
@@ -388,11 +382,12 @@ class DependcyPageState extends ConsumerState<DependencyPage>
         .push(
           WallpaperPageRoute(
             blurSigma: 6,
-            blurTintColor: CyberColors.bg.withOpacity(0.50),
+            blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
             builder: (context) => InTimeDepLogPage(v, true, title),
           ),
         )
         .then((value) async {
+          if (!context.mounted) return;
           await ref
               .read(
                 SingleAccountPageState.ofDependencyProvider(context)(
@@ -401,7 +396,7 @@ class DependcyPageState extends ConsumerState<DependencyPage>
               )
               .loadData(
                 context,
-                types[_tabController!.index].name.toLowerCase(),
+                types[_tabController!.index].apiType,
               );
         });
   }
@@ -457,7 +452,7 @@ class DependcyPageState extends ConsumerState<DependencyPage>
                   .currentTheme
                   .bottomNavigationBarTheme
                   .backgroundColor
-                  ?.withOpacity(1) ??
+                  ?.withValues(alpha: 1) ??
               Theme.of(context).bottomNavigationBarTheme.backgroundColor ??
               Colors.black,
       builder: (BuildContext context1) {
@@ -574,7 +569,7 @@ class DependcyPageState extends ConsumerState<DependencyPage>
               )
               .del(
                 context,
-                types[_tabController!.index].name,
+                types[_tabController!.index].apiType,
                 sids,
                 ids,
                 keys: keys,
@@ -604,7 +599,6 @@ class DependcyPageState extends ConsumerState<DependencyPage>
       if (confirmed != true) return;
       onConfirm();
     });
-    ;
   }
 
   void reInstalls(
@@ -618,7 +612,7 @@ class DependcyPageState extends ConsumerState<DependencyPage>
             getProviderName(context),
           ),
         )
-        .reInstall(context, types[_tabController!.index].name, sId, id);
+        .reInstall(context, types[_tabController!.index].apiType, sId, id);
   }
 
   @override
@@ -657,14 +651,14 @@ class DepListView extends StatefulWidget {
   final ValueChanged<String> changed;
 
   const DepListView({
-    Key? key,
+    super.key,
     required this.list,
     required this.type,
     required this.searchText,
     required this.editMode,
     required this.checked,
     required this.changed,
-  }) : super(key: key);
+  });
 
   @override
   State<DepListView> createState() => _DepListViewState();
@@ -729,11 +723,11 @@ class DependencyCell extends ConsumerWidget {
   const DependencyCell(
     this.type,
     this.bean, {
-    Key? key,
+    super.key,
     this.editMode = false,
     required this.checkedCallback,
     required this.checked,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -903,7 +897,6 @@ class DependencyCell extends ConsumerWidget {
               ],
               // 卡片共享展开：点击卡片 → 卡片隐藏 → 容器从卡片矩形展开日志页
               child: CardTransitionSource(
-                child: cardContent,
                 sourceBuilder: (ctx) => depRow,
                 pageBuilder:
                     (context) => InTimeDepLogPage(
@@ -912,7 +905,7 @@ class DependencyCell extends ConsumerWidget {
                       bean.name ?? "",
                     ),
                 blurSigma: 6,
-                blurTintColor: CyberColors.bg.withOpacity(0.50),
+                blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
                 onResult: (value) async {
                   await ref
                       .read(
@@ -920,8 +913,9 @@ class DependencyCell extends ConsumerWidget {
                           getProviderName(context),
                         ),
                       )
-                      .loadData(context, type.name.toLowerCase());
+                      .loadData(context, type.apiType);
                 },
+                child: cardContent,
               ),
             )
             : Slidable(
@@ -974,7 +968,6 @@ class DependencyCell extends ConsumerWidget {
               ),
               // 卡片共享展开：点击卡片 → 卡片隐藏 → 容器从卡片矩形展开日志页
               child: CardTransitionSource(
-                child: cardContent,
                 sourceBuilder: (ctx) => depRow,
                 pageBuilder:
                     (context) => InTimeDepLogPage(
@@ -983,7 +976,7 @@ class DependencyCell extends ConsumerWidget {
                       bean.name ?? "",
                     ),
                 blurSigma: 6,
-                blurTintColor: CyberColors.bg.withOpacity(0.50),
+                blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
                 onResult: (value) async {
                   await ref
                       .read(
@@ -991,8 +984,9 @@ class DependencyCell extends ConsumerWidget {
                           getProviderName(context),
                         ),
                       )
-                      .loadData(context, type.name.toLowerCase());
+                      .loadData(context, type.apiType);
                 },
+                child: cardContent,
               ),
             );
 
@@ -1021,18 +1015,19 @@ class DependencyCell extends ConsumerWidget {
         .push(
           WallpaperPageRoute(
             blurSigma: 6,
-            blurTintColor: CyberColors.bg.withOpacity(0.50),
+            blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
             builder: (context) => InTimeDepLogPage(v, true, title),
           ),
         )
         .then((value) async {
+          if (!context.mounted) return;
           await ref
               .read(
                 SingleAccountPageState.ofDependencyProvider(context)(
                   getProviderName(context),
                 ),
               )
-              .loadData(context, type.name.toLowerCase());
+              .loadData(context, type.apiType);
         });
   }
 
@@ -1049,7 +1044,7 @@ class DependencyCell extends ConsumerWidget {
             getProviderName(context),
           ),
         )
-        .reInstall(context, type.name.toLowerCase(), [sId], [id]);
+        .reInstall(context, type.apiType, [sId], [id]);
     showLog(context, title, ref, sId, id);
   }
 
@@ -1077,7 +1072,7 @@ class DependencyCell extends ConsumerWidget {
             )
             .del(
               context1,
-              type.name.toLowerCase(),
+              type.apiType,
               [sId],
               [id],
               keys: [bean.mustId],
@@ -1100,7 +1095,7 @@ class DependencyCell extends ConsumerWidget {
           )
           .del(
             context1,
-            type.name.toLowerCase(),
+            type.apiType,
             [sId],
             [id],
             keys: [bean.mustId],

@@ -2,20 +2,18 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/commit_button.dart';
 import 'package:qinglong_app/base/multi_account_userinfo_viewmodel.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/glass_text_field.dart';
 import 'package:qinglong_app/module/subscribe/add_subscribe_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
 class UpdateMaxAccountPage extends ConsumerStatefulWidget {
-  const UpdateMaxAccountPage({Key? key}) : super(key: key);
+  const UpdateMaxAccountPage({super.key});
 
   @override
   ConsumerState<UpdateMaxAccountPage> createState() =>
@@ -111,6 +109,7 @@ class _UpdateMaxAccountPageState extends ConsumerState<UpdateMaxAccountPage> {
         confirmLabel: '确实',
         danger: false,
       ).then((confirmed) {
+        if (!context.mounted) return;
         if (confirmed == true) {
           MultiAccountUserInfoViewModel.updateMaxAccount(
             int.tryParse(controller.text.toString()) ?? count,
@@ -126,6 +125,7 @@ class _UpdateMaxAccountPageState extends ConsumerState<UpdateMaxAccountPage> {
       content: "你设置了${controller.text}个最大登录数,确定吗?",
       confirmLabel: "确实",
     ).then((confirmed) {
+      if (!context.mounted) return;
       if (confirmed != true) return;
       MultiAccountUserInfoViewModel.updateMaxAccount(
         int.tryParse(controller.text.toString()) ?? count,

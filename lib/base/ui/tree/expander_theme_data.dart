@@ -93,7 +93,6 @@ class ExpanderThemeData {
   /// replaced by the non-null parameters of the given icon theme. If the given
   /// expander theme is null, simply returns this theme.
   ExpanderThemeData merge(ExpanderThemeData other) {
-    if (other == null) return this;
     return copyWith(
       color: other.color,
       type: other.type,

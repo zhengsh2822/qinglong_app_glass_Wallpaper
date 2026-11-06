@@ -1,10 +1,8 @@
-import 'dart:io';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:synchronized/synchronized.dart';
-import '../base/sp_const.dart';
 
 class SpUtil {
   static SpUtil? _singleton;

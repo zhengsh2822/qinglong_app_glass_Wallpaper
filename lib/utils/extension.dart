@@ -1,4 +1,3 @@
-﻿import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,9 +13,9 @@ extension ContextExt on BuildContext {
 
 extension StringExt on String {
   void toast() {
-    if (this == null || this!.isEmpty) return;
+    if (isEmpty) return;
     Fluttertoast.showToast(
-      msg: this!,
+      msg: this,
       toastLength: Toast.LENGTH_SHORT,
       gravity: ToastGravity.CENTER,
       timeInSecForIosWeb: 1,
@@ -24,9 +23,9 @@ extension StringExt on String {
   }
 
   void toast2() {
-    if (this == null || this!.isEmpty) return;
+    if (isEmpty) return;
     Fluttertoast.showToast(
-      msg: this!,
+      msg: this,
       toastLength: Toast.LENGTH_LONG,
       gravity: ToastGravity.CENTER,
       timeInSecForIosWeb: 1,

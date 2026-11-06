@@ -1,4 +1,4 @@
-import 'dart:convert' show jsonDecode, jsonEncode;
+import 'dart:convert' show jsonDecode;
 
 import 'models/script_data.dart';
 
@@ -328,7 +328,7 @@ class TreeViewController {
         }
       }
     }
-    return found == null ? null : found;
+    return found;
   }
 
   /// Expands a node and all of the node's ancestors so that the node is
@@ -347,11 +347,11 @@ class TreeViewController {
         parent = getParent(currentKey);
       }
       TreeViewController controller = this;
-      ancestors.forEach((String k) {
+      for (var k in ancestors) {
         ScriptData node = controller.getNode(k)!;
         ScriptData updated = node.copyWith(expanded: true);
         controller = controller.withUpdateNode(k, updated);
-      });
+      }
       return controller.children;
     }
     return children;
@@ -373,11 +373,11 @@ class TreeViewController {
         parent = getParent(currentKey);
       }
       TreeViewController controller = this;
-      ancestors.forEach((String k) {
+      for (var k in ancestors) {
         ScriptData node = controller.getNode(k)!;
         ScriptData updated = node.copyWith(expanded: false);
         controller = controller.withUpdateNode(k, updated);
-      });
+      }
       return controller.children;
     }
     return children;
@@ -394,8 +394,8 @@ class TreeViewController {
     int? index,
     InsertMode mode = InsertMode.append,
   }) {
-    List<ScriptData> _children0 = parent == null ? children : parent.children;
-    return _children0.map((ScriptData child) {
+    List<ScriptData> children0 = parent == null ? children : parent.children;
+    return children0.map((ScriptData child) {
       if (child.key == key) {
         List<ScriptData> children = child.children.toList(growable: true);
         if (mode == InsertMode.prepend) {

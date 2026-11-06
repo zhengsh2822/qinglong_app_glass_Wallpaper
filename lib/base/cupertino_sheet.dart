@@ -20,12 +20,12 @@ class CupertinoSheer extends ConsumerWidget {
   final bool showDivider;
 
   const CupertinoSheer({
-    Key? key,
+    super.key,
     required this.title,
     required this.onTap,
     this.danger = false,
     this.showDivider = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context, ref) {

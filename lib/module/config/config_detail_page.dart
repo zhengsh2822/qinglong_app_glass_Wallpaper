@@ -18,8 +18,7 @@ class ConfigDetailPage extends ConsumerStatefulWidget {
   final ConfigBean bean;
   final String? content;
 
-  const ConfigDetailPage({Key? key, required this.bean, this.content})
-    : super(key: key);
+  const ConfigDetailPage({super.key, required this.bean, this.content});
 
   @override
   ConsumerState<ConfigDetailPage> createState() => _ConfigDetailPageState();

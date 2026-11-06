@@ -13,7 +13,7 @@ class AnimatedIndexedStack extends StatefulWidget {
   });
 
   @override
-  _AnimatedIndexedStackState createState() => _AnimatedIndexedStackState();
+  State<AnimatedIndexedStack> createState() => _AnimatedIndexedStackState();
 }
 
 class _AnimatedIndexedStackState extends State<AnimatedIndexedStack>

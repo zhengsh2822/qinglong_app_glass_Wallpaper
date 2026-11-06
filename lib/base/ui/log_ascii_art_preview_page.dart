@@ -9,8 +9,7 @@ import 'package:flutter/services.dart';
 class LogAsciiArtPreviewPage extends StatefulWidget {
   final List<String> lines;
 
-  const LogAsciiArtPreviewPage({Key? key, required this.lines})
-      : super(key: key);
+  const LogAsciiArtPreviewPage({super.key, required this.lines});
 
   @override
   State<LogAsciiArtPreviewPage> createState() => _LogAsciiArtPreviewPageState();

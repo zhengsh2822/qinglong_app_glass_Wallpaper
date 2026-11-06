@@ -30,10 +30,10 @@ class ConfigEditPage extends ConsumerStatefulWidget {
   final String content;
   final String title;
 
-  const ConfigEditPage(this.title, this.content, {Key? key}) : super(key: key);
+  const ConfigEditPage(this.title, this.content, {super.key});
 
   @override
-  _ConfigEditPageState createState() => _ConfigEditPageState();
+  ConsumerState<ConfigEditPage> createState() => _ConfigEditPageState();
 }
 
 class _ConfigEditPageState extends ConsumerState<ConfigEditPage> {
@@ -122,6 +122,7 @@ class _ConfigEditPageState extends ConsumerState<ConfigEditPage> {
               title: "温馨提示",
               content: "你编辑的内容还没用提交,确定退出吗?",
             ).then((confirmed) {
+              if (!context.mounted) return;
               if (confirmed != true) return;
               Navigator.of(context).pop();
             });
@@ -184,9 +185,9 @@ class _ConfigEditPageState extends ConsumerState<ConfigEditPage> {
                       ...operateList
                           .map(
                             (e) =>
-                                PopupMenuItem<String>(child: Text(e), value: e),
+                                PopupMenuItem<String>(value: e, child: Text(e)),
                           )
-                          .toList(),
+                          ,
                     ],
                 child: const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 15),
@@ -205,14 +206,18 @@ class _ConfigEditPageState extends ConsumerState<ConfigEditPage> {
             onPressed: () async {
               try {
                 await hideKeyboardFocus();
+                if (!context.mounted) return;
                 await EasyLoading.show(status: " 提交：");
+                if (!context.mounted) return;
                 HttpResponse<NullResponse> response =
                     await SingleAccountPageState.ofApi(
                       context,
                     ).saveFile(widget.title, result);
+                if (!context.mounted) return;
                 if (Platform.isIOS) {
                   await notifyICloud(context, widget.title, result);
                 }
+                if (!context.mounted) return;
                 // WebDAV 自动云备份不受平台门控（iCloud 还原仅 iOS 有意义）
                 unawaited(
                   WebDavBackupUtils.maybeAutoBackup(
@@ -220,6 +225,7 @@ class _ConfigEditPageState extends ConsumerState<ConfigEditPage> {
                   ),
                 );
                 await EasyLoading.dismiss();
+                if (!context.mounted) return;
                 if (response.success) {
                   "提交成功".toast();
                   Navigator.of(context).pop(result);
@@ -284,7 +290,7 @@ class _ConfigEditPageState extends ConsumerState<ConfigEditPage> {
           int i = t.indexOf("export") + 6;
           int j = t.indexOf("=");
           operateList.add(t.substring(i, j));
-        } catch (e) {}
+        } catch (e) { /* ignore: failure is non-critical */ }
       }
     }
   }
@@ -293,6 +299,7 @@ class _ConfigEditPageState extends ConsumerState<ConfigEditPage> {
     String defaultValue = "";
     try {
       var clipBoard = await Clipboard.getData(Clipboard.kTextPlain);
+      if (!mounted) return;
 
       if (clipBoard != null && clipBoard.text != null) {
         String tempText = clipBoard.text!;
@@ -311,7 +318,7 @@ class _ConfigEditPageState extends ConsumerState<ConfigEditPage> {
           defaultValue = tempText;
         }
       }
-    } catch (e) {}
+    } catch (e) { /* ignore: failure is non-critical */ }
 
     TextEditingController controller = TextEditingController(
       text: defaultValue.replaceAll("\"", "").replaceAll("'", ""),
@@ -400,6 +407,6 @@ class _ConfigEditPageState extends ConsumerState<ConfigEditPage> {
           }
         }
       }
-    } catch (e) {}
+    } catch (e) { /* ignore: failure is non-critical */ }
   }
 }

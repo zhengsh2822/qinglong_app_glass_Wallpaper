@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -6,7 +5,6 @@ import 'package:flutter_animator/flutter_animator.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/multi_account_userinfo_viewmodel.dart';
-import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
@@ -42,13 +40,13 @@ class LoginPage extends ConsumerStatefulWidget {
   final int? targetAccountIndex;
 
   const LoginPage({
-    Key? key,
+    super.key,
     this.fromAddNewAccount = false,
     this.targetAccountIndex,
-  }) : super(key: key);
+  });
 
   @override
-  _LoginPageState createState() => _LoginPageState();
+  ConsumerState<LoginPage> createState() => _LoginPageState();
 }
 
 class _LoginPageState extends ConsumerState<LoginPage> {
@@ -279,6 +277,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       child: Row(
         children: [
           Visibility(
+            visible:
+                SpUtil.getBool(spSingleInstance, defValue: false) ||
+                widget.targetAccountIndex != null,
             child: CupertinoButton(
               padding: EdgeInsets.zero,
               onPressed: () => Navigator.of(context).pop(),
@@ -291,9 +292,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 size: 26,
               ),
             ),
-            visible:
-                SpUtil.getBool(spSingleInstance, defValue: false) ||
-                widget.targetAccountIndex != null,
           ),
           Expanded(
             child: Align(
@@ -673,7 +671,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 ? Colors.transparent
                 : (ref.read(themeProvider).themeMode == modeDark
                     ? const Color(0xE61C1C1E)
-                    : AppleColors.bgPrimary.withOpacity(0.78));
+                    : AppleColors.bgPrimary.withValues(alpha: 0.78));
         return OptimizedFrostedGlass(
           sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
@@ -1002,6 +1000,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       hintText: '请输入code',
       keyboardType: TextInputType.number,
     ).then((value) async {
+      if (!mounted) return;
       if (value == null || value.isEmpty) {
         isLoading = false;
         setState(() {});

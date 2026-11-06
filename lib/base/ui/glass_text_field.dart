@@ -31,7 +31,7 @@ class GlassTextField extends ConsumerStatefulWidget {
   final List<TextInputFormatter>? inputFormatters;
 
   const GlassTextField({
-    Key? key,
+    super.key,
     this.controller,
     this.focusNode,
     this.hintText,
@@ -47,7 +47,7 @@ class GlassTextField extends ConsumerStatefulWidget {
     this.style,
     this.padding = const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     this.inputFormatters,
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState<GlassTextField> createState() => _GlassTextFieldState();

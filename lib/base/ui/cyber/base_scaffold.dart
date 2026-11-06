@@ -18,7 +18,7 @@ class BaseScaffold extends ConsumerWidget {
   final Color? backgroundColor;
 
   const BaseScaffold({
-    Key? key,
+    super.key,
     this.appBar,
     this.body,
     this.floatingActionButton,
@@ -26,7 +26,7 @@ class BaseScaffold extends ConsumerWidget {
     this.drawer,
     this.resizeToAvoidBottomInset = true,
     this.backgroundColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context, ref) {

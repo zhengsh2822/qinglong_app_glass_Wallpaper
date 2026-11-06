@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart' show TickerFuture;
 
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/ui/container_reveal.dart';
@@ -32,7 +31,6 @@ class WallpaperPageRoute<T> extends PageRoute<T> {
   final double sourceHighlightOpacity;
   final Color sourceBorderColor;
 
-  @override
   final String? title;
 
   final WidgetBuilder builder;

@@ -5,6 +5,7 @@
 // gestures. You can also use WidgetTester to find child widgets in the widget
 // tree, read text, and verify that the values of widget properties are correct.
 
+import 'package:flutter_test/flutter_test.dart';
 import 'package:qinglong_app/base/cron_parse.dart';
 import 'package:timezone/standalone.dart';
 
@@ -28,6 +29,6 @@ void main() {
   var cronIterator = Cron().parse(cronTime, "Asia/Shanghai");
   TZDateTime nextDate = cronIterator.next();
   var result = nextDate.add(duration);
-  print(result.toIso8601String());
+  expect(result.difference(nextDate), duration);
 }
 

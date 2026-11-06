@@ -3,7 +3,6 @@
 // found in the LICENSE file.
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/widgets.dart';
 
 /// A button in a _ContextMenuSheet.
 ///
@@ -19,7 +18,7 @@ class QLCupertinoContextMenuAction extends StatefulWidget {
     this.isDestructiveAction = false,
     this.onPressed,
     this.trailingIcon,
-  })  : assert(isDefaultAction != null);
+  });
 
   /// The widget that will be placed inside the action.
   final Widget child;

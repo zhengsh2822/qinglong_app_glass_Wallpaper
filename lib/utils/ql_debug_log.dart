@@ -7,7 +7,7 @@ import 'package:path_provider/path_provider.dart';
 ///
 /// 设备 logcat 被 MIUI/HyperOS 禁用（ring buffer 0 可读）时的替代通道；
 /// debug 包可用 `adb exec-out run-as com.qlapp.qinglong_app cat files/ql_debug.log`
-/// 读取（applicationDocumentsDirectory 即 /data/user/0/<pkg>/app_flutter）。
+/// 读取（applicationDocumentsDirectory 即 `/data/user/0/<pkg>/app_flutter`）。
 /// 仅调试构建启用，release 零开销。
 class QlDebugLog {
   static File? _file;

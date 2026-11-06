@@ -1,4 +1,3 @@
-import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -104,7 +103,7 @@ class GlassAlertDialog extends StatelessWidget {
         result.add(
           Container(
             height: 0.5,
-            color: CyberColors.borderGlow.withOpacity(0.5),
+            color: CyberColors.borderGlow.withValues(alpha: 0.5),
           ),
         );
       }
@@ -139,8 +138,7 @@ class GlassDialogAction extends StatelessWidget {
         : (textStyle?.color ?? Theme.of(context).primaryColor);
     return CupertinoButton(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
-      minSize: 0,
-      onPressed: onPressed,
+      onPressed: onPressed, minimumSize: Size(0, 0),
       child: DefaultTextStyle.merge(
         style: TextStyle(
           fontSize: 16,

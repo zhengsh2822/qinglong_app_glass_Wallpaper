@@ -20,7 +20,7 @@ import 'package:qinglong_app/utils/extension.dart';
 /// GET     /system/client-ip/diagnose 访问链路诊断（remoteAddress/forwardedFor/expressIps/clientIp/hops）
 /// GET/PUT/DELETE /user/ip-blacklist  登录 IP 黑名单（body: {ip}）
 class ClientIpPage extends ConsumerStatefulWidget {
-  const ClientIpPage({Key? key}) : super(key: key);
+  const ClientIpPage({super.key});
 
   @override
   ClientIpPageState createState() => ClientIpPageState();

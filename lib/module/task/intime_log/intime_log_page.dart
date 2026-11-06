@@ -1,5 +1,3 @@
-import 'dart:async';
-import 'dart:ui';
 
 import 'package:qinglong_app/utils/share_utils.dart';
 import 'package:flutter/cupertino.dart';
@@ -33,12 +31,12 @@ class InTimeLogPage extends ConsumerStatefulWidget {
     this.cronId,
     this.needTimer,
     this.title, {
-    Key? key,
+    super.key,
     this.command,
-  }) : super(key: key);
+  });
 
   @override
-  _InTimeLogPageState createState() => _InTimeLogPageState();
+  ConsumerState<InTimeLogPage> createState() => _InTimeLogPageState();
 }
 
 class _InTimeLogPageState extends ConsumerState<InTimeLogPage>
@@ -138,10 +136,6 @@ class _InTimeLogPageState extends ConsumerState<InTimeLogPage>
     super.dispose();
   }
 
-  @override
-  void initState() {
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {

@@ -11,7 +11,7 @@ class SystemBean {
   //2.13.9 以及以上版本,任务列表 api 变化
   bool isUpperVersion2_13_9() {
     try {
-      List<String>? version1 = version?.split("\.");
+      List<String>? version1 = version?.split(".");
 
       String f = version1?[0] ?? "2";
       String s = version1?[1] ?? "10";
@@ -42,7 +42,7 @@ class SystemBean {
   //2.12.2 以及以上版本,日志从dirs换成了data
   bool isUpperVersion2_12_2() {
     try {
-      List<String>? version1 = version?.split("\.");
+      List<String>? version1 = version?.split(".");
 
       String f = version1?[0] ?? "2";
       String s = version1?[1] ?? "10";
@@ -73,7 +73,7 @@ class SystemBean {
   //2.14.5 以及以上版本日志可以删除
   bool isUpperVersion2_14_5() {
     try {
-      List<String>? version1 = version?.split("\.");
+      List<String>? version1 = version?.split(".");
 
       String f = version1?[0] ?? "2";
       String s = version1?[1] ?? "10";
@@ -104,7 +104,7 @@ class SystemBean {
   //2.13.0 以及以上版本日志详情接口参数有变化
   bool isUpperVersion2_13_0() {
     try {
-      List<String>? version1 = version?.split("\.");
+      List<String>? version1 = version?.split(".");
 
       String f = version1?[0] ?? "2";
       String s = version1?[1] ?? "10";
@@ -135,7 +135,7 @@ class SystemBean {
   //2.14.0 以及列表不用排序
   bool isUpperVersion2_14_0() {
     try {
-      List<String>? version1 = version?.split("\.");
+      List<String>? version1 = version?.split(".");
 
       String f = version1?[0] ?? "2";
       String s = version1?[1] ?? "10";
@@ -166,7 +166,7 @@ class SystemBean {
   // 2.10.13以上版本,针对任务,环境变量编辑做了修改
   bool isUpperVersion() {
     try {
-      List<String>? version1 = version?.split("\.");
+      List<String>? version1 = version?.split(".");
 
       String f = version1?[0] ?? "2";
       String s = version1?[1] ?? "10";
@@ -199,7 +199,7 @@ class SystemBean {
   // 默认只返回尾部 256KB，并返回 offset/nextOffset/total/truncated 供分页续读
   bool isUpperVersion2_22_0() {
     try {
-      List<String>? version1 = version?.split("\.");
+      List<String>? version1 = version?.split(".");
 
       String f = version1?[0] ?? "2";
       String s = version1?[1] ?? "10";
@@ -232,7 +232,7 @@ class SystemBean {
   // 未装完导致面板无法启动，客户端只对 2.24.0+ 开放应用内升级
   bool isUpperVersion2_24_0() {
     try {
-      List<String>? version1 = version?.split("\.");
+      List<String>? version1 = version?.split(".");
 
       String f = version1?[0] ?? "2";
       String s = version1?[1] ?? "10";
@@ -261,8 +261,8 @@ class SystemBean {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['version'] = this.version;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['version'] = version;
     return data;
   }
 

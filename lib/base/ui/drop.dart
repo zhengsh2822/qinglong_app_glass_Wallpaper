@@ -85,9 +85,9 @@ class SelectedListItem {
 
 /// This is main class to display the bottom sheet body.
 class MainBody extends ConsumerStatefulWidget {
-  DropDown dropDown;
+  final DropDown dropDown;
 
-  MainBody({required this.dropDown, Key? key}) : super(key: key);
+  const MainBody({required this.dropDown, super.key});
 
   @override
   ConsumerState<MainBody> createState() => _MainBodyState();
@@ -179,6 +179,17 @@ class _MainBodyState extends ConsumerState<MainBody> {
                 itemCount: mainList.length,
                 itemBuilder: (context, index) {
                   return InkWell(
+                    onTap:
+                        widget.dropDown.enableMultipleSelection
+                            ? null
+                            : () {
+                              widget.dropDown.selectedItem?.call(
+                                (mainList[index].value != null)
+                                    ? mainList[index].value ?? ''
+                                    : mainList[index].name,
+                              );
+                              _onUnfocusKeyboardAndPop();
+                            },
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
                       child: ListTile(
@@ -201,17 +212,6 @@ class _MainBodyState extends ConsumerState<MainBody> {
                                 : const SizedBox(height: 0.0, width: 0.0),
                       ),
                     ),
-                    onTap:
-                        widget.dropDown.enableMultipleSelection
-                            ? null
-                            : () {
-                              widget.dropDown.selectedItem?.call(
-                                (mainList[index].value != null)
-                                    ? mainList[index].value ?? ''
-                                    : mainList[index].name,
-                              );
-                              _onUnfocusKeyboardAndPop();
-                            },
                   );
                 },
               ),

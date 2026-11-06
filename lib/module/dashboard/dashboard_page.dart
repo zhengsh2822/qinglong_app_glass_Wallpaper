@@ -1,12 +1,10 @@
 import 'dart:convert';
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
-import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
@@ -25,7 +23,7 @@ import 'package:qinglong_app/utils/sp_utils.dart';
 import '../../main.dart';
 
 class DashboardPage extends ConsumerStatefulWidget {
-  const DashboardPage({Key? key}) : super(key: key);
+  const DashboardPage({super.key});
 
   @override
   DashboardPageState createState() => DashboardPageState();
@@ -272,7 +270,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
             height: 44,
             decoration: BoxDecoration(
               color: (isCyber ? CyberColors.cyan : AppleColors.accent)
-                  .withOpacity(0.15),
+                  .withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
@@ -723,7 +721,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
     Navigator.of(context).push(
       WallpaperPageRoute(
         blurSigma: 6,
-        blurTintColor: CyberColors.bg.withOpacity(0.50),
+        blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
         builder: (context) => InTimeLogPage('$id', true, name),
       ),
     );
@@ -812,7 +810,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
               ),
             ),
             Text(
-              '基准: ${cpus}核',
+              '基准: $cpus核',
               style: TextStyle(
                 fontSize: isCyber ? 11 : 11,
                 fontFamily: 'MiSans',
@@ -1034,7 +1032,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
           borderRadius: BorderRadius.circular(4),
           child: LinearProgressIndicator(
             value: percent.clamp(0.0, 1.0),
-            backgroundColor: color.withOpacity(0.15),
+            backgroundColor: color.withValues(alpha: 0.15),
             valueColor: AlwaysStoppedAnimation<Color>(color),
             minHeight: 6,
           ),
@@ -1166,9 +1164,9 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
     final days = seconds ~/ 86400;
     final hours = (seconds % 86400) ~/ 3600;
     final mins = (seconds % 3600) ~/ 60;
-    if (days > 0) return '${days}天${hours}小时';
-    if (hours > 0) return '${hours}小时${mins}分';
-    return '${mins}分';
+    if (days > 0) return '$days天$hours小时';
+    if (hours > 0) return '$hours小时$mins分';
+    return '$mins分';
   }
 }
 
@@ -1390,7 +1388,7 @@ class _TrendChartPainter extends CustomPainter {
     final color = primaryColor;
     final successColor = isCyber ? CyberColors.neonGreen : AppColors.success;
     final failColor = isCyber ? CyberColors.neonRed : AppColors.danger;
-    final gridColor = descColor.withOpacity(0.15);
+    final gridColor = descColor.withValues(alpha: 0.15);
     final textColor = descColor;
 
     // 解析 total 数据
@@ -1478,7 +1476,7 @@ class _TrendChartPainter extends CustomPainter {
             ..shader = LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [color.withOpacity(0.35), color.withOpacity(0.0)],
+              colors: [color.withValues(alpha: 0.35), color.withValues(alpha: 0.0)],
             ).createShader(
               Rect.fromLTWH(chartLeft, chartTop, chartWidth, chartHeight),
             );

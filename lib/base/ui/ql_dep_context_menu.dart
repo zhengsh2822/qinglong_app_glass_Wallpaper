@@ -14,7 +14,6 @@ import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 
-import '../routes.dart';
 
 // The scale of the child at the time that the CupertinoContextMenu opens.
 // This value was eyeballed from a physical device running iOS 13.1.2.
@@ -396,7 +395,6 @@ class _QlDepCupertinoContextMenuState extends State<QlDepCupertinoContextMenu>
 // siblings of the original child.
 class _DecoyChild extends StatefulWidget {
   const _DecoyChild({
-    super.key,
     this.beginRect,
     required this.controller,
     this.endRect,
@@ -811,7 +809,6 @@ class _ContextMenuRoute<T> extends PopupRoute<T> {
 // animating out.
 class _ContextMenuRouteStatic extends StatefulWidget {
   const _ContextMenuRouteStatic({
-    super.key,
     this.actions,
     required this.child,
     this.childGlobalKey,
@@ -819,7 +816,7 @@ class _ContextMenuRouteStatic extends StatefulWidget {
     this.onDismiss,
     required this.orientation,
     this.sheetGlobalKey,
-  }) : assert(orientation != null);
+  });
 
   final List<Widget>? actions;
   final Widget child;

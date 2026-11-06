@@ -173,7 +173,7 @@ class _RingPainter extends CustomPainter {
       );
       final Paint dotGlow =
           Paint()
-            ..color = accent.withOpacity(0.6)
+            ..color = accent.withValues(alpha: 0.6)
             ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
       canvas.drawCircle(tip, stroke * 0.9, dotGlow);
       canvas.drawCircle(tip, stroke * 0.5, Paint()..color = accent);
@@ -249,7 +249,7 @@ class _ProgressOverlayPanel extends ConsumerWidget {
           // 见 ql_debug.log 433 条记录）。改用 SizedBox.expand 撑满。
           return SizedBox.expand(
             child: ColoredBox(
-              color: Colors.black.withOpacity(0.45),
+              color: Colors.black.withValues(alpha: 0.45),
               child: Center(
                 child: Container(
                   padding: const EdgeInsets.symmetric(

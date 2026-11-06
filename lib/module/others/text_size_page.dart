@@ -1,9 +1,7 @@
-import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/commit_button.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/theme.dart';
@@ -61,11 +59,6 @@ class _TextSizePageState extends ConsumerState<TextSizePage> {
     _secondaryTextColor = color;
     ref.read(themeProvider).setCustomSecondaryTextColor(color);
     setState(() {});
-  }
-
-  void _resetColors() {
-    _savePrimaryColor(null);
-    _saveSecondaryColor(null);
   }
 
   /// 重置字体设置：字体大小回标准 + 粗细回标准 + 主/次字体颜色恢复默认（立即保存全局生效）
@@ -352,7 +345,7 @@ class _TextSizePageState extends ConsumerState<TextSizePage> {
                           setState(() => _autoContrast = v);
                           SpUtil.putBool(spTextAutoContrast, v);
                           // 反色开关变更立即全局生效（themeProvider rebuild 重新读取）
-                          ref.read(themeProvider).notifyListeners();
+                          ref.read(themeProvider).refresh();
                         },
                       ),
                     ),

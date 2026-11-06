@@ -11,8 +11,6 @@ import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
-import 'package:qinglong_app/base/ui/glass_dialog.dart';
 import 'package:qinglong_app/base/ui/highlight/selectable_code_view.dart';
 import 'package:qinglong_app/base/ui/search_cell.dart';
 import 'package:qinglong_app/utils/extension.dart';
@@ -26,11 +24,10 @@ class ScriptEditPage extends ConsumerStatefulWidget {
   final String title;
   final String path;
 
-  const ScriptEditPage(this.title, this.path, this.content, {Key? key})
-    : super(key: key);
+  const ScriptEditPage(this.title, this.path, this.content, {super.key});
 
   @override
-  _ScriptEditPageState createState() => _ScriptEditPageState();
+  ConsumerState<ScriptEditPage> createState() => _ScriptEditPageState();
 }
 
 class _ScriptEditPageState extends ConsumerState<ScriptEditPage> {
@@ -122,14 +119,12 @@ class _ScriptEditPageState extends ConsumerState<ScriptEditPage> {
           const SizedBox(width: 4),
           CupertinoButton(
             padding: EdgeInsets.zero,
-            minSize: 0,
-            onPressed: _onSearchPrev,
+            onPressed: _onSearchPrev, minimumSize: Size(0, 0),
             child: Icon(CupertinoIcons.chevron_up, size: 20, color: iconColor),
           ),
           CupertinoButton(
             padding: EdgeInsets.zero,
-            minSize: 0,
-            onPressed: _onSearchNext,
+            onPressed: _onSearchNext, minimumSize: Size(0, 0),
             child: Icon(
               CupertinoIcons.chevron_down,
               size: 20,
@@ -139,12 +134,11 @@ class _ScriptEditPageState extends ConsumerState<ScriptEditPage> {
           const SizedBox(width: 4),
           CupertinoButton(
             padding: EdgeInsets.zero,
-            minSize: 0,
-            onPressed: _closeSearchBar,
+            onPressed: _closeSearchBar, minimumSize: Size(0, 0),
             child: Icon(
               CupertinoIcons.xmark_circle_fill,
               size: 22,
-              color: iconColor.withOpacity(0.5),
+              color: iconColor.withValues(alpha: 0.5),
             ),
           ),
         ],
@@ -251,11 +245,13 @@ class _ScriptEditPageState extends ConsumerState<ScriptEditPage> {
               try {
                 await hideKeyboardFocus();
                 await EasyLoading.show(status: " 提交中");
+                if (!context.mounted) return;
                 HttpResponse<NullResponse> response =
                     await SingleAccountPageState.ofApi(
                       context,
                     ).updateScript(widget.title, widget.path, result);
                 await EasyLoading.dismiss();
+                if (!context.mounted) return;
                 if (response.success) {
                   "提交成功".toast();
                   Navigator.of(context).pop(result);
@@ -331,6 +327,7 @@ class _ScriptEditPageState extends ConsumerState<ScriptEditPage> {
         content: "你编辑的内容还没用提交,确定退出吗?",
         confirmLabel: "确定",
       ).then((confirmed) {
+        if (!mounted) return;
         if (confirmed == true) {
           Navigator.of(context).pop();
         }
@@ -343,6 +340,7 @@ class _ScriptEditPageState extends ConsumerState<ScriptEditPage> {
       content: "你编辑的内容还没用提交,确定退出吗?",
       confirmLabel: "确定",
     ).then((confirmed) {
+      if (!mounted) return;
       if (confirmed != true) return;
       Navigator.of(context).pop();
     });

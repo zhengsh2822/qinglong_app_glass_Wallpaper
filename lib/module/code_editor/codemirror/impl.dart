@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
@@ -41,7 +40,7 @@ class EditorController {
 }
 
 abstract class CodeMirrorViewImpl extends ConsumerStatefulWidget {
-  const CodeMirrorViewImpl({Key? key}) : super(key: key);
+  const CodeMirrorViewImpl({super.key});
 }
 
 abstract class CodeMirrorViewImplState<T extends CodeMirrorViewImpl>

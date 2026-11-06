@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -35,7 +34,7 @@ import '../../base/ui/enable_widget.dart';
 import 'package:qinglong_app/base/ui/wallpaper_page_route.dart';
 
 class EnvPage extends ConsumerStatefulWidget {
-  const EnvPage({Key? key}) : super(key: key);
+  const EnvPage({super.key});
 
   @override
   EnvPageState createState() => EnvPageState();
@@ -367,6 +366,7 @@ class EnvPageState extends ConsumerState<EnvPage>
                       ),
                     )
                     .then((value) {
+                      if (!context.mounted) return;
                       ref
                           .read(
                             SingleAccountPageState.ofEnvProvider(context)(
@@ -524,7 +524,7 @@ class EnvPageState extends ConsumerState<EnvPage>
                   .currentTheme
                   .bottomNavigationBarTheme
                   .backgroundColor
-                  ?.withOpacity(1) ??
+                  ?.withValues(alpha: 1) ??
               Theme.of(context).bottomNavigationBarTheme.backgroundColor ??
               Colors.black,
       builder: (BuildContext context) {
@@ -679,12 +679,12 @@ class EnvItemCell extends StatelessWidget {
     this.bean,
     this.index,
     this.ref, {
-    Key? key,
+    super.key,
     this.editMode = false,
     this.editMode2 = false,
     required this.checkedCallback,
     required this.checked,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -932,6 +932,7 @@ class EnvItemCell extends StatelessWidget {
                   ),
                 )
                 .then((value) {
+                  if (!context.mounted) return;
                   ref
                       .read(
                         SingleAccountPageState.ofEnvProvider(context)(
@@ -964,11 +965,11 @@ class EnvItemCell extends StatelessWidget {
         ),
       ],
       child: CardTransitionSource(
-        child: _buildCardChild(context, isCyber, cardContent),
         sourceBuilder: (ctx) => cardContent,
         pageBuilder: (context) => EnvDetailPage(bean),
         blurSigma: 6,
-        blurTintColor: CyberColors.bg.withOpacity(0.50),
+        blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
+        child: _buildCardChild(context, isCyber, cardContent),
       ),
     );
   }
@@ -998,6 +999,7 @@ class EnvItemCell extends StatelessWidget {
         )
         .then((value) {
           // 与编辑按钮一致：返回后无条件刷新列表，覆盖新增/取消两种情况
+          if (!context.mounted) return;
           ref
               .read(
                 SingleAccountPageState.ofEnvProvider(context)(
@@ -1034,7 +1036,6 @@ class EnvItemCell extends StatelessWidget {
           )
           .delEnv(context1, bean.sId!);
     });
-    ;
   }
 
   int getIndexByIndex(BuildContext context, int index) {
@@ -1052,7 +1053,7 @@ class EnvListView extends ConsumerStatefulWidget {
   final SortState timeSort;
 
   const EnvListView({
-    Key? key,
+    super.key,
     required this.list,
     required this.searchText,
     required this.editMode,
@@ -1060,7 +1061,7 @@ class EnvListView extends ConsumerStatefulWidget {
     required this.changed,
     this.nameSort = SortState.none,
     this.timeSort = SortState.none,
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState<EnvListView> createState() => _EnvListViewState();
@@ -1130,7 +1131,7 @@ class EnvRecordListView extends ConsumerStatefulWidget {
   final bool draggable;
 
   const EnvRecordListView({
-    Key? key,
+    super.key,
     required this.list,
     required this.searchText,
     required this.editMode,
@@ -1139,7 +1140,7 @@ class EnvRecordListView extends ConsumerStatefulWidget {
     this.nameSort = SortState.none,
     this.timeSort = SortState.none,
     this.draggable = true,
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState<EnvRecordListView> createState() => _EnvRecordListViewState();

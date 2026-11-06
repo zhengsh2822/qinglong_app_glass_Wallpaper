@@ -13,7 +13,6 @@ import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/utils/share_utils.dart';
 import 'package:qinglong_app/base/ui/qlvisible.dart';
@@ -26,7 +25,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../main.dart';
 
 class AboutPage extends ConsumerStatefulWidget {
-  const AboutPage({Key? key}) : super(key: key);
+  const AboutPage({super.key});
 
   @override
   ConsumerState createState() => _AboutPageState();
@@ -261,55 +260,6 @@ class _AboutPageState extends ConsumerState<AboutPage>
                 child: Column(
                   children: [
                     QlVisible(
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(18),
-                            topRight: Radius.circular(18),
-                          ),
-                          onTap: () async {},
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 10,
-                              horizontal: 15,
-                            ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  CupertinoIcons.heart,
-                                  color: ref.watch(themeProvider).primaryColor,
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 15),
-                                Text(
-                                  "在 App Store 评分",
-                                  style: TextStyle(
-                                    color:
-                                        ref
-                                            .watch(themeProvider)
-                                            .themeColor
-                                            .titleColor(),
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                const Spacer(),
-                                Icon(
-                                  CupertinoIcons.right_chevron,
-                                  size: 16,
-                                  color:
-                                      ref
-                                          .watch(themeProvider)
-                                          .themeColor
-                                          .descColor(),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
                       childReplace: Material(
                         color: Colors.transparent,
                         child: InkWell(
@@ -356,6 +306,55 @@ class _AboutPageState extends ConsumerState<AboutPage>
                                 ),
                                 const Spacer(),
                                 const SizedBox(width: 5),
+                                Icon(
+                                  CupertinoIcons.right_chevron,
+                                  size: 16,
+                                  color:
+                                      ref
+                                          .watch(themeProvider)
+                                          .themeColor
+                                          .descColor(),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(18),
+                            topRight: Radius.circular(18),
+                          ),
+                          onTap: () async {},
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 10,
+                              horizontal: 15,
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  CupertinoIcons.heart,
+                                  color: ref.watch(themeProvider).primaryColor,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 15),
+                                Text(
+                                  "在 App Store 评分",
+                                  style: TextStyle(
+                                    color:
+                                        ref
+                                            .watch(themeProvider)
+                                            .themeColor
+                                            .titleColor(),
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const Spacer(),
                                 Icon(
                                   CupertinoIcons.right_chevron,
                                   size: 16,
@@ -463,9 +462,9 @@ class _AboutPageState extends ConsumerState<AboutPage>
     return isCyber ? CyberBackground(child: scaffold) : scaffold;
   }
 
-  void _launchURL(String _url) async {
+  void _launchURL(String url) async {
     try {
-      await launchUrl(Uri.tryParse(_url.trimLeft())!);
+      await launchUrl(Uri.tryParse(url.trimLeft())!);
     } catch (e) {
       logger.e(e);
     }
@@ -483,6 +482,7 @@ class _AboutPageState extends ConsumerState<AboutPage>
 
   void _checkUpdate() async {
     var response = await SingleAccountPageState.ofApi(context).checkUpdate();
+    if (!mounted) return;
     if (response.success) {
       if (response.bean?.hasNewVersion ?? false) {
         // 2.24.0 起面板升级任务化（下载暂存→校验依赖→重启应用，失败可回退）；
@@ -576,6 +576,7 @@ class _AboutPageState extends ConsumerState<AboutPage>
           sendTimeout: const Duration(seconds: 10),
         ),
       );
+      if (!context.mounted) return;
       if (resp.statusCode != 200 || resp.data is! Map) {
         // 主动提醒模式下静默（不 toast），避免每次启动打扰
         if (!autoRemind) "获取更新信息失败".toast();
@@ -686,6 +687,7 @@ class _AboutPageState extends ConsumerState<AboutPage>
       }
 
       // 三模式通用 frosted glass 弹窗（赛博/毛玻璃/默认统一走新 UI）
+      if (!context.mounted) return;
       showConfirmDialog(
         context,
         title: "发现新版安装包",

@@ -16,10 +16,10 @@ class CyberBackground extends StatelessWidget {
   final bool showGrid;
 
   const CyberBackground({
-    Key? key,
+    super.key,
     required this.child,
     this.showGrid = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

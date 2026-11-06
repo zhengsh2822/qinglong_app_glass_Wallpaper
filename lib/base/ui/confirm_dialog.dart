@@ -10,7 +10,6 @@ import 'package:qinglong_app/base/ui/blur_effect.dart';
 import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
-const double _dialogBlurSigma = 25.0;
 const double _dialogBorderRadius = 18.0;
 const double _dialogBarrierDim = 0.65;
 const Duration _dialogTransitionDuration = Duration(milliseconds: 400);

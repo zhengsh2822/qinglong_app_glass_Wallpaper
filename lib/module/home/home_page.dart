@@ -1,12 +1,10 @@
 import 'dart:convert';
-import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
@@ -15,9 +13,7 @@ import 'package:qinglong_app/base/cupertino_sheet.dart';
 import 'package:qinglong_app/base/ui/glow_sheet.dart';
 import 'package:qinglong_app/base/ui/spring_sheet.dart';
 import 'package:qinglong_app/base/theme.dart';
-import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/liquid_glass_shapes.dart';
-import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/base/ui/slidable_close_notifier.dart';
 import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/module/config/config_page.dart';
@@ -36,7 +32,7 @@ import '../../base/multi_account_userinfo_viewmodel.dart';
 import '../../base/userinfo_viewmodel.dart';
 
 class HomePage extends ConsumerStatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({super.key});
 
   @override
   HomePageState createState() => HomePageState();
@@ -108,6 +104,7 @@ class HomePageState extends ConsumerState<HomePage> {
 
   void getSystemBean(BuildContext context) async {
     var bean = await SingleAccountPageState.ofApi(context).system();
+    if (!context.mounted) return;
 
     if (!bean.success) {
       String? host = SingleAccountPageState.ofUserInfo(context).host;
@@ -340,6 +337,7 @@ class HomePageState extends ConsumerState<HomePage> {
               }
               WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
                 await EasyLoading.show(status: " 登录中");
+                if (!mounted) return;
 
                 LoginHelper loginHelper = LoginHelper(
                   userInfo.host!,
@@ -349,6 +347,7 @@ class HomePageState extends ConsumerState<HomePage> {
                   userInfo.alias,
                 );
                 var response = await loginHelper.login(context);
+                if (!mounted) return;
 
                 EasyLoading.dismiss();
 
@@ -456,11 +455,6 @@ class HomePageState extends ConsumerState<HomePage> {
     // 惰性创建 travel 值（首次 build 时 provider 才可读）；胶囊弹簧是唯一驱动源，
     // provider 只改 selectedIndex → 胶囊弹簧 → 页面跟随，无需 ref.listen 驱动画
     _navTravel ??= ValueNotifier<double>(homeIndex.toDouble());
-    // 底部导航"我的"按钮几何（与官方 LiquidGlassTabBar 的胶囊侧边距 16 +
-    // itemPadding=3 保持一致），用于长按"我的"弹窗对齐悬浮"我的"位置
-    final double screenW = MediaQuery.of(context).size.width;
-    const double navSide = 16.0;
-    const double navInnerPad = 3.0;
     return PopScope(
       canPop: true,
       child: Material(

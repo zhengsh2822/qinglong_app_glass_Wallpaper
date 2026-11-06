@@ -31,6 +31,7 @@ class EnvViewModel extends BaseViewModel {
     HttpResponse<List<EnvBean>> result = await SingleAccountPageState.ofApi(
       context,
     ).envs("");
+    if (!context.mounted) return;
 
     if (result.success && result.bean != null) {
       list.clear();
@@ -66,6 +67,7 @@ class EnvViewModel extends BaseViewModel {
     HttpResponse<NullResponse> result = await SingleAccountPageState.ofApi(
       context,
     ).delEnvs(id);
+    if (!context.mounted) return;
     if (result.success) {
       "删除成功".toast();
       loadData(context, false);
@@ -78,6 +80,7 @@ class EnvViewModel extends BaseViewModel {
     HttpResponse<NullResponse> result = await SingleAccountPageState.ofApi(
       context,
     ).delEnv(id);
+    if (!context.mounted) return;
     if (result.success) {
       "删除成功".toast();
       loadData(context, false);
@@ -100,6 +103,7 @@ class EnvViewModel extends BaseViewModel {
         context,
       ).enableEnv(sId);
 
+      if (!context.mounted) return;
       if (response.success) {
         "启用成功".toast();
         loadData(context, false);
@@ -111,6 +115,7 @@ class EnvViewModel extends BaseViewModel {
         context,
       ).disableEnv(sId);
 
+      if (!context.mounted) return;
       if (response.success) {
         "禁用成功".toast();
         loadData(context, false);
@@ -127,6 +132,7 @@ class EnvViewModel extends BaseViewModel {
     int oldIndex,
   ) async {
     await SingleAccountPageState.ofApi(context).moveEnv(id, oldIndex, newIndex);
+    if (!context.mounted) return;
     loadData(context, false);
   }
 }

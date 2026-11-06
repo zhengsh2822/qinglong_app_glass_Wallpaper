@@ -28,10 +28,10 @@ import 'subscribe_viewmodel.dart';
 import 'package:qinglong_app/base/ui/wallpaper_page_route.dart';
 
 class SubscribePage extends ConsumerStatefulWidget {
-  const SubscribePage({Key? key}) : super(key: key);
+  const SubscribePage({super.key});
 
   @override
-  _SubscribePageState createState() => _SubscribePageState();
+  ConsumerState<SubscribePage> createState() => _SubscribePageState();
 }
 
 class _SubscribePageState extends ConsumerState<SubscribePage> {
@@ -120,10 +120,11 @@ class _SubscribePageState extends ConsumerState<SubscribePage> {
                       builder:
                           (context) => const AddSubscribePage(taskBean: {}),
                       blurSigma: 6,
-                      blurTintColor: CyberColors.bg.withOpacity(0.50),
+                      blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
                     ),
                   )
                   .then((value) {
+                    if (!context.mounted) return;
                     if (value != null && value == true) {
                       ref
                           .read(
@@ -183,7 +184,7 @@ class _SubscribePageState extends ConsumerState<SubscribePage> {
         child: IconTheme(
           data: const IconThemeData(size: 25),
           child: SlidableAutoCloseBehavior(
-            key: ValueKey('subscribe_slidable_${_slidableResetKey}'),
+            key: ValueKey('subscribe_slidable_$_slidableResetKey'),
             child: ListView.separated(
               // 顶部间距 64 = 搜索框区域(10+44) + 间距10
               padding: const EdgeInsets.only(top: 64, bottom: 80),
@@ -263,7 +264,7 @@ class TaskItemCell extends StatelessWidget {
   final Map<String, dynamic> bean;
   final WidgetRef ref;
 
-  const TaskItemCell(this.bean, this.ref, {Key? key}) : super(key: key);
+  const TaskItemCell(this.bean, this.ref, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -298,6 +299,7 @@ class TaskItemCell extends StatelessWidget {
           normalColor: const Color(0xff606467),
           onTap: () {
             Future.delayed(const Duration(milliseconds: 250), () {
+              if (!context.mounted) return;
               logCron(context, ref);
             });
           },
@@ -315,10 +317,11 @@ class TaskItemCell extends StatelessWidget {
                   WallpaperPageRoute(
                     builder: (context) => AddSubscribePage(taskBean: bean),
                     blurSigma: 6,
-                    blurTintColor: CyberColors.bg.withOpacity(0.50),
+                    blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
                   ),
                 )
                 .then((value) {
+                  if (!context.mounted) return;
                   if (value != null && value == true) {
                     ref
                         .read(
@@ -341,6 +344,7 @@ class TaskItemCell extends StatelessWidget {
           normalColor: const Color(0xffA356D6),
           onTap: () {
             WidgetsBinding.instance.endOfFrame.then((value) {
+              if (!context.mounted) return;
               _enableSubscribe(context, bean["is_disabled"] ?? 0);
             });
           },
@@ -352,6 +356,7 @@ class TaskItemCell extends StatelessWidget {
           normalColor: const Color(0xffEA4D3E),
           onTap: () {
             WidgetsBinding.instance.endOfFrame.then((value) {
+              if (!context.mounted) return;
               _delSubscribe(context, ref);
             });
           },
@@ -364,13 +369,6 @@ class TaskItemCell extends StatelessWidget {
   /// 卡片内容（共享转场源）：纯内容，毛玻璃/描边由外层静态外壳承载
   Widget _buildCardChild(BuildContext context, {required bool isCyber}) {
     return CardTransitionSource(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-        child: SizedBox(
-          width: double.infinity,
-          child: _buildSubscribeContent(context, isCyber),
-        ),
-      ),
       sourceBuilder:
           (ctx) => Padding(
             padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
@@ -378,7 +376,14 @@ class TaskItemCell extends StatelessWidget {
           ),
       pageBuilder: (context) => SubscribeDetailPage(bean),
       blurSigma: 6,
-      blurTintColor: CyberColors.bg.withOpacity(0.50),
+      blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+        child: SizedBox(
+          width: double.infinity,
+          child: _buildSubscribeContent(context, isCyber),
+        ),
+      ),
     );
   }
 
@@ -485,8 +490,10 @@ class TaskItemCell extends StatelessWidget {
           ),
         )
         .runCrons(context, bean["id"]);
+    if (!context.mounted) return;
     if (showLog) {
       Future.delayed(const Duration(milliseconds: 250), () {
+        if (!context.mounted) return;
         logCron(context, ref);
       });
     }
@@ -506,7 +513,7 @@ class TaskItemCell extends StatelessWidget {
     Navigator.of(context).push(
       WallpaperPageRoute(
         blurSigma: 6,
-        blurTintColor: CyberColors.bg.withOpacity(0.50),
+        blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
         builder:
             (context) =>
                 InTimeSubscribeLogPage(bean["id"], true, bean["name"] ?? ""),
@@ -523,6 +530,7 @@ class TaskItemCell extends StatelessWidget {
         content: '确认删除订阅 ${bean["name"] ?? ""} 吗',
         danger: true,
       ).then((confirmed) {
+        if (!context1.mounted) return;
         if (confirmed == true) {
           ref
               .read(
@@ -541,6 +549,7 @@ class TaskItemCell extends StatelessWidget {
       content: "确认删除订阅 ${bean["name"] ?? ""} 吗",
       danger: true,
     ).then((confirmed) {
+      if (!context1.mounted) return;
       if (confirmed != true) return;
       ref
           .read(
@@ -550,7 +559,6 @@ class TaskItemCell extends StatelessWidget {
           )
           .delSubscribe(context1, bean["id"]);
     });
-    ;
   }
 
   void _enableSubscribe(BuildContext context, int disabled) {

@@ -1,10 +1,8 @@
-import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
-import 'package:flutter_riverpod/src/consumer.dart';
-import 'package:qinglong_app/main.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../base/theme.dart';
@@ -16,11 +14,11 @@ class CodeMirrorView extends CodeMirrorViewImpl {
   final Function(String val) onValue;
 
   const CodeMirrorView({
-    Key? key,
+    super.key,
     required this.options,
     required this.onCreate,
     required this.onValue,
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() {

@@ -6,11 +6,9 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart' show HapticFeedback;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
-import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/base/ui/spring_sheet.dart';
-import 'package:qinglong_app/utils/sp_utils.dart';
 
 /// 顶部 Tab —— 液态玻璃风格（v5：手势状态机移植自 top_tab_demo v6，同步主题版新优化）
 ///
@@ -691,8 +689,6 @@ class _LiquidTabBarSliderState extends State<_LiquidTabBarSlider>
   @override
   Widget build(BuildContext context) {
     final int count = _count;
-    // 壁纸版大胶囊毛玻璃 sigma（全局统一调节）
-    final double sigma = SpUtil.getDouble(spCardBlurSigma, defValue: 4);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -735,7 +731,7 @@ class _LiquidTabBarSliderState extends State<_LiquidTabBarSlider>
                     child: IgnorePointer(
                       child: Transform(
                         alignment: Alignment.center,
-                        transform: Matrix4.identity()..scale(sx, sy),
+                        transform: Matrix4.identity()..scaleByDouble(sx, sy, 1.0, 1.0),
                         child: Container(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(

@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,8 +17,8 @@ import 'package:qinglong_app/base/ui/wallpaper_page_route.dart';
 
 class ScriptUploadPage extends ConsumerStatefulWidget {
   const ScriptUploadPage({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   ConsumerState<ScriptUploadPage> createState() => ScriptUploadPageState();
@@ -110,12 +109,14 @@ class ScriptUploadPageState extends ConsumerState<ScriptUploadPage> {
             "path": fileKey.currentState?.scriptPath,
           },
         ).then((value) {
+          if (!context.mounted) return;
           if (value != null && value == true) {
             Navigator.of(context).pop(true);
           }
         });
       } else {
         String content = await fileKey.currentState!.file!.readAsString();
+        if (!context.mounted) return;
         EasyLoading.show(status: "提交中...");
         HttpResponse<NullResponse> response = await SingleAccountPageState.ofApi(context).addScript(
           _nameController.text,
@@ -123,6 +124,7 @@ class ScriptUploadPageState extends ConsumerState<ScriptUploadPage> {
           content,
         );
         EasyLoading.dismiss();
+        if (!context.mounted) return;
         if (response.success) {
           "提交成功".toast();
 
@@ -144,6 +146,7 @@ class ScriptUploadPageState extends ConsumerState<ScriptUploadPage> {
             ),
           )
               .then((value) {
+            if (!context.mounted) return;
             Navigator.of(context).pop();
           });
         } else {

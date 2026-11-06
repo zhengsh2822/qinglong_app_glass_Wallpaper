@@ -1,4 +1,3 @@
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:qinglong_app/base/app_colors.dart';
@@ -29,7 +28,7 @@ class CyberGlassCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   const CyberGlassCard({
-    Key? key,
+    super.key,
     required this.child,
     this.borderRadius = 18,
     this.margin,
@@ -38,7 +37,7 @@ class CyberGlassCard extends StatelessWidget {
     this.backgroundColor,
     this.border,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

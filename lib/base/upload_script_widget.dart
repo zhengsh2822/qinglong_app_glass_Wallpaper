@@ -1,28 +1,19 @@
 import 'dart:io';
 import 'dart:math';
-import 'dart:ui';
 import 'package:path/path.dart' as ints;
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:qinglong_app/base/app_colors.dart';
-import 'package:qinglong_app/base/commit_button.dart';
 import 'package:qinglong_app/base/cupertino_sheet.dart';
-import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
-import 'package:qinglong_app/utils/sp_utils.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
-import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/base/ui/selector_card.dart';
 import 'package:qinglong_app/base/ui/tree/models/script_data.dart';
-import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/module/others/scripts/script_code_detail_page.dart';
 import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/file_picker_utils.dart';
-import 'package:qinglong_app/utils/sp_utils.dart';
 import '../module/others/scripts/script_download_page.dart';
 import '../module/subscribe/add_subscribe_page.dart';
 import 'single_account_page.dart';
@@ -38,11 +29,11 @@ class UploadScriptWidget extends ConsumerStatefulWidget {
   final bool onlyShowName;
 
   const UploadScriptWidget({
-    Key? key,
+    super.key,
     required this.nameCallBack,
     this.onlyShowName = false,
     this.cronCallBack,
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState<UploadScriptWidget> createState() => UploadScriptWidgetState();
@@ -87,10 +78,10 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
             String name = node.parent;
             if (name == "") return;
             if (paths.isEmpty) {
-              paths.add(name + "/" + node.title);
+              paths.add("$name/${node.title}");
             } else {
-              if (!paths.contains(name + "/" + node.title)) {
-                paths.add(name + "/" + node.title);
+              if (!paths.contains("$name/${node.title}")) {
+                paths.add("$name/${node.title}");
               }
             }
           } else {
@@ -146,7 +137,7 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
                           title: e!,
                           selected: scriptPath == e,
                           onTap: () {
-                            scriptPath = e!;
+                            scriptPath = e;
                             widget.nameCallBack(fileName);
                             setState(() {});
                           },
@@ -298,6 +289,7 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
             return;
           }
           String content = await file!.readAsString();
+          if (!context.mounted) return;
           Navigator.of(context).push(
             WallpaperPageRoute(
               builder:

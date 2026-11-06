@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/theme.dart';
@@ -65,8 +64,8 @@ class _HslColorPickerState extends State<HslColorPicker> {
   @override
   void didUpdateWidget(covariant HslColorPicker oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.color.value != oldWidget.color.value &&
-        widget.color.value != _hsl.toColor().value) {
+    if (widget.color.toARGB32() != oldWidget.color.toARGB32() &&
+        widget.color.toARGB32() != _hsl.toColor().toARGB32()) {
       _hsl = HSLColor.fromColor(widget.color);
     }
   }
@@ -285,7 +284,7 @@ class _SliderPainter extends CustomPainter {
       thumbCenter,
       radius + 1,
       Paint()
-        ..color = Colors.black.withOpacity(0.25)
+        ..color = Colors.black.withValues(alpha: 0.25)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
     );
     // 白色圆形 thumb

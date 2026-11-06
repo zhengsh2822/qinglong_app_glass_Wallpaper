@@ -5,7 +5,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:qinglong_app/base/commit_button.dart';
 import 'package:qinglong_app/base/http/api.dart';
 import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
@@ -27,7 +26,7 @@ import '../../base/theme.dart';
 import 'package:qinglong_app/base/ui/wallpaper_page_route.dart';
 
 class IcloudPage extends ConsumerStatefulWidget {
-  const IcloudPage({Key? key}) : super(key: key);
+  const IcloudPage({super.key});
 
   @override
   ConsumerState<IcloudPage> createState() => _IcloudPageState();
@@ -102,6 +101,7 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
                           var result = await Api(
                             SingleAccountPageState.of(context)!.index,
                           ).envs("");
+                          if (!context.mounted) return;
                           await getIt<ICloudUtils>(
                             instanceName:
                                 SingleAccountPageState.of(
@@ -110,7 +110,7 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
                           ).asyncEnv(result.bean ?? [], focusUpdate: true);
                           SpUtil.putString(spEnvBackTime, ICloudUtils.now());
                           setState(() {});
-                        } catch (e) {}
+                        } catch (e) { /* ignore: failure is non-critical */ }
                       },
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -185,6 +185,7 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
                             await SingleAccountPageState.ofApi(
                               context,
                             ).content("config.sh");
+                        if (!context.mounted) return;
                         if (result.success && result.bean != null) {
                           content = result.bean ?? "";
                           await ICloudUtils(
@@ -278,6 +279,7 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
                               await Api(
                                 SingleAccountPageState.of(context)!.index,
                               ).subscribes();
+                          if (!context.mounted) return;
                           await getIt<ICloudUtils>(
                             instanceName:
                                 SingleAccountPageState.of(
@@ -292,7 +294,7 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
                             ICloudUtils.now(),
                           );
                           setState(() {});
-                        } catch (e) {}
+                        } catch (e) { /* ignore: failure is non-critical */ }
                       },
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -412,7 +414,7 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
       fileNum = result["fileNum"].toString();
       fileSizes = getFileSizeString(result["size"] ?? 0, 2);
       setState(() {});
-    } catch (e) {}
+    } catch (e) { /* ignore: failure is non-critical */ }
   }
 
   String? fileNum = "-";
@@ -430,11 +432,12 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
         await FileUtil(
           SingleAccountPageState.of(context)?.index ?? 0,
         ).sourcePath;
+    if (!mounted) return;
     Navigator.of(context).push(
       WallpaperPageRoute(
         builder: (context) => FileDirectoryPage(path: path),
         blurSigma: 6,
-        blurTintColor: CyberColors.bg.withOpacity(0.50),
+        blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
       ),
     );
   }
@@ -455,7 +458,7 @@ Map<String, int> dirStatSync(String dirPath) {
         }
       });
     }
-  } catch (e) {}
+  } catch (e) { /* ignore: failure is non-critical */ }
 
   return {'fileNum': fileNum, 'size': totalSize};
 }

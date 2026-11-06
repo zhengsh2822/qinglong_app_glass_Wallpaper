@@ -21,26 +21,19 @@ class SubscribeDetailPage extends ConsumerStatefulWidget {
   final Map<String, dynamic> taskBean;
   final bool hideAppbar;
 
-  const SubscribeDetailPage(this.taskBean, {Key? key, this.hideAppbar = false})
-    : super(key: key);
+  const SubscribeDetailPage(this.taskBean, {super.key, this.hideAppbar = false});
 
   @override
-  _TaskDetailPageState createState() => _TaskDetailPageState();
+  ConsumerState<SubscribeDetailPage> createState() => _TaskDetailPageState();
 }
 
 class _TaskDetailPageState extends ConsumerState<SubscribeDetailPage>
     with LazyLoadState<SubscribeDetailPage> {
-  final TextEditingController _nameController = TextEditingController();
   Type type = Type.public;
   CronType cronType = CronType.cron;
-  final TextEditingController _cronController = TextEditingController();
   PullType pullType = PullType.privateKey;
   String intervalUnit = "天";
 
-  @override
-  void initState() {
-    super.initState();
-  }
 
   void _enableSubscribe(BuildContext context, int disabled) {
     ref
@@ -94,10 +87,11 @@ class _TaskDetailPageState extends ConsumerState<SubscribeDetailPage>
                                 (context) =>
                                     AddSubscribePage(taskBean: widget.taskBean),
                             blurSigma: 6,
-                            blurTintColor: CyberColors.bg.withOpacity(0.50),
+                            blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
                           ),
                         )
                         .then((value) {
+                          if (!context.mounted) return;
                           if (value != null && value == true) {
                             ref
                                 .read(
@@ -296,6 +290,7 @@ class _TaskDetailPageState extends ConsumerState<SubscribeDetailPage>
       content: "确认删除订阅 ${widget.taskBean["name"] ?? ""} 吗",
       danger: true,
     ).then((confirmed) async {
+      if (!context1.mounted) return;
       if (confirmed != true) return;
       await ref
           .read(
@@ -305,7 +300,6 @@ class _TaskDetailPageState extends ConsumerState<SubscribeDetailPage>
           )
           .delSubscribe(context1, widget.taskBean["id"]);
     });
-    ;
   }
 
   Widget buildRadioButton(
@@ -447,13 +441,13 @@ class SubscribeDetailCell extends ConsumerWidget {
   final Function? taped;
 
   const SubscribeDetailCell({
-    Key? key,
+    super.key,
     required this.title,
     this.desc,
     this.icon,
     this.hideDivide = false,
     this.taped,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

@@ -1,9 +1,7 @@
 import 'dart:io';
-import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
@@ -57,13 +55,18 @@ class ThemeViewModel extends ChangeNotifier {
   /// 设置自定义主字体颜色（null 表示恢复默认）
   /// 必须调 notifyListeners 让全局 rebuild
   void setCustomPrimaryTextColor(Color? color) {
-    SpUtil.putInt(spPrimaryTextColor, color?.value ?? -1);
+    SpUtil.putInt(spPrimaryTextColor, color?.toARGB32() ?? -1);
     notifyListeners();
   }
 
   /// 设置自定义次字体颜色（null 表示恢复默认）
   void setCustomSecondaryTextColor(Color? color) {
-    SpUtil.putInt(spSecondaryTextColor, color?.value ?? -1);
+    SpUtil.putInt(spSecondaryTextColor, color?.toARGB32() ?? -1);
+    notifyListeners();
+  }
+
+  /// 外部修改 SP 后触发全局主题重建（notifyListeners 为 protected，只能在本类内调用）
+  void refresh() {
     notifyListeners();
   }
 
@@ -701,7 +704,7 @@ class LightThemeColors extends ThemeColors {
   Color pinedAndWhite() => Colors.white;
 
   @override
-  Color searchBgColor() => Colors.white.withOpacity(0.6);
+  Color searchBgColor() => Colors.white.withValues(alpha: 0.6);
 
   @override
   Color otherFuncBg() => Colors.transparent;
@@ -721,7 +724,7 @@ class WhiteThemeColors extends ThemeColors {
   Color pinColor() => AppleColors.bgPrimary;
 
   @override
-  Color searchBgColor() => Colors.white.withOpacity(0.6);
+  Color searchBgColor() => Colors.white.withValues(alpha: 0.6);
 
   @override
   Color otherFuncBg() => Colors.transparent;

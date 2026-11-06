@@ -23,7 +23,7 @@ import 'package:qinglong_app/utils/extension.dart';
 class PanelUpgradePage extends ConsumerStatefulWidget {
   final String? targetVersion;
 
-  const PanelUpgradePage({Key? key, this.targetVersion}) : super(key: key);
+  const PanelUpgradePage({super.key, this.targetVersion});
 
   @override
   ConsumerState<PanelUpgradePage> createState() => _PanelUpgradePageState();
@@ -306,7 +306,7 @@ class _PanelUpgradePageState extends ConsumerState<PanelUpgradePage> {
                       .watch(themeProvider)
                       .themeColor
                       .titleColor()
-                      .withOpacity(0.06),
+                      .withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: SingleChildScrollView(
@@ -347,7 +347,7 @@ class _PanelUpgradePageState extends ConsumerState<PanelUpgradePage> {
             .watch(themeProvider)
             .themeColor
             .titleColor()
-            .withOpacity(0.10),
+            .withValues(alpha: 0.10),
         valueColor: AlwaysStoppedAnimation<Color>(
           ref.watch(themeProvider).primaryColor,
         ),

@@ -4,9 +4,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
-import 'package:qinglong_app/base/ui/glass_dialog.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
-import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
@@ -16,7 +14,7 @@ class ScriptAddPage extends ConsumerStatefulWidget {
   final String title;
   final String path;
 
-  const ScriptAddPage(this.title, this.path, {Key? key}) : super(key: key);
+  const ScriptAddPage(this.title, this.path, {super.key});
 
   @override
   ConsumerState createState() => _ScriptAddPageState();
@@ -86,6 +84,7 @@ class _ScriptAddPageState extends ConsumerState<ScriptAddPage> {
               title: "温馨提示",
               content: "你新增的内容还没用提交,确定退出吗?",
             ).then((confirmed) {
+              if (!context.mounted) return;
               if (confirmed != true) return;
               Navigator.of(context).pop();
             });
@@ -99,11 +98,13 @@ class _ScriptAddPageState extends ConsumerState<ScriptAddPage> {
             onPressed: () async {
               try {
                 await EasyLoading.show(status: " 提交中");
+                if (!context.mounted) return;
                 HttpResponse<NullResponse> response =
                     await SingleAccountPageState.ofApi(
                       context,
                     ).addScript(widget.title, widget.path, result);
                 await EasyLoading.dismiss();
+                if (!context.mounted) return;
                 if (response.success) {
                   "提交成功".toast();
                   Navigator.of(context).pop(true);

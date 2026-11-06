@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:highlight/highlight.dart' show highlight, Node;
 import 'package:qinglong_app/base/theme.dart';
-import 'package:qinglong_app/base/ui/highlight/themes/atom-one-dark.dart';
+import 'package:qinglong_app/base/ui/highlight/themes/atom_one_dark.dart';
 import 'package:qinglong_app/base/ui/highlight/themes/github.dart';
 
 /// 可选择的代码视图
@@ -27,12 +27,12 @@ import 'package:qinglong_app/base/ui/highlight/themes/github.dart';
 /// 跨块选择不支持（牺牲少量体验换取 10000 行脚本的流畅滚动）。
 class SelectableCodeView extends ConsumerStatefulWidget {
   const SelectableCodeView({
-    Key? key,
+    super.key,
     required this.source,
     required this.language,
     this.padding = const EdgeInsets.all(12),
     this.chunkSize = 100,
-  }) : super(key: key);
+  });
 
   /// 代码原文
   final String source;

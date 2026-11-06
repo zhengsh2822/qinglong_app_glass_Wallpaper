@@ -6,7 +6,7 @@ import 'package:qinglong_app/module/env/env_bean.dart';
 import 'package:qinglong_app/module/home/system_bean.dart';
 import 'package:qinglong_app/module/login/login_bean.dart';
 import 'package:qinglong_app/module/login/user_bean.dart';
-import 'package:qinglong_app/module/others/LogDelBean.dart';
+import 'package:qinglong_app/module/others/log_del_bean.dart';
 import 'package:qinglong_app/module/others/dependencies/dependency_bean.dart';
 import 'package:qinglong_app/module/others/login_log/login_log_bean.dart';
 import 'package:qinglong_app/module/others/notify_log/notify_log_bean.dart';
@@ -14,7 +14,7 @@ import 'package:qinglong_app/module/others/scripts/script_bean.dart';
 import 'package:qinglong_app/module/others/task_log/task_log_bean.dart';
 import 'package:qinglong_app/module/others/update/check_update_bean.dart';
 import 'package:qinglong_app/module/others/update/upgrade_status_bean.dart';
-import 'package:qinglong_app/module/task/TaskBean2.dart';
+import 'package:qinglong_app/module/task/task_bean2.dart';
 import 'package:qinglong_app/module/task/task_bean.dart';
 
 class JsonConversion$Json {

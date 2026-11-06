@@ -24,7 +24,7 @@ class NotifyLogPage extends ConsumerStatefulWidget {
   const NotifyLogPage({super.key});
 
   @override
-  _NotifyLogPageState createState() => _NotifyLogPageState();
+  ConsumerState<NotifyLogPage> createState() => _NotifyLogPageState();
 }
 
 class _NotifyLogPageState extends ConsumerState<NotifyLogPage>

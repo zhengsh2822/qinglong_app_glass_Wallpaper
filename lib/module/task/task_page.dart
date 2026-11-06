@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -43,10 +42,10 @@ class TaskPage extends ConsumerStatefulWidget {
   final bool onlyShowPullRepo;
 
   const TaskPage({
-    Key? key,
+    super.key,
     this.loading = false,
     this.onlyShowPullRepo = false,
-  }) : super(key: key);
+  });
 
   @override
   TaskPageState createState() => TaskPageState();
@@ -287,6 +286,7 @@ class TaskPageState extends ConsumerState<TaskPage>
                         ),
                       )
                       .then((value) {
+                        if (!context.mounted) return;
                         ref
                             .read(
                               SingleAccountPageState.ofTaskProvider(context)(
@@ -319,7 +319,7 @@ class TaskPageState extends ConsumerState<TaskPage>
                       return await model.loadData(context, false);
                     },
                     child: SlidableAutoCloseBehavior(
-                      key: ValueKey('task_slidable_${_slidableResetKey}'),
+                      key: ValueKey('task_slidable_$_slidableResetKey'),
                       child: body(model, model.notScripts, ref, true),
                     ),
                   ),
@@ -473,6 +473,7 @@ class TaskPageState extends ConsumerState<TaskPage>
                       ),
                     )
                     .then((value) {
+                      if (!context.mounted) return;
                       ref
                           .read(
                             SingleAccountPageState.ofTaskProvider(context)(
@@ -637,7 +638,7 @@ class TaskPageState extends ConsumerState<TaskPage>
                   .currentTheme
                   .bottomNavigationBarTheme
                   .backgroundColor
-                  ?.withOpacity(1) ??
+                  ?.withValues(alpha: 1) ??
               Theme.of(context).bottomNavigationBarTheme.backgroundColor ??
               Colors.black,
       builder: (BuildContext context) {
@@ -861,7 +862,7 @@ class TaskPageState extends ConsumerState<TaskPage>
         Navigator.of(context).push(
           WallpaperPageRoute(
             blurSigma: 6,
-            blurTintColor: CyberColors.bg.withOpacity(0.50),
+            blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
             builder:
                 (context) =>
                     InTimeLogPage(cronId, false, name, command: command),
@@ -936,7 +937,7 @@ class ListBodyWidget extends ConsumerStatefulWidget {
   final bool onlyShowPullRepo;
 
   const ListBodyWidget({
-    Key? key,
+    super.key,
     required this.model,
     required this.list,
     required this.searchText,
@@ -944,7 +945,7 @@ class ListBodyWidget extends ConsumerStatefulWidget {
     required this.checked,
     required this.changed,
     required this.onlyShowPullRepo,
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState<ListBodyWidget> createState() => _ListBodyState();
@@ -1011,11 +1012,11 @@ class TaskItemCell extends StatelessWidget {
   const TaskItemCell(
     this.bean,
     this.ref, {
-    Key? key,
+    super.key,
     this.editMode = false,
     required this.checkedCallback,
     required this.checked,
-  }) : super(key: key);
+  });
 
   bool get isCyber => ref.read(themeProvider).themeMode == modeCyber;
 
@@ -1082,7 +1083,10 @@ class TaskItemCell extends StatelessWidget {
           color: const Color(0xFFFFC107),
           normalColor: AppColors.warning,
           onTap: () {
-            WidgetsBinding.instance.endOfFrame.then((_) => pinTask(context));
+            WidgetsBinding.instance.endOfFrame.then((_) {
+              if (!context.mounted) return;
+              pinTask(context);
+            });
           },
         ),
         SwipeActionSpec(
@@ -1094,7 +1098,10 @@ class TaskItemCell extends StatelessWidget {
           color: const Color(0xFF333333),
           normalColor: AppColors.purple,
           onTap: () {
-            WidgetsBinding.instance.endOfFrame.then((_) => enableTask(context));
+            WidgetsBinding.instance.endOfFrame.then((_) {
+              if (!context.mounted) return;
+              enableTask(context);
+            });
           },
         ),
         SwipeActionSpec(
@@ -1104,18 +1111,19 @@ class TaskItemCell extends StatelessWidget {
           normalColor: AppColors.danger,
           onTap: () {
             HapticFeedback.mediumImpact();
-            WidgetsBinding.instance.endOfFrame.then(
-              (_) => delTask(context, ref),
-            );
+            WidgetsBinding.instance.endOfFrame.then((_) {
+              if (!context.mounted) return;
+              delTask(context, ref);
+            });
           },
         ),
       ],
       child: CardTransitionSource(
-        child: _buildCardChild(context),
         sourceBuilder: (ctx) => _buildCardContent(context),
         pageBuilder: (context) => TaskDetailPage(bean),
         blurSigma: 6,
-        blurTintColor: CyberColors.bg.withOpacity(0.50),
+        blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
+        child: _buildCardChild(context),
       ),
     );
   }
@@ -1436,6 +1444,7 @@ class TaskItemCell extends StatelessWidget {
           ).notifier,
         )
         .runCrons(context, [bean.sId!]);
+    if (!context.mounted) return;
     if (showLog) {
       logCron(context, ref);
     }
@@ -1456,7 +1465,7 @@ class TaskItemCell extends StatelessWidget {
         .push(
           WallpaperPageRoute(
             blurSigma: 6,
-            blurTintColor: CyberColors.bg.withOpacity(0.50),
+            blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
             builder:
                 (context) => InTimeLogPage(
                   bean.sId!,
@@ -1467,7 +1476,9 @@ class TaskItemCell extends StatelessWidget {
           ),
         )
         .then((value) {
+          if (!context.mounted) return;
           Future.delayed(const Duration(milliseconds: 500), () {
+            if (!context.mounted) return;
             ref
                 .read(
                   SingleAccountPageState.ofTaskProvider(context)(
@@ -1511,6 +1522,7 @@ class TaskItemCell extends StatelessWidget {
       danger: true,
     );
     if (confirmed != true) return;
+    if (!context1.mounted) return;
     ref
         .read(
           SingleAccountPageState.ofTaskProvider(context1)(

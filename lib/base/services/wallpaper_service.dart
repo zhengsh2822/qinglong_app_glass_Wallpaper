@@ -160,6 +160,11 @@ class WallpaperService extends ChangeNotifier {
   WallpaperService._();
   static final WallpaperService instance = WallpaperService._();
 
+  /// 外部修改 SP 后触发壁纸监听者重建（notifyListeners 为 protected，只能在本类内调用）
+  void refresh() {
+    notifyListeners();
+  }
+
   static const _kPrefKey = 'wallpaper_config_v1';
 
   WallpaperConfig _config = const WallpaperConfig();
@@ -253,7 +258,7 @@ class WallpaperService extends ChangeNotifier {
   Future<void> setSolidColor(Color color) async {
     _config = _config.copyWith(
       type: WallpaperType.solid,
-      solidColor: color.value,
+      solidColor: color.toARGB32(),
     );
     await _save();
     notifyListeners();
@@ -277,8 +282,8 @@ class WallpaperService extends ChangeNotifier {
     _config = _config.copyWith(
       type: WallpaperType.gradient,
       gradientIndex: -1,
-      customGradientA: a.value,
-      customGradientB: b.value,
+      customGradientA: a.toARGB32(),
+      customGradientB: b.toARGB32(),
     );
     await _save();
     notifyListeners();
@@ -572,9 +577,9 @@ class WallpaperService extends ChangeNotifier {
   Color _blendColors(Color a, Color b) {
     return Color.fromARGB(
       255,
-      ((a.red + b.red) / 2).round(),
-      ((a.green + b.green) / 2).round(),
-      ((a.blue + b.blue) / 2).round(),
+      ((a.r * 255 + b.r * 255) / 2).round(),
+      ((a.g * 255 + b.g * 255) / 2).round(),
+      ((a.b * 255 + b.b * 255) / 2).round(),
     );
   }
 

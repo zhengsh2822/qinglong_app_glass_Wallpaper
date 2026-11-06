@@ -25,13 +25,14 @@ class SubscribeViewModel extends BaseViewModel {
 
     HttpResponse<String> result =
         await SingleAccountPageState.ofApi(context).subscribes();
+    if (!context.mounted) return;
 
     if (result.success && result.bean != null) {
       list.clear();
 
       List<dynamic> tempList = jsonDecode(result.bean ?? "[]");
 
-      if (tempList != null && tempList.isNotEmpty) {
+      if (tempList.isNotEmpty) {
         for (int i = 0; i < tempList.length; i++) {
           list.add(tempList[i] as Map<String, dynamic>);
         }
@@ -66,6 +67,7 @@ class SubscribeViewModel extends BaseViewModel {
     HttpResponse<NullResponse> result = await SingleAccountPageState.ofApi(
       context,
     ).startSubscribes([cron]);
+    if (!context.mounted) return;
     if (result.success) {
       loadData(context, false);
     } else {
@@ -77,6 +79,7 @@ class SubscribeViewModel extends BaseViewModel {
     HttpResponse<NullResponse> result = await SingleAccountPageState.ofApi(
       context,
     ).stopSubscribes([cron]);
+    if (!context.mounted) return;
     if (result.success) {
       loadData(context, false);
     } else {
@@ -88,6 +91,7 @@ class SubscribeViewModel extends BaseViewModel {
     HttpResponse<NullResponse> result = await SingleAccountPageState.ofApi(
       context,
     ).delSubscribe(id);
+    if (!context.mounted) return;
     if (result.success) {
       "删除成功".toast();
       loadData(context, false);
@@ -106,6 +110,7 @@ class SubscribeViewModel extends BaseViewModel {
         context,
       ).disableSubscribe(sId);
 
+      if (!context.mounted) return;
       if (response.success) {
         "禁用成功".toast();
         loadData(context, false);
@@ -117,6 +122,7 @@ class SubscribeViewModel extends BaseViewModel {
         context,
       ).enableSubscribe(sId);
 
+      if (!context.mounted) return;
       if (response.success) {
         "启用成功".toast();
         loadData(context, false);

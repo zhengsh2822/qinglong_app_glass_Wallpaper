@@ -4,7 +4,7 @@
 /// 1. 每个账号独立实例(_instances 按 index 隔离),避免跨账号数据泄漏
 /// 2. 内部维护两套索引:
 ///    - `_cache`: key -> _CacheEntry,用于点查
-///    - `_prefixIndex`: prefix -> Set<key>,用于按前缀批量失效,避免 O(n) 遍历
+///    - `_prefixIndex`: prefix -> `Set<key>`,用于按前缀批量失效,避免 O(n) 遍历
 /// 3. 分级 TTL: 不同资源类型使用不同过期时长,避免短 TTL 频繁回源
 class HttpCache {
   static final Map<int, HttpCache> _instances = {};

@@ -7,7 +7,6 @@ import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/module/others/dependencies/dependency_bean.dart';
 import 'package:qinglong_app/module/others/dependencies/dependency_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
-import 'package:qinglong_app/utils/ql_debug_log.dart';
 
 class DependencyViewModel extends BaseViewModel {
   List<DependencyBean> nodeJsList = [];
@@ -26,17 +25,17 @@ class DependencyViewModel extends BaseViewModel {
     await Future.wait([
       loadData(
         context,
-        DepedencyEnum.NodeJS.name.toLowerCase().toString(),
+        DepedencyEnum.nodeJs.apiType,
         true,
       ),
       loadData(
         context,
-        DepedencyEnum.Python3.name.toLowerCase().toString(),
+        DepedencyEnum.python3.apiType,
         true,
       ),
       loadData(
         context,
-        DepedencyEnum.Linux.name.toLowerCase().toString(),
+        DepedencyEnum.linux.apiType,
         true,
       ),
     ]);
@@ -44,10 +43,10 @@ class DependencyViewModel extends BaseViewModel {
 
   List<DependencyBean> getListByType(int index) {
     if (DependcyPageState.types[index].name ==
-        DepedencyEnum.NodeJS.name.toString()) {
+        DepedencyEnum.nodeJs.name) {
       return nodeJsList;
     } else if (DependcyPageState.types[index].name ==
-        DepedencyEnum.Python3.name.toString()) {
+        DepedencyEnum.python3.name) {
       return python3List;
     }
     return linuxList;
@@ -110,6 +109,7 @@ class DependencyViewModel extends BaseViewModel {
         linuxList.addAll(response.bean!);
       }
       success();
+      if (!context.mounted) return;
       _syncInstallStatus(context);
     } else {
       if (showLoading) {
@@ -158,6 +158,7 @@ class DependencyViewModel extends BaseViewModel {
     await SingleAccountPageState.ofApi(
       context,
     ).dependencyReinstall(sId ?? [], id ?? []);
+    if (!context.mounted) return;
     await loadData(context, type);
   }
 
@@ -209,4 +210,18 @@ class DependencyViewModel extends BaseViewModel {
   }
 }
 
-enum DepedencyEnum { NodeJS, Python3, Linux }
+enum DepedencyEnum {
+  nodeJs,
+  python3,
+  linux;
+
+  /// 青龙接口使用的类型字符串（全小写）
+  String get apiType => name.toLowerCase();
+
+  /// 界面展示名称
+  String get label => switch (this) {
+    DepedencyEnum.nodeJs => 'NodeJS',
+    DepedencyEnum.python3 => 'Python3',
+    DepedencyEnum.linux => 'Linux',
+  };
+}

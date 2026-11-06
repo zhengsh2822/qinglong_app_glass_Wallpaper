@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -27,10 +26,10 @@ class ChangeAccountPage extends ConsumerStatefulWidget {
   /// 非空时页面不再自绘 CyberBackground，背景由转场容器提供。
   final Animation<double>? animation;
 
-  const ChangeAccountPage({Key? key, this.animation}) : super(key: key);
+  const ChangeAccountPage({super.key, this.animation});
 
   @override
-  _ChangeAccountPageState createState() => _ChangeAccountPageState();
+  ConsumerState<ChangeAccountPage> createState() => _ChangeAccountPageState();
 }
 
 class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {

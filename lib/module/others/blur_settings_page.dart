@@ -1,13 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/services/wallpaper_service.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/color_picker_sheet.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
-import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 
 import '../../base/sp_const.dart';
 import '../../utils/sp_utils.dart';
@@ -46,7 +44,7 @@ class _BlurSettingsPageState extends ConsumerState<BlurSettingsPage> {
     _bgBlurSigma = value;
     SpUtil.putDouble(spBgBlurSigma, value);
     // 触发 WallpaperBackground rebuild，让它重新读取 SP 中的背景模糊值
-    WallpaperService.instance.notifyListeners();
+    WallpaperService.instance.refresh();
     setState(() {});
   }
 
@@ -54,7 +52,7 @@ class _BlurSettingsPageState extends ConsumerState<BlurSettingsPage> {
     _cardBlurSigma = value;
     SpUtil.putDouble(spCardBlurSigma, value);
     // 通知主题重建，让 GlassCard 重新读取 SP
-    ref.read(themeProvider).notifyListeners();
+    ref.read(themeProvider).refresh();
     setState(() {});
   }
 
@@ -62,7 +60,7 @@ class _BlurSettingsPageState extends ConsumerState<BlurSettingsPage> {
     _cardSolidOpacity = value;
     SpUtil.putDouble(spCardSolidOpacity, value);
     // 通知主题重建，让 OptimizedFrostedGlass 重新读取 SP
-    ref.read(themeProvider).notifyListeners();
+    ref.read(themeProvider).refresh();
     setState(() {});
   }
 
@@ -76,16 +74,16 @@ class _BlurSettingsPageState extends ConsumerState<BlurSettingsPage> {
   }
 
   void _saveCardSolidColor(Color color) {
-    _cardSolidColor = color.value;
-    SpUtil.putInt(spCardSolidColor, color.value);
-    ref.read(themeProvider).notifyListeners();
+    _cardSolidColor = color.toARGB32();
+    SpUtil.putInt(spCardSolidColor, color.toARGB32());
+    ref.read(themeProvider).refresh();
     setState(() {});
   }
 
   void _resetCardSolidColor() {
     _cardSolidColor = -1;
     SpUtil.putInt(spCardSolidColor, -1);
-    ref.read(themeProvider).notifyListeners();
+    ref.read(themeProvider).refresh();
     setState(() {});
   }
 
@@ -171,7 +169,7 @@ class _BlurSettingsPageState extends ConsumerState<BlurSettingsPage> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: ref.watch(themeProvider).primaryColor.withOpacity(0.15),
+                          color: ref.watch(themeProvider).primaryColor.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -232,7 +230,7 @@ class _BlurSettingsPageState extends ConsumerState<BlurSettingsPage> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: ref.watch(themeProvider).primaryColor.withOpacity(0.15),
+                          color: ref.watch(themeProvider).primaryColor.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -293,7 +291,7 @@ class _BlurSettingsPageState extends ConsumerState<BlurSettingsPage> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: ref.watch(themeProvider).primaryColor.withOpacity(0.15),
+                          color: ref.watch(themeProvider).primaryColor.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -333,7 +331,7 @@ class _BlurSettingsPageState extends ConsumerState<BlurSettingsPage> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.04),
+                        color: Colors.white.withValues(alpha: 0.04),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -351,7 +349,7 @@ class _BlurSettingsPageState extends ConsumerState<BlurSettingsPage> {
                                     .watch(themeProvider)
                                     .themeColor
                                     .descColor()
-                                    .withOpacity(0.2),
+                                    .withValues(alpha: 0.2),
                                 width: 1,
                               ),
                             ),

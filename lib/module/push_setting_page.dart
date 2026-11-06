@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,7 +15,6 @@ import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/base/ui/selector_card.dart';
-import 'package:qinglong_app/base/ui/settings_widgets.dart';
 import 'package:qinglong_app/module/subscribe/add_subscribe_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
@@ -24,7 +22,7 @@ import 'package:qinglong_app/utils/sp_utils.dart';
 import '../base/commit_button.dart';
 
 class PushSettingPage extends ConsumerStatefulWidget {
-  const PushSettingPage({Key? key}) : super(key: key);
+  const PushSettingPage({super.key});
 
   @override
   ConsumerState<PushSettingPage> createState() => _PushSettingPageState();
@@ -409,6 +407,7 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
         context,
       ).updateNotifcation({});
       EasyLoading.dismiss();
+      if (!mounted) return;
       if (response.success) {
         "设置成功".toast();
         Navigator.of(context).pop();
@@ -436,6 +435,7 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
       context,
     ).updateNotifcation(params);
     EasyLoading.dismiss();
+    if (!mounted) return;
     if (response.success) {
       "设置成功".toast();
       Navigator.of(context).pop();
