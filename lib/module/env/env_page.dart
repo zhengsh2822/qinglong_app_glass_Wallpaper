@@ -7,9 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:qinglong_app/base/base_state_widget.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
-import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
-import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/ui/elastic_reorder_list.dart';
 import 'package:qinglong_app/base/ui/spring_depth_page_track.dart';
@@ -19,19 +17,16 @@ import 'package:qinglong_app/base/ui/glass_segmented_tab.dart';
 import 'package:qinglong_app/base/ui/animated_edit_mode_overlay.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
-import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/base/ui/search_cell.dart';
 import 'package:qinglong_app/base/ui/slidable_close_notifier.dart';
+import 'package:qinglong_app/base/ui/swipe_glass_card.dart';
 import 'package:qinglong_app/base/ui/sort_nav_button.dart';
 import 'package:qinglong_app/base/ui/sort_triangle.dart';
 import 'package:qinglong_app/base/ui/add_select_all_button.dart';
-import 'package:qinglong_app/utils/sp_utils.dart';
 import 'package:qinglong_app/module/env/add_env_page.dart';
 import 'package:qinglong_app/module/env/env_bean.dart';
 import 'package:qinglong_app/module/env/env_detail_page.dart';
 import 'package:qinglong_app/module/env/env_viewmodel.dart';
-import 'package:qinglong_app/module/task/task_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/utils.dart';
 
@@ -60,9 +55,6 @@ class EnvPageState extends ConsumerState<EnvPage>
   Set<String> checkedIds = <String>{};
   bool buttonshow = false;
   GlobalKey<RefreshIndicatorState> refreshKey = GlobalKey();
-
-  /// Slidable 关闭信号值（用于生成 Key 重置卡片状态）
-  int _slidableResetKey = 0;
 
   Future<void> scrollToTop() async {
     _scrollController.animateTo(
@@ -131,9 +123,8 @@ class EnvPageState extends ConsumerState<EnvPage>
   }
 
   void _onSlidableClose() {
-    setState(() {
-      _slidableResetKey = SlidableCloseNotifier.value;
-    });
+    // 关闭滑动后刷新列表状态（不再通过 key 重建子树）
+    setState(() {});
   }
 
   /// 顶部导航栏排序三态（对齐网页版）：默认=按创建时间、顺排/逆排
@@ -912,171 +903,72 @@ class EnvItemCell extends StatelessWidget {
         ],
       ),
     );
-    if (isCyber) {
-      // 赛博模式：用 CyberSlidable（Material elevation 光晕 + BackdropFilter 折射）
-      return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 12),
-        child: CyberSlidable(
-          slidableKey: ValueKey(bean.sId),
-          enabled: !editMode,
-          borderRadius: AppleColors.radiusCard,
-          // 右滑：startActions（卡片左侧复制按钮）
-          startActions: [
-            CyberSlideAction(
-              label: '复制',
-              icon: CupertinoIcons.doc_on_doc,
-              color: const Color(0xFF00C8FF),
-              onTap: () {
-                _copyEnv(bean, context);
-              },
-            ),
-          ],
-          endActions: [
-            CyberSlideAction(
-              label: '编辑',
-              icon: CupertinoIcons.pencil_outline,
-              color: const Color(0xFF00F0FF),
-              onTap: () {
-                Navigator.of(context)
-                    .push(
-                      WallpaperPageRoute(
-                        builder: (context) => AddEnvPage(envBean: bean),
-                      ),
-                    )
-                    .then((value) {
-                      ref
-                          .read(
-                            SingleAccountPageState.ofEnvProvider(context)(
-                              getProviderName(context),
-                            ).notifier,
-                          )
-                          .loadData(context, false);
-                    });
-              },
-            ),
-            CyberSlideAction(
-              label: bean.status == 0 ? '禁用' : '启用',
-              icon:
-                  bean.status == 0
-                      ? Icons.dnd_forwardslash
-                      : Icons.check_circle_outline_sharp,
-              color: const Color(0xFF333333),
-              onTap: () => enableEnv(context),
-            ),
-            CyberSlideAction(
-              label: '删除',
-              icon: CupertinoIcons.delete,
-              color: const Color(0xFFFF3D00),
-              onTap: () {
-                HapticFeedback.mediumImpact();
-                delEnv(context, ref);
-              },
-            ),
-          ],
-          // 卡片共享展开：点击卡片 → 卡片隐藏 → 容器从卡片矩形展开详情页
-          child: CardTransitionSource(
-            child: _buildCardChild(context, isCyber, cardContent),
-            sourceBuilder: (ctx) => cardContent,
-            pageBuilder: (context) => EnvDetailPage(bean),
-            blurSigma: 6,
-            blurTintColor: CyberColors.bg.withOpacity(0.50),
-          ),
-        ),
-      );
-    }
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(AppleColors.radiusCard),
-        border: Border.all(color: CyberColors.cardStroke),
+    return SwipeGlassCard(
+      slidableKey: ValueKey(bean.sId),
+      enabled: !editMode,
+      margin: EdgeInsets.symmetric(
+        horizontal: isCyber ? 12 : AppleColors.spaceMd,
       ),
-      // 统一毛玻璃封装：sigma<=0 时自动退化为纯色（无 BackdropFilter）
-      child: OptimizedFrostedGlass(
-        sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
-        borderRadius: BorderRadius.circular(AppleColors.radiusCard),
-        child: Slidable(
-          enabled: !editMode,
-          key: ValueKey(bean.sId),
-          // 右滑：startActionPane（卡片左侧复制按钮）
-          startActionPane: ActionPane(
-            motion: const ScrollMotion(),
-            extentRatio: 0.28,
-            children: [
-              AppSlideButton(
-                context: context,
-                color: const Color(0xff2F9BD8),
-                icon: CupertinoIcons.doc_on_doc,
-                label: '复制',
-                cyberMode: isCyber,
-                width: double.infinity,
-                onTap: () => _copyEnv(bean, context),
-              ),
-            ],
-          ),
-          endActionPane: ActionPane(
-            motion: const ScrollMotion(),
-            // 3 按钮：等分 Pane 宽度（screen × 0.55 ≈ 198px ≈ 3×60+18）
-            extentRatio: 0.55,
-            children: [
-              AppSlideButton(
-                context: context,
-                color: const Color(0xff5D5E70),
-                icon: CupertinoIcons.pencil_outline,
-                label: '编辑',
-                cyberMode: isCyber,
-                width: double.infinity,
-                onTap: () {
-                  Navigator.of(context)
-                      .push(
-                        WallpaperPageRoute(
-                          builder: (context) => AddEnvPage(envBean: bean),
-                        ),
-                      )
-                      .then((value) {
-                        ref
-                            .read(
-                              SingleAccountPageState.ofEnvProvider(context)(
-                                getProviderName(context),
-                              ).notifier,
-                            )
-                            .loadData(context, false);
-                      });
-                },
-              ),
-              AppSlideButton(
-                context: context,
-                color: const Color(0xffA356D6),
-                icon:
-                    bean.status == 0
-                        ? Icons.dnd_forwardslash
-                        : Icons.check_circle_outline_sharp,
-                label: bean.status == 0 ? '禁用' : '启用',
-                cyberMode: isCyber,
-                width: double.infinity,
-                onTap: () => enableEnv(context),
-              ),
-              AppSlideButton(
-                context: context,
-                color: const Color(0xffEA4D3E),
-                icon: CupertinoIcons.delete,
-                label: '删除',
-                cyberMode: isCyber,
-                width: double.infinity,
-                onTap: () => delEnv(context, ref),
-              ),
-            ],
-          ),
-          // 卡片共享展开：点击卡片 → 卡片隐藏 → 容器从卡片矩形展开详情页
-          child: CardTransitionSource(
-            child: _buildCardChild(context, isCyber, cardContent),
-            sourceBuilder: (ctx) => cardContent,
-            pageBuilder: (context) => EnvDetailPage(bean),
-            blurSigma: 6,
-            blurTintColor: CyberColors.bg.withOpacity(0.50),
-          ),
+      startActions: [
+        SwipeActionSpec(
+          label: '复制',
+          icon: CupertinoIcons.doc_on_doc,
+          color: const Color(0xFF00C8FF),
+          normalColor: const Color(0xff2F9BD8),
+          onTap: () => _copyEnv(bean, context),
         ),
+      ],
+      endActions: [
+        SwipeActionSpec(
+          label: '编辑',
+          icon: CupertinoIcons.pencil_outline,
+          color: const Color(0xFF00F0FF),
+          normalColor: const Color(0xff5D5E70),
+          onTap: () {
+            Navigator.of(context)
+                .push(
+                  WallpaperPageRoute(
+                    builder: (context) => AddEnvPage(envBean: bean),
+                  ),
+                )
+                .then((value) {
+                  ref
+                      .read(
+                        SingleAccountPageState.ofEnvProvider(context)(
+                          getProviderName(context),
+                        ).notifier,
+                      )
+                      .loadData(context, false);
+                });
+          },
+        ),
+        SwipeActionSpec(
+          label: bean.status == 0 ? '禁用' : '启用',
+          icon:
+              bean.status == 0
+                  ? Icons.dnd_forwardslash
+                  : Icons.check_circle_outline_sharp,
+          color: const Color(0xFF333333),
+          normalColor: const Color(0xffA356D6),
+          onTap: () => enableEnv(context),
+        ),
+        SwipeActionSpec(
+          label: '删除',
+          icon: CupertinoIcons.delete,
+          color: const Color(0xFFFF3D00),
+          normalColor: const Color(0xffEA4D3E),
+          onTap: () {
+            HapticFeedback.mediumImpact();
+            delEnv(context, ref);
+          },
+        ),
+      ],
+      child: CardTransitionSource(
+        child: _buildCardChild(context, isCyber, cardContent),
+        sourceBuilder: (ctx) => cardContent,
+        pageBuilder: (context) => EnvDetailPage(bean),
+        blurSigma: 6,
+        blurTintColor: CyberColors.bg.withOpacity(0.50),
       ),
     );
   }
@@ -1086,23 +978,12 @@ class EnvItemCell extends StatelessWidget {
     bool isCyber,
     Widget cardContent,
   ) {
-    // 统一毛玻璃封装：sigma<=0 时自动退化为纯色（无 BackdropFilter）
-    return OptimizedFrostedGlass(
-      sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
+    // 纯内容：毛玻璃/描边已上移到静态外壳层，Slidable 只滑内容，
+    // ActionPane 按钮落在卡片底板之上（与定时任务/应用管理统一）
+    return Material(
+      color: Colors.transparent,
       borderRadius: BorderRadius.circular(AppleColors.radiusCard),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(18),
-          // 统一青色描边：浅色/深色通用，提升卡片边缘清晰度
-          border: Border.all(color: CyberColors.cardStroke, width: 1),
-        ),
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(18),
-          child: cardContent,
-        ),
-      ),
+      child: cardContent,
     );
   }
 

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 
 /// 高性能毛玻璃组件（对 BackdropFilter 的封装优化）
@@ -50,6 +51,10 @@ class OptimizedFrostedGlass extends ConsumerStatefulWidget {
   /// [spCardSolidColor]/[spCardSolidOpacity] 联动。
   final bool forceOpaqueSolid;
 
+  /// 圆角曲线类型；连续曲率时用引擎原生 RSuperellipse 裁剪模糊层，
+  /// 保证毛玻璃轮廓与 G2 描边完全重合。
+  final AppCornerStyle cornerStyle;
+
   const OptimizedFrostedGlass({
     super.key,
     required this.child,
@@ -58,6 +63,7 @@ class OptimizedFrostedGlass extends ConsumerStatefulWidget {
     this.borderRadius,
     this.enableScrollCache = false,
     this.forceOpaqueSolid = false,
+    this.cornerStyle = AppCornerStyle.continuous,
   });
 
   @override
@@ -158,9 +164,9 @@ class _OptimizedFrostedGlassState extends ConsumerState<OptimizedFrostedGlass> {
     // 强制 100% 不透明固定纯色（弹窗/顶部 tab）：既不模糊，也不跟随卡片
     // 纯色调节，固定浅色白底/深色黑底，保证内容可读
     if (widget.forceOpaqueSolid) {
-      return ClipRRect(
-        borderRadius: widget.borderRadius ?? BorderRadius.zero,
-        child: ColoredBox(
+      return _clipCorner(
+        widget.borderRadius ?? BorderRadius.zero,
+        ColoredBox(
           color: isDark ? Colors.black : Colors.white,
           child: widget.child,
         ),
@@ -171,12 +177,9 @@ class _OptimizedFrostedGlassState extends ConsumerState<OptimizedFrostedGlass> {
     // 渲染，大幅降低 GPU 压力；纯色不透明度由 spCardSolidOpacity 单独调节，
     // 颜色可自定义（spCardSolidColor，-1 时浅色主题白底/深色主题黑底）。
     if (sigma <= 0) {
-      return ClipRRect(
-        borderRadius: widget.borderRadius ?? BorderRadius.zero,
-        child: ColoredBox(
-          color: cardSolidColor(isDark: isDark),
-          child: widget.child,
-        ),
+      return _clipCorner(
+        widget.borderRadius ?? BorderRadius.zero,
+        ColoredBox(color: cardSolidColor(isDark: isDark), child: widget.child),
       );
     }
 
@@ -202,12 +205,22 @@ class _OptimizedFrostedGlassState extends ConsumerState<OptimizedFrostedGlass> {
       key: widget.enableScrollCache ? (_boundaryKey ??= GlobalKey()) : null,
       child: ClipRect(
         clipBehavior: Clip.hardEdge,
-        child: ClipRRect(
-          borderRadius: widget.borderRadius ?? BorderRadius.zero,
-          child: content,
-        ),
+        child: _clipCorner(widget.borderRadius ?? BorderRadius.zero, content),
       ),
     );
+  }
+
+  /// 圆角裁剪：连续曲率走 ShapeBorderClipper（RSuperellipse），
+  /// 普通圆角保持 ClipRRect，保证模糊层与描边轮廓完全一致。
+  Widget _clipCorner(BorderRadius br, Widget child) {
+    if (widget.cornerStyle == AppCornerStyle.continuous &&
+        br != BorderRadius.zero) {
+      return ClipPath(
+        clipper: ShapeBorderClipper(shape: appCornerBorder(borderRadius: br)),
+        child: child,
+      );
+    }
+    return ClipRRect(borderRadius: br, child: child);
   }
 }
 

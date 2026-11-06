@@ -11,6 +11,7 @@ import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/card_transition_source.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/empty_widget.dart';
@@ -302,13 +303,19 @@ class ConfigCell extends ConsumerWidget {
             child: CardTransitionSource(
               child: OptimizedFrostedGlass(
                 sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
+                // 与 GlassCard/GlassListItemCard 一致：全透明仅模糊，
+                // 不叠加默认 15% 白膜
+                tintColor: Colors.transparent,
                 borderRadius: BorderRadius.circular(AppleColors.radiusCard),
                 child: Container(
-                  decoration: BoxDecoration(
+                  decoration: ShapeDecoration(
                     color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(AppleColors.radiusCard),
-                    // 单层描边：统一明显青色描边（cardStroke）
-                    border: Border.all(color: CyberColors.cardStroke, width: 1),
+                    // 单层描边：统一明显青色描边（cardStroke），
+                    // 形状走连续曲率，与毛玻璃裁剪轮廓完全重合
+                    shape: appCornerBorder(
+                      radius: AppleColors.radiusCard,
+                      side: BorderSide(color: CyberColors.cardStroke, width: 1),
+                    ),
                   ),
                   child: Material(
                     color: Colors.transparent,

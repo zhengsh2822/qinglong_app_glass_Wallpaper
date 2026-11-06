@@ -3,7 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/multi_account_userinfo_viewmodel.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
@@ -12,9 +11,8 @@ import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/container_transform_route.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
+import 'package:qinglong_app/base/ui/swipe_glass_card.dart';
 import 'package:qinglong_app/base/ui/shared_page_entrance.dart';
 import 'package:qinglong_app/base/ui/wallpaper_background.dart';
 import 'package:qinglong_app/base/userinfo_viewmodel.dart';
@@ -236,87 +234,28 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
       return child;
     }
 
-    // 卡片容器
-    Widget card;
-    if (isCyber) {
-      card = Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        child: OptimizedFrostedGlass(
-          sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
-          borderRadius: BorderRadius.circular(18),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: CyberColors.cardStroke, width: 1),
-            ),
-            child: Material(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.circular(18),
-              child: child,
-            ),
-          ),
-        ),
-      );
-    } else {
-      card = Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        child: OptimizedFrostedGlass(
-          sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
-          borderRadius: BorderRadius.circular(18),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: CyberColors.cardStroke, width: 1),
-            ),
-            child: Material(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.circular(18),
-              child: child,
-            ),
-          ),
-        ),
-      );
-    }
+    // 卡片内容（纯内容，毛玻璃/描边由外层静态外壳承载）
+    final Widget cardContent = Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(18),
+      child: child,
+    );
 
-    // 滑动删除
-    if (isCyber) {
-      return CyberSlidable(
-        slidableKey: ValueKey(userInfo.host),
-        endActions: [
-          CyberSlideAction(
-            label: '删除',
-            icon: CupertinoIcons.delete,
-            color: const Color(0xFFFF3D5C),
-            onTap: () => _confirmDelete(userInfo, index),
-          ),
-        ],
-        child: card,
-      );
-    }
-
-    return Slidable(
-      key: ValueKey(userInfo.host),
-      endActionPane: ActionPane(
-        motion: const ScrollMotion(),
-        extentRatio: 0.22,
-        children: [
-          AppSlideButton(
-            context: context,
-            color: const Color(0xffEA4D3E),
-            icon: CupertinoIcons.delete,
-            onTap: () => _confirmDelete(userInfo, index),
-            cyberMode: false,
-            width: double.infinity,
-            cornerRadius: 12,
-            iconSize: 22,
-            outerGap: 5,
-            innerGap: 6,
-          ),
-        ],
-      ),
-      child: card,
+    return SwipeGlassCard(
+      slidableKey: ValueKey(userInfo.host),
+      isCyber: isCyber,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      endActions: [
+        SwipeActionSpec(
+          label: '删除',
+          icon: CupertinoIcons.delete,
+          color: const Color(0xFFFF3D5C),
+          normalColor: const Color(0xffEA4D3E),
+          showNormalLabel: false,
+          onTap: () => _confirmDelete(userInfo, index),
+        ),
+      ],
+      child: cardContent,
     );
   }
 

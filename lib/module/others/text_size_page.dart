@@ -7,6 +7,7 @@ import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/commit_button.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/spring_sheet.dart';
 import 'package:qinglong_app/base/ui/color_picker_sheet.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
@@ -428,10 +429,12 @@ class _TextSizePageState extends ConsumerState<TextSizePage> {
             Container(
               width: 40,
               height: 40,
-              decoration: BoxDecoration(
+              decoration: ShapeDecoration(
+                shape: appCornerBorder(
+                  radius: 10,
+                  side: const BorderSide(color: Color(0x33FFFFFF), width: 1),
+                ),
                 color: color,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0x33FFFFFF), width: 1),
               ),
             ),
             const SizedBox(width: 8),

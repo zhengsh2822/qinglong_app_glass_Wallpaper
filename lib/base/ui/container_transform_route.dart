@@ -16,6 +16,27 @@ import 'container_reveal.dart';
 /// 容器内部层级与节奏由共用组件 [ContainerReveal] 实现；
 /// 页面自带分段入场动画（pageBuilder 拿 animation 自己做），故 pageFade 为 null。
 class ContainerTransformRoute extends PageRoute<void> {
+  /// 最近一次进入收回中的本类路由（由 ContainerCollapseTracker 维护），
+  /// 供「收回中重开同来源」无缝续播（与展开打断对称）。
+  static ContainerTransformRoute? _collapsing;
+
+  /// ContainerCollapseTracker 维护入口（_collapsing 为库私有，跨库经此访问）
+  static void trackCollapsing(ContainerTransformRoute? route) {
+    _collapsing = route;
+  }
+
+  /// 路由移除时清理追踪（仅当仍指向该路由）
+  static void untrackCollapsing(ContainerTransformRoute? route) {
+    if (identical(_collapsing, route)) _collapsing = null;
+  }
+
+  /// 收回被打断重开时的起始进度（0~1，构造时从旧路由捕获）：
+  /// createAnimationController 设为初值，didPush 的 forward() 从此续播。
+  double _initialRevealProgress = 0;
+
+  /// 被本路由接管的收回中旧路由（install 时同帧移除，避免双窗口叠影）。
+  ContainerTransformRoute? _interrupted;
+
   ContainerTransformRoute({
     required this.sourceRect,
     required this.pageBuilder,
@@ -28,7 +49,43 @@ class ContainerTransformRoute extends PageRoute<void> {
     this.pageBackground = const Color(0xFF080A0D),
     this.duration = const Duration(milliseconds: 480),
     super.settings,
-  });
+  }) {
+    // 收回打断：同来源（源矩形相等）的本类路由正在收回 → 新路由从旧进度
+    // 无缝续播展开。页面自带分段入场动画直接吃路由动画，从中间值续播即
+    // 内容入场同步续播，天然无缝。
+    final ContainerTransformRoute? collapsing = _collapsing;
+    final Animation<double>? anim = collapsing?.animation;
+    if (collapsing != null &&
+        anim != null &&
+        anim.status == AnimationStatus.reverse &&
+        anim.value > 0 &&
+        collapsing.sourceRect == sourceRect) {
+      _initialRevealProgress = anim.value;
+      _interrupted = collapsing;
+    }
+  }
+
+  @override
+  AnimationController createAnimationController() {
+    final AnimationController controller = super.createAnimationController();
+    // createAnimationController 在 install() 阶段执行，早于 didPush() 的
+    // forward()——先设初值，展开即从旧收回位置续播
+    if (_initialRevealProgress > 0) {
+      controller.value = _initialRevealProgress.clamp(0.0, 1.0);
+    }
+    return controller;
+  }
+
+  @override
+  void install() {
+    super.install();
+    if (_interrupted != null) {
+      // push 与 removeRoute 同帧：新路由首帧即渲染旧收回位置的窗口，
+      // 旧路由立刻消失，视觉零差异。
+      navigator?.removeRoute(_interrupted!);
+      _interrupted = null;
+    }
+  }
 
   /// 源卡片在屏幕坐标系中的矩形（跳转前捕获）。
   final Rect sourceRect;
@@ -94,17 +151,46 @@ class ContainerTransformRoute extends PageRoute<void> {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
-    return ContainerReveal(
-      animation: animation,
-      originRect: sourceRect,
-      background: background,
-      sourceChild: sourceChild,
-      sourceRadius: sourceRadius,
-      sourceBlurSigma: sourceBlurSigma,
-      sourceHighlightOpacity: sourceHighlightOpacity,
-      sourceBorderColor: sourceBorderColor,
-      pageBackground: pageBackground,
-      child: child,
+    // 收回阶段整页 IgnorePointer：正在收回的面板不应再吃输入，让点击穿透
+    // 到下层源卡片，从卡片重新打开即可打断收回；展开与静止阶段保持可交互
+    //（展开中可打断返回）。
+    return IgnorePointer(
+      ignoring: animation.status == AnimationStatus.reverse,
+      child: ContainerReveal(
+        animation: animation,
+        originRect: sourceRect,
+        background: background,
+        sourceChild: sourceChild,
+        sourceRadius: sourceRadius,
+        sourceBlurSigma: sourceBlurSigma,
+        sourceHighlightOpacity: sourceHighlightOpacity,
+        sourceBorderColor: sourceBorderColor,
+        pageBackground: pageBackground,
+        child: child,
+      ),
+    );
+  }
+}
+
+/// 注册到 MaterialApp.navigatorObservers：记录收回中的 ContainerTransformRoute，
+/// 供「收回中重开同来源」无缝续播（回收打断，与展开打断对称）。
+///
+/// 展开支持打断是 Flutter 原生能力（推入中 pop，controller 从当前值反向）；
+/// 收回原本不行——收回中的页面盖在下层上吃输入，重开也是双窗口叠影。
+/// 配合路由构造器的同来源检测（initialRevealProgress + install 时
+/// removeRoute 旧路由）实现无缝续播。
+class ContainerCollapseTracker extends NavigatorObserver {
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    if (route is ContainerTransformRoute) {
+      ContainerTransformRoute.trackCollapsing(route);
+    }
+  }
+
+  @override
+  void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    ContainerTransformRoute.untrackCollapsing(
+      route is ContainerTransformRoute ? route : null,
     );
   }
 }

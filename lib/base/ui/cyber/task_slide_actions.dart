@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:qinglong_app/base/app_colors.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 
 /// 滑动按钮数据模型
 class CyberSlideActionData {
@@ -101,8 +102,10 @@ class CyberSlideActions extends StatelessWidget {
       motion: const ScrollMotion(),
       extentRatio: extentRatio,
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(borderRadius),
+        ClipPath(
+          clipper: ShapeBorderClipper(
+            shape: appCornerBorder(radius: borderRadius),
+          ),
           child: Row(
             children: List.generate(actions.length, (i) {
               return Expanded(
@@ -174,9 +177,9 @@ class _CyberSlideButton extends StatelessWidget {
       onPressed: (_) => data.onPressed(),
       backgroundColor: Colors.transparent,
       child: Container(
-        decoration: BoxDecoration(
+        decoration: ShapeDecoration(
+          shape: appCornerBorder(borderRadius: radius),
           color: data.backgroundColor,
-          borderRadius: radius,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

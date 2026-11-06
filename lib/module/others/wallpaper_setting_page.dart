@@ -5,6 +5,7 @@ import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/services/wallpaper_service.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/settings_widgets.dart';
 import 'package:qinglong_app/utils/extension.dart';
@@ -268,8 +269,10 @@ class _WallpaperSettingPageState extends ConsumerState<WallpaperSettingPage> {
               const Divider(indent: 55, height: 1),
               Padding(
                 padding: const EdgeInsets.all(15),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
+                child: ClipPath(
+                  clipper: ShapeBorderClipper(
+                    shape: appCornerBorder(radius: 12),
+                  ),
                   child: Image.file(
                     file,
                     width: double.infinity,
@@ -374,8 +377,9 @@ class _WallpaperSettingPageState extends ConsumerState<WallpaperSettingPage> {
                     final String? url =
                         await NetworkWallpaperSources.bingPortrait();
                     if (url == null) {
-                      final String fallback =
-                          NetworkWallpaperSources.picsum(seed: 2000);
+                      final String fallback = NetworkWallpaperSources.picsum(
+                        seed: 2000,
+                      );
                       WallpaperService.instance.setNetworkUrl(fallback);
                       _urlController.text = fallback;
                       'Bing 获取失败，已改用 picsum 竖屏'.toast();
@@ -391,8 +395,9 @@ class _WallpaperSettingPageState extends ConsumerState<WallpaperSettingPage> {
                   _buildPresetNetworkChip(
                     label: 'picsum ${i + 1}',
                     onTap: () {
-                      final String url =
-                          NetworkWallpaperSources.picsum(seed: 1000 + i);
+                      final String url = NetworkWallpaperSources.picsum(
+                        seed: 1000 + i,
+                      );
                       WallpaperService.instance.setNetworkUrl(url);
                       _urlController.text = url;
                     },
@@ -401,8 +406,8 @@ class _WallpaperSettingPageState extends ConsumerState<WallpaperSettingPage> {
             ),
             if (cfg.networkUrl != null && !svc.isDownloading) ...[
               const SizedBox(height: 14),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
+              ClipPath(
+                clipper: ShapeBorderClipper(shape: appCornerBorder(radius: 12)),
                 child: Image.network(
                   cfg.networkUrl!,
                   width: double.infinity,

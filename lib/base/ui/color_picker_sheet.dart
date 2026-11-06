@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/hsl_color_picker.dart';
 
@@ -94,10 +95,7 @@ class _ColorPickerSheetState extends ConsumerState<ColorPickerSheet> {
                     ),
                     child: Text(
                       "恢复默认",
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: theme.primaryColor,
-                      ),
+                      style: TextStyle(fontSize: 12, color: theme.primaryColor),
                     ),
                   ),
                 ),
@@ -143,22 +141,50 @@ class _ColorPickerSheetState extends ConsumerState<ColorPickerSheet> {
               Expanded(
                 child: CupertinoButton(
                   color: Colors.transparent,
-                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  padding: EdgeInsets.zero,
                   onPressed: () => Navigator.of(context).pop(),
-                  child: Text("取消", style: TextStyle(fontSize: 15, color: titleColor)),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: ShapeDecoration(
+                      shape: appCornerBorder(
+                        radius: 12,
+                        side: BorderSide(
+                          color: titleColor.withValues(alpha: 0.25),
+                        ),
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        "取消",
+                        style: TextStyle(fontSize: 15, color: titleColor),
+                      ),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 flex: 2,
                 child: CupertinoButton(
-                  color: theme.primaryColor,
-                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  color: Colors.transparent,
+                  padding: EdgeInsets.zero,
                   onPressed: () {
                     widget.onConfirm(_currentColor);
                     Navigator.of(context).pop();
                   },
-                  child: const Text("确认", style: TextStyle(fontSize: 15, color: Colors.white)),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: ShapeDecoration(
+                      shape: appCornerBorder(radius: 12),
+                      color: theme.primaryColor,
+                    ),
+                    child: const Center(
+                      child: Text(
+                        "确认",
+                        style: TextStyle(fontSize: 15, color: Colors.white),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -180,10 +206,10 @@ class _ColorPreviewBlock extends StatelessWidget {
     return Container(
       width: double.infinity,
       height: 80,
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
+        shape: appCornerBorder(radius: 12),
         color: color,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
+        shadows: [
           BoxShadow(
             color: color.withOpacity(0.3),
             blurRadius: 12,
@@ -194,9 +220,9 @@ class _ColorPreviewBlock extends StatelessWidget {
       child: Center(
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          decoration: BoxDecoration(
+          decoration: ShapeDecoration(
+            shape: appCornerBorder(radius: 8),
             color: Colors.black.withOpacity(0.25),
-            borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
             '#${hex.substring(2)}',

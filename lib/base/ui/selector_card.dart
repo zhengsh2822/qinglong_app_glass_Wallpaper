@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 
 /// 卡内展开选择器的选项数据
 class SelectorCardItem {
@@ -72,8 +73,8 @@ class _SelectorCardState extends ConsumerState<SelectorCard> {
     // 字重跟随全局四档调节（400/500/600/700）
     final FontWeight fw = FontWeight(ref.watch(textWeightProvider));
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(18),
+    return ClipPath(
+      clipper: ShapeBorderClipper(shape: appCornerBorder(radius: 18)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -95,10 +96,11 @@ class _SelectorCardState extends ConsumerState<SelectorCard> {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: fw,
-                            color: ref
-                                .watch(themeProvider)
-                                .themeColor
-                                .titleColor(),
+                            color:
+                                ref
+                                    .watch(themeProvider)
+                                    .themeColor
+                                    .titleColor(),
                           ),
                         ),
                         if (widget.subtitle != null)
@@ -108,10 +110,11 @@ class _SelectorCardState extends ConsumerState<SelectorCard> {
                               widget.subtitle!,
                               style: TextStyle(
                                 fontSize: 12,
-                                color: ref
-                                    .watch(themeProvider)
-                                    .themeColor
-                                    .descColor(),
+                                color:
+                                    ref
+                                        .watch(themeProvider)
+                                        .themeColor
+                                        .descColor(),
                               ),
                             ),
                           ),
@@ -138,87 +141,92 @@ class _SelectorCardState extends ConsumerState<SelectorCard> {
             alignment: Alignment.topCenter,
             child:
                 _expanded
-                ? Column(
-                    children:
-                        widget.items
-                            .map(
-                              (item) => InkWell(
-                                onTap: () {
-                                  item.onTap();
-                                  if (widget.collapseOnSelect) {
-                                    setState(() => _expanded = false);
-                                  }
-                                },
-                                child: Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 12,
-                                  ),
-                                  decoration: const BoxDecoration(
-                                    border: Border(
-                                      top: BorderSide(
-                                        color: Color(0xFFEFEFF1),
-                                        width: 0.5,
+                    ? Column(
+                      children:
+                          widget.items
+                              .map(
+                                (item) => InkWell(
+                                  onTap: () {
+                                    item.onTap();
+                                    if (widget.collapseOnSelect) {
+                                      setState(() => _expanded = false);
+                                    }
+                                  },
+                                  child: Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 12,
+                                    ),
+                                    decoration: const BoxDecoration(
+                                      border: Border(
+                                        top: BorderSide(
+                                          color: Color(0xFFEFEFF1),
+                                          width: 0.5,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              item.title,
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: fw,
-                                                color: ref
-                                                    .watch(themeProvider)
-                                                    .themeColor
-                                                    .titleColor(),
-                                              ),
-                                            ),
-                                            if (item.subtitle != null)
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                  top: 2,
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                item.title,
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: fw,
+                                                  color:
+                                                      ref
+                                                          .watch(themeProvider)
+                                                          .themeColor
+                                                          .titleColor(),
                                                 ),
-                                                child: Text(
-                                                  item.subtitle!,
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: ref
-                                                        .watch(themeProvider)
-                                                        .themeColor
-                                                        .descColor(),
+                                              ),
+                                              if (item.subtitle != null)
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                        top: 2,
+                                                      ),
+                                                  child: Text(
+                                                    item.subtitle!,
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      color:
+                                                          ref
+                                                              .watch(
+                                                                themeProvider,
+                                                              )
+                                                              .themeColor
+                                                              .descColor(),
+                                                    ),
                                                   ),
                                                 ),
-                                              ),
-                                          ],
+                                            ],
+                                          ),
                                         ),
-                                      ),
-                                      if (item.selected)
-                                        Icon(
-                                          CupertinoIcons.checkmark_alt_circle,
-                                          size: 20,
-                                          color:
-                                              isCyber
-                                                  ? CyberColors.cyan
-                                                  : ref
-                                                      .watch(themeProvider)
-                                                      .primaryColor,
-                                        ),
-                                    ],
+                                        if (item.selected)
+                                          Icon(
+                                            CupertinoIcons.checkmark_alt_circle,
+                                            size: 20,
+                                            color:
+                                                isCyber
+                                                    ? CyberColors.cyan
+                                                    : ref
+                                                        .watch(themeProvider)
+                                                        .primaryColor,
+                                          ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                            )
-                            .toList(),
-                  )
-                : const SizedBox(width: double.infinity),
+                              )
+                              .toList(),
+                    )
+                    : const SizedBox(width: double.infinity),
           ),
         ],
       ),

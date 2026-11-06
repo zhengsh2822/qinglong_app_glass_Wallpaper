@@ -7,26 +7,21 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/base_state_widget.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
-import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
-import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/card_transition_source.dart';
 import 'package:qinglong_app/module/subscribe/subscribe_detail_page.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
 import 'package:qinglong_app/base/ui/enable_widget.dart';
 import 'package:qinglong_app/base/ui/content_entrance.dart';
-import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
+import 'package:qinglong_app/base/ui/swipe_glass_card.dart';
 import 'package:qinglong_app/base/ui/floating_search_bar_area.dart';
 import 'package:qinglong_app/base/ui/running_widget.dart';
 import 'package:qinglong_app/base/ui/slidable_close_notifier.dart';
 import 'package:qinglong_app/module/subscribe/add_subscribe_page.dart';
 import 'package:qinglong_app/module/task/intime_log/intime_subscribe_log_page.dart';
 import 'package:qinglong_app/module/task/task_viewmodel.dart';
-import 'package:qinglong_app/utils/sp_utils.dart';
 import 'package:qinglong_app/utils/utils.dart';
 
 import 'subscribe_viewmodel.dart';
@@ -273,271 +268,106 @@ class TaskItemCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
-    if (isCyber) {
-      return _buildCyber(context);
-    }
-    return _buildNormal(context);
-  }
-
-  // 注意：_buildCyber 内部 Slidable 直接读 ref.themeProvider 获取 isCyber
-
-  /// 赛博模式：Slidable + 赛博颜色（与非赛博模式结构一致）
-  Widget _buildCyber(BuildContext context) {
-    final bool isCyber = true; // build() 已判断为赛博模式
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
-        child: Slidable(
-          key: ValueKey(bean["id"] as int),
-          endActionPane: ActionPane(
-            motion: const ScrollMotion(),
-            // 3 按钮：等分 Pane 宽度（screen × 0.55 ≈ 198px ≈ 3×60+18）
-            extentRatio: 0.55,
-            children: [
-              AppSlideButton(
-                context: context,
-                color: isCyber ? const Color(0xFF00F0FF) : AppColors.success,
-                icon: CupertinoIcons.pencil_outline,
-                label: '编辑',
-                cyberMode: isCyber,
-                width: double.infinity,
-                onTap: () {
-                  Navigator.of(context)
-                      .push(
-                        WallpaperPageRoute(
-                          builder:
-                              (context) => AddSubscribePage(taskBean: bean),
-                          blurSigma: 6,
-                          blurTintColor: CyberColors.bg.withOpacity(0.50),
-                        ),
-                      )
-                      .then((value) {
-                        if (value != null && value == true) {
-                          ref
-                              .read(
-                                SingleAccountPageState.ofSubscribeProvider(
-                                  context,
-                                )(getProviderName(context)),
-                              )
-                              .loadData(context);
-                        }
-                      });
-                },
-              ),
-              AppSlideButton(
-                context: context,
-                color: isCyber ? const Color(0xFFA356D6) : AppColors.purple,
-                icon:
-                    (bean["is_disabled"] ?? 0) != 1
-                        ? Icons.dnd_forwardslash
-                        : Icons.check_circle_outline_sharp,
-                label: (bean["is_disabled"] ?? 0) != 1 ? '禁用' : '启用',
-                cyberMode: isCyber,
-                width: double.infinity,
-                onTap: () {
-                  WidgetsBinding.instance.endOfFrame.then((value) {
-                    _enableSubscribe(context, bean["is_disabled"] ?? 0);
-                  });
-                },
-              ),
-              AppSlideButton(
-                context: context,
-                color: isCyber ? const Color(0xFFFF3D5C) : AppColors.danger,
-                icon: CupertinoIcons.delete,
-                label: '删除',
-                cyberMode: isCyber,
-                width: double.infinity,
-                onTap: () {
-                  WidgetsBinding.instance.endOfFrame.then((value) {
-                    _delSubscribe(context, ref);
-                  });
-                },
-              ),
-            ],
-          ),
-          startActionPane: ActionPane(
-            motion: const ScrollMotion(),
-            // 2 按钮：等分 Pane 宽度（screen × 0.4 = 144px）
-            extentRatio: 0.4,
-            children: [
-              AppSlideButton(
-                context: context,
-                color: const Color(0xFFFFB800),
-                icon:
-                    bean["status"] == 1
-                        ? CupertinoIcons.memories
-                        : CupertinoIcons.stop_circle,
-                label: bean["status"] == 1 ? '运行' : '停止',
-                cyberMode: isCyber,
-                width: double.infinity,
-                onTap: () {
-                  if (bean["status"] == 1) {
-                    _startCron(context, ref, true);
-                  } else {
-                    _stopCron(context, ref);
-                  }
-                },
-              ),
-              AppSlideButton(
-                context: context,
-                color: const Color(0xFF00FF94),
-                icon: CupertinoIcons.text_justifyleft,
-                label: '日志',
-                cyberMode: isCyber,
-                width: double.infinity,
-                onTap: () {
-                  Future.delayed(const Duration(milliseconds: 250), () {
-                    logCron(context, ref);
-                  });
-                },
-              ),
-            ],
-          ),
-          child: _buildCardChild(context, isCyber: true),
-        ),
+    return SwipeGlassCard(
+      slidableKey: ValueKey(bean["id"] as int),
+      margin: EdgeInsets.symmetric(
+        horizontal: isCyber ? 12 : AppleColors.spaceMd,
       ),
+      radius: 18,
+      startActions: [
+        SwipeActionSpec(
+          label: bean["status"] == 1 ? '运行' : '停止',
+          icon:
+              bean["status"] == 1
+                  ? CupertinoIcons.memories
+                  : CupertinoIcons.stop_circle,
+          color: const Color(0xFFFFB800),
+          normalColor: const Color(0xffD25535),
+          onTap: () {
+            if (bean["status"] == 1) {
+              _startCron(context, ref, true);
+            } else {
+              _stopCron(context, ref);
+            }
+          },
+        ),
+        SwipeActionSpec(
+          label: '日志',
+          icon: CupertinoIcons.text_justifyleft,
+          color: const Color(0xFF00FF94),
+          normalColor: const Color(0xff606467),
+          onTap: () {
+            Future.delayed(const Duration(milliseconds: 250), () {
+              logCron(context, ref);
+            });
+          },
+        ),
+      ],
+      endActions: [
+        SwipeActionSpec(
+          label: '编辑',
+          icon: CupertinoIcons.pencil_outline,
+          color: const Color(0xFF00F0FF),
+          normalColor: const Color(0xff5D5E70),
+          onTap: () {
+            Navigator.of(context)
+                .push(
+                  WallpaperPageRoute(
+                    builder: (context) => AddSubscribePage(taskBean: bean),
+                    blurSigma: 6,
+                    blurTintColor: CyberColors.bg.withOpacity(0.50),
+                  ),
+                )
+                .then((value) {
+                  if (value != null && value == true) {
+                    ref
+                        .read(
+                          SingleAccountPageState.ofSubscribeProvider(context)(
+                            getProviderName(context),
+                          ),
+                        )
+                        .loadData(context);
+                  }
+                });
+          },
+        ),
+        SwipeActionSpec(
+          label: (bean["is_disabled"] ?? 0) != 1 ? '禁用' : '启用',
+          icon:
+              (bean["is_disabled"] ?? 0) != 1
+                  ? Icons.dnd_forwardslash
+                  : Icons.check_circle_outline_sharp,
+          color: const Color(0xFFA356D6),
+          normalColor: const Color(0xffA356D6),
+          onTap: () {
+            WidgetsBinding.instance.endOfFrame.then((value) {
+              _enableSubscribe(context, bean["is_disabled"] ?? 0);
+            });
+          },
+        ),
+        SwipeActionSpec(
+          label: '删除',
+          icon: CupertinoIcons.delete,
+          color: const Color(0xFFFF3D5C),
+          normalColor: const Color(0xffEA4D3E),
+          onTap: () {
+            WidgetsBinding.instance.endOfFrame.then((value) {
+              _delSubscribe(context, ref);
+            });
+          },
+        ),
+      ],
+      child: _buildCardChild(context, isCyber: isCyber),
     );
   }
 
-  /// 非赛博模式：保留原 Slidable 实现
-  Widget _buildNormal(BuildContext context) {
-    final bool isCyber = false; // build() 已判断为非赛博模式
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(AppleColors.radiusCard),
-        border: Border.all(color: CyberColors.cardStroke),
-      ),
-      child: OptimizedFrostedGlass(
-        sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
-        borderRadius: BorderRadius.circular(AppleColors.radiusCard),
-        child: Slidable(
-          key: ValueKey(bean["id"] as int),
-          endActionPane: ActionPane(
-            motion: const ScrollMotion(),
-            extentRatio: 0.55,
-            children: [
-              AppSlideButton(
-                context: context,
-                color: const Color(0xff5D5E70),
-                icon: CupertinoIcons.pencil_outline,
-                label: '编辑',
-                cyberMode: isCyber,
-                width: double.infinity,
-                onTap: () {
-                  Navigator.of(context)
-                      .push(
-                        WallpaperPageRoute(
-                          builder:
-                              (context) => AddSubscribePage(taskBean: bean),
-                          blurSigma: 6,
-                          blurTintColor: CyberColors.bg.withOpacity(0.50),
-                        ),
-                      )
-                      .then((value) {
-                        if (value != null && value == true) {
-                          ref
-                              .read(
-                                SingleAccountPageState.ofSubscribeProvider(
-                                  context,
-                                )(getProviderName(context)),
-                              )
-                              .loadData(context);
-                        }
-                      });
-                },
-              ),
-              AppSlideButton(
-                context: context,
-                color: const Color(0xffA356D6),
-                icon:
-                    (bean["is_disabled"] ?? 0) != 1
-                        ? Icons.dnd_forwardslash
-                        : Icons.check_circle_outline_sharp,
-                label: (bean["is_disabled"] ?? 0) != 1 ? '禁用' : '启用',
-                cyberMode: isCyber,
-                width: double.infinity,
-                onTap: () {
-                  WidgetsBinding.instance.endOfFrame.then((value) {
-                    _enableSubscribe(context, bean["is_disabled"] ?? 0);
-                  });
-                },
-              ),
-              AppSlideButton(
-                context: context,
-                color: const Color(0xffEA4D3E),
-                icon: CupertinoIcons.delete,
-                label: '删除',
-                cyberMode: isCyber,
-                width: double.infinity,
-                onTap: () {
-                  WidgetsBinding.instance.endOfFrame.then((value) {
-                    _delSubscribe(context, ref);
-                  });
-                },
-              ),
-            ],
-          ),
-          startActionPane: ActionPane(
-            motion: const ScrollMotion(),
-            extentRatio: 0.4,
-            children: [
-              AppSlideButton(
-                context: context,
-                color: const Color(0xffD25535),
-                icon:
-                    bean["status"] == 1
-                        ? CupertinoIcons.memories
-                        : CupertinoIcons.stop_circle,
-                label: bean["status"] == 1 ? '运行' : '停止',
-                cyberMode: isCyber,
-                width: double.infinity,
-                onTap: () {
-                  if (bean["status"] == 1) {
-                    _startCron(context, ref, true);
-                  } else {
-                    _stopCron(context, ref);
-                  }
-                },
-              ),
-              AppSlideButton(
-                context: context,
-                color: const Color(0xff606467),
-                icon: CupertinoIcons.text_justifyleft,
-                label: '日志',
-                cyberMode: isCyber,
-                width: double.infinity,
-                onTap: () {
-                  Future.delayed(const Duration(milliseconds: 250), () {
-                    logCron(context, ref);
-                  });
-                },
-              ),
-            ],
-          ),
-          child: _buildCardChild(context, isCyber: false),
-        ),
-      ),
-    );
-  }
-
-  /// 卡片主体内容（赛博/非赛博共用）
-  /// 卡片共享展开：点击卡片 → 卡片隐藏 → 容器从卡片矩形展开详情页
+  /// 卡片内容（共享转场源）：纯内容，毛玻璃/描边由外层静态外壳承载
   Widget _buildCardChild(BuildContext context, {required bool isCyber}) {
     return CardTransitionSource(
-      child: OptimizedFrostedGlass(
-        sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
-        borderRadius: BorderRadius.circular(18),
-        child: Container(
-          width: MediaQuery.of(context).size.width,
-          decoration: BoxDecoration(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: CyberColors.cardStroke, width: 1),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+        child: SizedBox(
+          width: double.infinity,
           child: _buildSubscribeContent(context, isCyber),
         ),
       ),

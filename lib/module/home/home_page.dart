@@ -578,8 +578,8 @@ class HomePageState extends ConsumerState<HomePage> {
         iconLabelGap: 2,
         underGlassIconSize: 30,
         underGlassLabelFontSize: 10,
-        selectedFontWeight: FontWeight.w700,
-        unselectedFontWeight: FontWeight.w600,
+        selectedFontWeight: FontWeight(ref.watch(textWeightProvider)),
+        unselectedFontWeight: FontWeight(ref.watch(textWeightProvider)),
       ),
       pillStyle: LiquidGlassTabPillStyle(
         mode: LiquidGlassPillMode.both,
@@ -629,6 +629,25 @@ class HomePageState extends ConsumerState<HomePage> {
       final (outlined, filled) = icons[i];
       return LiquidGlassTabBarItem(
         label: labels[i],
+        // 标签文字跟随字体设置的主/次字体色与全局字重；图标保持主题色
+        labelBuilder: (context, label) {
+          final ThemeViewModel theme = ProviderScope.containerOf(
+            context,
+          ).read(themeProvider);
+          final FontWeight fw = FontWeight(
+            ProviderScope.containerOf(context).read(textWeightProvider),
+          );
+          return Text(
+            label.text ?? '',
+            style: label.textStyle.copyWith(
+              color:
+                  label.selected
+                      ? theme.customPrimaryTextColor
+                      : theme.customSecondaryTextColor,
+              fontWeight: fw,
+            ),
+          );
+        },
         iconBuilder:
             (context, g) => Icon(
               g.selected ? filled : outlined,

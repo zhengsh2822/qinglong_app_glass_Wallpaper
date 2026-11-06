@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:qinglong_app/base/app_colors.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 
 /// 滑动操作按钮数据模型
 class CyberSlideAction {
@@ -41,12 +42,17 @@ class CyberSlidable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Slidable(
-      key: slidableKey,
-      enabled: enabled,
-      startActionPane: _buildPane(context, startActions),
-      endActionPane: _buildPane(context, endActions),
-      child: child,
+    // 关键：用 ClipPath 把 Slidable 整体裁剪到圆角内（G2 连续曲率），
+    // 避免左右滑出的 ActionPane 按钮"飘"到卡片外。
+    return ClipPath(
+      clipper: ShapeBorderClipper(shape: appCornerBorder(radius: borderRadius)),
+      child: Slidable(
+        key: slidableKey,
+        enabled: enabled,
+        startActionPane: _buildPane(context, startActions),
+        endActionPane: _buildPane(context, endActions),
+        child: child,
+      ),
     );
   }
 
@@ -81,14 +87,16 @@ class CyberSlidable extends StatelessWidget {
                     vertical: verticalPadding,
                   ),
                   child: Container(
-                    decoration: BoxDecoration(
-                      color: action.color,
-                      borderRadius: BorderRadius.circular(buttonRadius),
-                      border: Border.all(
-                        color: action.color.withValues(alpha: 0.7),
-                        width: 0.5,
+                    decoration: ShapeDecoration(
+                      shape: appCornerBorder(
+                        radius: buttonRadius,
+                        side: BorderSide(
+                          color: action.color.withValues(alpha: 0.7),
+                          width: 0.5,
+                        ),
                       ),
-                      boxShadow: [
+                      color: action.color,
+                      shadows: [
                         BoxShadow(
                           color: action.color.withValues(alpha: 0.45),
                           blurRadius: 5,
@@ -108,7 +116,9 @@ class CyberSlidable extends StatelessWidget {
                                 await Slidable.of(buttonContext)?.close();
                                 action.onTap();
                               },
-                              borderRadius: BorderRadius.circular(buttonRadius),
+                              customBorder: appCornerBorder(
+                                radius: buttonRadius,
+                              ),
                               child: Center(
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,

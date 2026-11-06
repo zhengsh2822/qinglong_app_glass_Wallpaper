@@ -7,22 +7,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:qinglong_app/base/base_state_widget.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
-import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/glass_segmented_tab.dart';
 import 'package:qinglong_app/base/ui/pauseable_timer_mixin.dart';
 import 'package:qinglong_app/base/ui/animated_edit_mode_overlay.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
-import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/base/ui/search_cell.dart';
 import 'package:qinglong_app/base/ui/slidable_close_notifier.dart';
+import 'package:qinglong_app/base/ui/swipe_glass_card.dart';
 import 'package:qinglong_app/base/ui/add_select_all_button.dart';
 import 'package:qinglong_app/module/task/add_task_page.dart';
 import 'package:qinglong_app/module/task/intime_log/intime_log_page.dart';
@@ -882,8 +881,10 @@ class TaskPageState extends ConsumerState<TaskPage>
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 7),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(5),
+                child: ClipPath(
+                  clipper: ShapeBorderClipper(
+                    shape: appCornerBorder(radius: 12),
+                  ),
                   child: Image.asset("assets/images/ql.png", height: 45),
                 ),
               ),
@@ -1020,257 +1021,101 @@ class TaskItemCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 【使用示例】赛博模式使用 CyberSlidable 统一组件
-    // 左滑4个按钮（endActions）：编辑/置顶/禁用/删除
-    // 右滑2个按钮（startActions）：运行停止/日志
-    if (isCyber) {
-      // 复用 CyberSlidable 组件（与 appkey_page/change_account_page 一致），
-      // 它的 CustomSlidableAction 用 Material elevation 渲染赛博按钮光晕，
-      // 配合主卡片 BackdropFilter 形成"光折射到主卡片"效果
-      // 「房子」在外：毛玻璃+描边固定不动，Slidable 只滑内容，
-      // ActionPane 按钮落在卡片底板上（与主题版"同一房子"统一）
-      return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 12),
-        child: OptimizedFrostedGlass(
-          sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
-          borderRadius: BorderRadius.circular(18),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color:
-                    bean.isPinned == 1
-                        ? CyberColors.cyan.withValues(alpha: 0.85)
-                        : CyberColors.cardStroke,
-                width: bean.isPinned == 1 ? 1.2 : 1,
-              ),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(17),
-              child: CyberSlidable(
-                slidableKey: ValueKey(bean.sId),
-                enabled: !editMode,
-                startActions: [
-            CyberSlideAction(
-              label: bean.status! == 1 ? '运行' : '停止',
-              icon:
-                  bean.status! == 1
-                      ? CupertinoIcons.memories
-                      : CupertinoIcons.stop_circle,
-              color: const Color(0xffD25535),
-              onTap: () {
-                if (bean.status! == 1) {
-                  startCron(
-                    context,
-                    ref,
-                    SpUtil.getBool(spAutoShowLog, defValue: true),
-                  );
-                } else {
-                  stopCron(context, ref);
-                }
-              },
-            ),
-            CyberSlideAction(
-              label: '日志',
-              icon: CupertinoIcons.text_justifyleft,
-              color: const Color(0xff606467),
-              onTap: () => logCron(context, ref),
-            ),
-          ],
-          endActions: [
-            CyberSlideAction(
-              label: '编辑',
-              icon: CupertinoIcons.pencil_outline,
-              color: const Color(0xFF00F0FF),
-              onTap: () {
-                Navigator.of(context).push(
-                  WallpaperPageRoute(
-                    builder:
-                        (context) =>
-                            AddTaskPage(taskBean: bean, hideUploadFile: true),
-                  ),
-                );
-              },
-            ),
-            CyberSlideAction(
-              label: (bean.isPinned ?? 0) == 0 ? '置顶' : '取消',
-              icon:
-                  (bean.isPinned ?? 0) == 0
-                      ? CupertinoIcons.pin
-                      : CupertinoIcons.pin_slash,
-              color: const Color(0xFFFFC107),
-              onTap: () {
-                WidgetsBinding.instance.endOfFrame.then(
-                  (_) => pinTask(context),
-                );
-              },
-            ),
-            CyberSlideAction(
-              label: bean.isDisabled! == 0 ? '禁用' : '启用',
-              icon:
-                  bean.isDisabled! == 0
-                      ? CupertinoIcons.eye_slash
-                      : CupertinoIcons.checkmark_alt_circle,
-              color: const Color(0xFF333333),
-              onTap: () {
-                WidgetsBinding.instance.endOfFrame.then(
-                  (_) => enableTask(context),
-                );
-              },
-            ),
-            CyberSlideAction(
-              label: '删除',
-              icon: CupertinoIcons.delete,
-              color: const Color(0xFFFF3D00),
-              onTap: () {
-                HapticFeedback.mediumImpact();
-                WidgetsBinding.instance.endOfFrame.then(
-                  (_) => delTask(context, ref),
-                );
-              },
-            ),
-          ],
-          // 卡片共享展开：点击卡片 → 内容在卡片底板上滑动露出按钮
-          child: CardTransitionSource(
-            child: _buildCardChild(context),
-            sourceBuilder: (ctx) => _buildCardContent(context),
-            pageBuilder: (context) => TaskDetailPage(bean),
-            blurSigma: 6,
-            blurTintColor: CyberColors.bg.withOpacity(0.50),
-          ),
-              ),
-            ),
-          ),
+    return SwipeGlassCard(
+      slidableKey: ValueKey(bean.sId),
+      enabled: !editMode,
+      margin: EdgeInsets.symmetric(
+        horizontal: isCyber ? 12 : AppleColors.spaceMd,
+      ),
+      radius: AppleColors.radiusCard,
+      isPinned: bean.isPinned == 1,
+      highlightPinned: true,
+      startActions: [
+        SwipeActionSpec(
+          label: bean.status! == 1 ? '运行' : '停止',
+          icon:
+              bean.status! == 1
+                  ? CupertinoIcons.memories
+                  : CupertinoIcons.stop_circle,
+          color: const Color(0xffD25535),
+          onTap: () {
+            if (bean.status! == 1) {
+              startCron(
+                context,
+                ref,
+                SpUtil.getBool(spAutoShowLog, defValue: true),
+              );
+            } else {
+              stopCron(context, ref);
+            }
+          },
         ),
-      );
-    }
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppleColors.spaceMd),
-      // 统一毛玻璃封装：sigma<=0 时自动退化为纯色（无 BackdropFilter）
-      // 边框由 _buildCardChild 统一绘制（cardStroke），避免外层残留浅灰双边框
-      child: OptimizedFrostedGlass(
-        sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
-        borderRadius: BorderRadius.circular(AppleColors.radiusCard),
-        child: Slidable(
-          enabled: !editMode,
-          key: ValueKey(bean.sId),
-          endActionPane: ActionPane(
-            motion: const ScrollMotion(),
-            // 4 按钮：等分 Pane 宽度（screen × 0.7 = 252px ≈ 4×60+12）
-            extentRatio: 0.7,
-            children: [
-              AppSlideButton(
-                context: context,
-                color: isCyber ? const Color(0xFF00F0FF) : AppColors.success,
-                icon: CupertinoIcons.pencil_outline,
-                label: '编辑',
-                cyberMode: isCyber,
-                width: double.infinity,
-                onTap: () {
-                  Navigator.of(context).push(
-                    WallpaperPageRoute(
-                      builder:
-                          (context) =>
-                              AddTaskPage(taskBean: bean, hideUploadFile: true),
-                    ),
-                  );
-                },
-              ),
-              AppSlideButton(
-                context: context,
-                color: isCyber ? const Color(0xFFFFC107) : AppColors.warning,
-                icon:
-                    (bean.isPinned ?? 0) == 0
-                        ? CupertinoIcons.pin
-                        : CupertinoIcons.pin_slash,
-                label: (bean.isPinned ?? 0) == 0 ? '置顶' : '取消',
-                cyberMode: isCyber,
-                width: double.infinity,
-                onTap: () {
-                  WidgetsBinding.instance.endOfFrame.then(
-                    (_) => pinTask(context),
-                  );
-                },
-              ),
-              AppSlideButton(
-                context: context,
-                color: isCyber ? const Color(0xFF333333) : AppColors.purple,
-                icon:
-                    bean.isDisabled! == 0
-                        ? CupertinoIcons.eye_slash
-                        : CupertinoIcons.checkmark_alt_circle,
-                label: bean.isDisabled! == 0 ? '禁用' : '启用',
-                cyberMode: isCyber,
-                width: double.infinity,
-                onTap: () {
-                  WidgetsBinding.instance.endOfFrame.then(
-                    (_) => enableTask(context),
-                  );
-                },
-              ),
-              AppSlideButton(
-                context: context,
-                color: isCyber ? const Color(0xFFFF3D00) : AppColors.danger,
-                icon: CupertinoIcons.delete,
-                label: '删除',
-                cyberMode: isCyber,
-                width: double.infinity,
-                onTap: () {
-                  WidgetsBinding.instance.endOfFrame.then(
-                    (_) => delTask(context, ref),
-                  );
-                },
-              ),
-            ],
-          ),
-          startActionPane: ActionPane(
-            motion: const ScrollMotion(),
-            // 2 按钮：等分 Pane 宽度（screen × 0.4 = 144px）
-            extentRatio: 0.4,
-            children: [
-              AppSlideButton(
-                context: context,
-                color: const Color(0xffD25535),
-                icon:
-                    bean.status! == 1
-                        ? CupertinoIcons.memories
-                        : CupertinoIcons.stop_circle,
-                label: bean.status! == 1 ? '运行' : '停止',
-                cyberMode: isCyber,
-                width: double.infinity,
-                onTap: () {
-                  if (bean.status! == 1) {
-                    startCron(
-                      context,
-                      ref,
-                      SpUtil.getBool(spAutoShowLog, defValue: true),
-                    );
-                  } else {
-                    stopCron(context, ref);
-                  }
-                },
-              ),
-              AppSlideButton(
-                context: context,
-                color: const Color(0xff606467),
-                icon: CupertinoIcons.text_justifyleft,
-                label: '日志',
-                cyberMode: isCyber,
-                width: double.infinity,
-                onTap: () => logCron(context, ref),
-              ),
-            ],
-          ),
-          // 卡片共享展开：点击卡片 → 卡片隐藏 → 容器从卡片矩形展开详情页
-          child: CardTransitionSource(
-            child: _buildCardChild(context),
-            sourceBuilder: (ctx) => _buildCardContent(context),
-            pageBuilder: (context) => TaskDetailPage(bean),
-            blurSigma: 6,
-            blurTintColor: CyberColors.bg.withOpacity(0.50),
-          ),
+        SwipeActionSpec(
+          label: '日志',
+          icon: CupertinoIcons.text_justifyleft,
+          color: const Color(0xff606467),
+          onTap: () => logCron(context, ref),
         ),
+      ],
+      endActions: [
+        SwipeActionSpec(
+          label: '编辑',
+          icon: CupertinoIcons.pencil_outline,
+          color: const Color(0xFF00F0FF),
+          normalColor: AppColors.success,
+          onTap: () {
+            Navigator.of(context).push(
+              WallpaperPageRoute(
+                builder:
+                    (context) =>
+                        AddTaskPage(taskBean: bean, hideUploadFile: true),
+              ),
+            );
+          },
+        ),
+        SwipeActionSpec(
+          label: (bean.isPinned ?? 0) == 0 ? '置顶' : '取消',
+          icon:
+              (bean.isPinned ?? 0) == 0
+                  ? CupertinoIcons.pin
+                  : CupertinoIcons.pin_slash,
+          color: const Color(0xFFFFC107),
+          normalColor: AppColors.warning,
+          onTap: () {
+            WidgetsBinding.instance.endOfFrame.then((_) => pinTask(context));
+          },
+        ),
+        SwipeActionSpec(
+          label: bean.isDisabled! == 0 ? '禁用' : '启用',
+          icon:
+              bean.isDisabled! == 0
+                  ? CupertinoIcons.eye_slash
+                  : CupertinoIcons.checkmark_alt_circle,
+          color: const Color(0xFF333333),
+          normalColor: AppColors.purple,
+          onTap: () {
+            WidgetsBinding.instance.endOfFrame.then((_) => enableTask(context));
+          },
+        ),
+        SwipeActionSpec(
+          label: '删除',
+          icon: CupertinoIcons.delete,
+          color: const Color(0xFFFF3D00),
+          normalColor: AppColors.danger,
+          onTap: () {
+            HapticFeedback.mediumImpact();
+            WidgetsBinding.instance.endOfFrame.then(
+              (_) => delTask(context, ref),
+            );
+          },
+        ),
+      ],
+      child: CardTransitionSource(
+        child: _buildCardChild(context),
+        sourceBuilder: (ctx) => _buildCardContent(context),
+        pageBuilder: (context) => TaskDetailPage(bean),
+        blurSigma: 6,
+        blurTintColor: CyberColors.bg.withOpacity(0.50),
       ),
     );
   }

@@ -9,20 +9,15 @@ import 'package:qinglong_app/base/base_state_widget.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
-import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/content_entrance.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
 import 'package:qinglong_app/base/ui/floating_search_bar_area.dart';
-import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
+import 'package:qinglong_app/base/ui/swipe_glass_card.dart';
 import 'package:qinglong_app/base/ui/tag_chip.dart';
 import 'package:qinglong_app/module/appkey/appkey_detail_page.dart';
 import 'package:qinglong_app/module/appkey/appkey_viewmodel.dart';
-import 'package:qinglong_app/utils/sp_utils.dart';
 import 'package:qinglong_app/utils/utils.dart';
 
 import 'add_appkey_page.dart';
@@ -227,75 +222,60 @@ class AppKeyItemCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 对齐定时任务卡片方案：外层 margin 12 + CyberSlidable + _buildCardChild(BackdropFilter + 边框光晕)
-    // 滑动内容（操作按钮）在 CyberSlidable 的设计下与卡片分离，符合赛博模式视觉规范
-    return Container(
-      // 固定宽度：左右留白 16，卡片撑满剩余宽度（杜绝自适应宽窄不一）
+    return SwipeGlassCard(
+      slidableKey: ValueKey(getAppKeyId(bean)),
+      isCyber: true,
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      // 「房子」在外：毛玻璃+描边固定不动，Slidable 只滑内容
-      child: OptimizedFrostedGlass(
-        sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
-        borderRadius: BorderRadius.circular(18),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: CyberColors.cardStroke, width: 1),
-          ),
-          child: CyberSlidable(
-            slidableKey: ValueKey(getAppKeyId(bean)),
-            borderRadius: 18,
-            endActions: [
-              CyberSlideAction(
-                label: '编辑',
-                icon: CupertinoIcons.pencil_outline,
-                color: const Color(0xFF00F0FF),
-                onTap: () {
-                  Navigator.of(context)
-                      .push(
-                        WallpaperPageRoute(
-                          blurSigma: 6,
-                          blurTintColor: CyberColors.bg.withOpacity(0.50),
-                          builder: (context) => AddAppKeyPage(bean: bean),
-                        ),
-                      )
-                      .then((value) {
-                        if (value != null && value == true) {
-                          ref
-                              .read(
-                                SingleAccountPageState.ofAppKeyProvider(
-                                  context,
-                                )(getProviderName(context)),
-                              )
-                              .loadData(context);
-                        }
-                      });
-                },
-              ),
-              CyberSlideAction(
-                label: '重置',
-                icon: CupertinoIcons.arrow_2_circlepath,
-                color: const Color(0xFFA356D6),
-                onTap: () {
-                  WidgetsBinding.instance.endOfFrame.then((value) {
-                    _reset(context);
-                  });
-                },
-              ),
-              CyberSlideAction(
-                label: '删除',
-                icon: CupertinoIcons.delete,
-                color: const Color(0xFFFF3D5C),
-                onTap: () {
-                  WidgetsBinding.instance.endOfFrame.then((value) {
-                    _del(context, ref);
-                  });
-                },
-              ),
-            ],
-            child: _buildCardChild(context),
-          ),
+      radius: 18,
+      endActions: [
+        SwipeActionSpec(
+          label: '编辑',
+          icon: CupertinoIcons.pencil_outline,
+          color: const Color(0xFF00F0FF),
+          onTap: () {
+            Navigator.of(context)
+                .push(
+                  WallpaperPageRoute(
+                    blurSigma: 6,
+                    blurTintColor: CyberColors.bg.withOpacity(0.50),
+                    builder: (context) => AddAppKeyPage(bean: bean),
+                  ),
+                )
+                .then((value) {
+                  if (value != null && value == true) {
+                    ref
+                        .read(
+                          SingleAccountPageState.ofAppKeyProvider(context)(
+                            getProviderName(context),
+                          ),
+                        )
+                        .loadData(context);
+                  }
+                });
+          },
         ),
-      ),
+        SwipeActionSpec(
+          label: '重置',
+          icon: CupertinoIcons.arrow_2_circlepath,
+          color: const Color(0xFFA356D6),
+          onTap: () {
+            WidgetsBinding.instance.endOfFrame.then((value) {
+              _reset(context);
+            });
+          },
+        ),
+        SwipeActionSpec(
+          label: '删除',
+          icon: CupertinoIcons.delete,
+          color: const Color(0xFFFF3D5C),
+          onTap: () {
+            WidgetsBinding.instance.endOfFrame.then((value) {
+              _del(context, ref);
+            });
+          },
+        ),
+      ],
+      child: _buildCardChild(context),
     );
   }
 

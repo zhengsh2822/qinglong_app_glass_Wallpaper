@@ -17,6 +17,7 @@ import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/animated_indexed_switch.dart';
+import 'package:qinglong_app/base/ui/container_transform_route.dart';
 import 'package:qinglong_app/base/ui/keyboard_dismiss_observer.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
@@ -276,7 +277,12 @@ class QlAppState extends ConsumerState<QlApp> with WidgetsBindingObserver {
       navigatorKey: navigatorState,
       // 退场键盘错峰：手势返回/pop 开始瞬间即收键盘，键盘动画与退场动画
       // 时间重叠被吸收，避免"键盘未收起就退出"导致掉帧（并行优化 B 方案）
-      navigatorObservers: [KeyboardDismissNavigatorObserver()],
+      // ContainerCollapseTracker：记录收回中的容器展开路由，供收回打断
+      // 重开时无缝续播（container_transform_route.dart）
+      navigatorObservers: [
+        KeyboardDismissNavigatorObserver(),
+        ContainerCollapseTracker(),
+      ],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,

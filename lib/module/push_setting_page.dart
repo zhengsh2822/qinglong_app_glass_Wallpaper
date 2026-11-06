@@ -8,6 +8,7 @@ import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/glass_text_field.dart';
@@ -84,12 +85,14 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
                             ),
                             borderRadius: BorderRadius.circular(18),
                             child: Container(
-                              decoration: BoxDecoration(
+                              decoration: ShapeDecoration(
                                 color: Colors.transparent,
-                                borderRadius: BorderRadius.circular(18),
-                                border: Border.all(
-                                  color: CyberColors.cardStroke,
-                                  width: 1,
+                                shape: appCornerBorder(
+                                  radius: 18,
+                                  side: BorderSide(
+                                    color: CyberColors.cardStroke,
+                                    width: 1,
+                                  ),
                                 ),
                               ),
                               child: SelectorCard(

@@ -12,6 +12,7 @@ import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/base/ui/log_entry_button.dart';
@@ -373,10 +374,11 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
                 '$todaySuccess',
                 CyberColors.neonGreen,
                 // 与网页版一致：点击查看今日成功任务明细
-                onTap: () => Navigator.of(context).pushNamed(
-                  Routes.routeDashboardTaskResult,
-                  arguments: true,
-                ),
+                onTap:
+                    () => Navigator.of(context).pushNamed(
+                      Routes.routeDashboardTaskResult,
+                      arguments: true,
+                    ),
               ),
             ),
             Expanded(
@@ -386,10 +388,11 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
                 '$todayFail',
                 CyberColors.neonRed,
                 // 与网页版一致：点击查看今日失败任务明细
-                onTap: () => Navigator.of(context).pushNamed(
-                  Routes.routeDashboardTaskResult,
-                  arguments: false,
-                ),
+                onTap:
+                    () => Navigator.of(context).pushNamed(
+                      Routes.routeDashboardTaskResult,
+                      arguments: false,
+                    ),
               ),
             ),
           ],
@@ -743,9 +746,10 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
     // CPU 使用率（青龙开源后端 /api/dashboard/system 未返回此字段）
     // 预留解析位置：后端扩展 cpuUsage 字段后可直接展示
     final cpuUsageRaw = _system!['cpuUsage'];
-    final cpuUsagePercent = cpuUsageRaw != null
-        ? (double.tryParse(cpuUsageRaw.toString().replaceAll('%', '')) ?? 0)
-        : null;
+    final cpuUsagePercent =
+        cpuUsageRaw != null
+            ? (double.tryParse(cpuUsageRaw.toString().replaceAll('%', '')) ?? 0)
+            : null;
 
     return _buildSectionCard(
       isCyber: isCyber,
@@ -791,9 +795,7 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
   // 比率 < 70% 绿色（轻松），70-100% 橙色（较忙），> 100% 红色（过载）
   Widget _buildLoadAvgChart(bool isCyber, int cpus, List<dynamic> loadAvg) {
     final labels = ['1分钟', '5分钟', '15分钟'];
-    final values = loadAvg
-        .map((e) => (e as num?)?.toDouble() ?? 0)
-        .toList();
+    final values = loadAvg.map((e) => (e as num?)?.toDouble() ?? 0).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -805,9 +807,8 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
               '系统负载',
               style: TextStyle(
                 fontSize: isCyber ? 12 : 13,
-                color: isCyber
-                    ? CyberColors.descColor
-                    : AppleColors.textSecondary,
+                color:
+                    isCyber ? CyberColors.descColor : AppleColors.textSecondary,
               ),
             ),
             Text(
@@ -815,9 +816,8 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
               style: TextStyle(
                 fontSize: isCyber ? 11 : 11,
                 fontFamily: 'MiSans',
-                color: isCyber
-                    ? CyberColors.descColor
-                    : AppleColors.textTertiary,
+                color:
+                    isCyber ? CyberColors.descColor : AppleColors.textTertiary,
               ),
             ),
           ],
@@ -848,9 +848,10 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
                       labels[i],
                       style: TextStyle(
                         fontSize: isCyber ? 12 : 12,
-                        color: isCyber
-                            ? CyberColors.descColor
-                            : AppleColors.textSecondary,
+                        color:
+                            isCyber
+                                ? CyberColors.descColor
+                                : AppleColors.textSecondary,
                       ),
                     ),
                     Text(
@@ -858,9 +859,10 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
                       style: TextStyle(
                         fontSize: isCyber ? 12 : 12,
                         fontFamily: 'MiSans',
-                        color: isCyber
-                            ? CyberColors.titleWhite
-                            : AppleColors.textPrimary,
+                        color:
+                            isCyber
+                                ? CyberColors.titleWhite
+                                : AppleColors.textPrimary,
                       ),
                     ),
                   ],
@@ -1114,17 +1116,19 @@ class DashboardPageState extends ConsumerState<DashboardPage> {
     // 统一毛玻璃封装：sigma<=0 时自动退化为纯色（无 BackdropFilter）
     return OptimizedFrostedGlass(
       sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
+      // 与 GlassCard/GlassListItemCard 一致：全透明仅模糊，
+      // 不叠加默认 15% 白膜
+      tintColor: Colors.transparent,
       borderRadius: BorderRadius.circular(AppleColors.radiusCard),
       child: Container(
         width: double.infinity,
         clipBehavior: isCyber ? Clip.antiAlias : Clip.none,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppleColors.radiusCard),
+        decoration: ShapeDecoration(
           color: Colors.transparent,
-          border: Border.all(
-              color: CyberColors.cardStroke,
-              width: 1,
-            ),
+          shape: appCornerBorder(
+            radius: AppleColors.radiusCard,
+            side: BorderSide(color: CyberColors.cardStroke, width: 1),
+          ),
         ),
         padding: const EdgeInsets.all(16),
         child: child,
@@ -1267,9 +1271,10 @@ class _TrendChartState extends State<_TrendChart> {
     final Map<String, dynamic> row = widget.data[index];
     final int count = widget.data.length;
     final double chartWidth = width - _chartRightPad - _chartLeft;
-    final double pointX = count > 1
-        ? _chartLeft + chartWidth / (count - 1) * index
-        : _chartLeft + chartWidth / 2;
+    final double pointX =
+        count > 1
+            ? _chartLeft + chartWidth / (count - 1) * index
+            : _chartLeft + chartWidth / 2;
 
     const double tipWidth = 118;
     // 默认放在指示线右侧，右侧放不下则翻到左侧
@@ -1579,10 +1584,7 @@ class _TrendChartPainter extends CustomPainter {
       }
 
       mark(values[selected], color);
-      mark(
-        (data[selected]['success'] as num?)?.toDouble() ?? 0,
-        successColor,
-      );
+      mark((data[selected]['success'] as num?)?.toDouble() ?? 0, successColor);
       mark((data[selected]['fail'] as num?)?.toDouble() ?? 0, failColor);
     }
   }

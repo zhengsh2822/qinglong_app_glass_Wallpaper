@@ -12,6 +12,7 @@ import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
@@ -734,10 +735,12 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                                   28,
                                   24,
                                 ),
-                                decoration: BoxDecoration(
+                                decoration: ShapeDecoration(
+                                  shape: appCornerBorder(
+                                    radius: 18,
+                                    side: BorderSide(color: borderColor),
+                                  ),
                                   color: cardBg,
-                                  borderRadius: BorderRadius.circular(18),
-                                  border: Border.all(color: borderColor),
                                 ),
                                 child: SingleChildScrollView(child: content),
                               ),
@@ -757,19 +760,13 @@ class _JdckPageState extends ConsumerState<JdckPage> {
   }
 
   Color _dialogTextColor() {
-    final isCyber = ref.read(themeProvider).themeMode == modeCyber;
-    final isDark = ref.read(themeProvider).themeMode == modeDark;
-    if (isCyber) return CyberColors.titleWhite;
-    if (isDark) return Colors.white;
-    return AppleColors.textPrimary;
+    // 跟随字体设置里的主字体颜色（未自定义时回退当前主题默认）
+    return ref.read(themeProvider).customPrimaryTextColor;
   }
 
   Color _dialogSubTextColor() {
-    final isCyber = ref.read(themeProvider).themeMode == modeCyber;
-    final isDark = ref.read(themeProvider).themeMode == modeDark;
-    if (isCyber) return const Color(0xFFB8BFC9);
-    if (isDark) return const Color(0xFFAEAEB2);
-    return AppleColors.textSecondary;
+    // 跟随字体设置里的次字体颜色（未自定义时回退当前主题默认）
+    return ref.read(themeProvider).customSecondaryTextColor;
   }
 
   Color _dialogPrimaryColor() {
@@ -813,9 +810,9 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                               horizontal: 8,
                               vertical: 4,
                             ),
-                            decoration: BoxDecoration(
+                            decoration: ShapeDecoration(
+                              shape: appCornerBorder(radius: 10),
                               color: const Color(0xFF34C759).withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Text(
                               '已登录',
@@ -898,9 +895,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                                 color: subTextColor.withOpacity(0.3),
                               ),
                               padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
+                              shape: appCornerBorder(radius: 12),
                             ),
                             child: const Text('取消'),
                           ),
@@ -916,9 +911,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                                       ? Colors.white
                                       : Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
+                              shape: appCornerBorder(radius: 12),
                             ),
                             child:
                                 _qlChecking
@@ -968,14 +961,9 @@ class _JdckPageState extends ConsumerState<JdckPage> {
     bool obscureText = false,
     Widget? suffixIcon,
   }) {
-    // 标签/提示三模式分离：
-    // 赛博模式用浅灰色（黑底卡片上清晰）
-    // 非赛博模式用深灰色（白底卡片上清晰）
-    final bool isCyberField = ref.read(themeProvider).themeMode == modeCyber;
-    final labelColor =
-        isCyberField ? const Color(0xFFB8BFC9) : const Color(0xFF555555);
-    final hintColor =
-        isCyberField ? const Color(0xFFA8AFB9) : const Color(0xFF888888);
+    // 输入框标签/提示跟随次字体颜色（未自定义时回退主题默认）
+    final Color labelColor = ref.read(themeProvider).customSecondaryTextColor;
+    final Color hintColor = labelColor.withValues(alpha: 0.72);
     return TextField(
       controller: controller,
       obscureText: obscureText,
@@ -1082,9 +1070,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                                 color: subTextColor.withOpacity(0.3),
                               ),
                               padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
+                              shape: appCornerBorder(radius: 12),
                             ),
                             child: const Text('取消'),
                           ),
@@ -1110,9 +1096,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                               backgroundColor: primaryColor,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
+                              shape: appCornerBorder(radius: 12),
                             ),
                             child: const Text('添加'),
                           ),
@@ -1197,9 +1181,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                                 color: subTextColor.withOpacity(0.3),
                               ),
                               padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
+                              shape: appCornerBorder(radius: 12),
                             ),
                             child: const Text('取消'),
                           ),
@@ -1229,9 +1211,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                               backgroundColor: primaryColor,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
+                              shape: appCornerBorder(radius: 12),
                             ),
                             child: const Text('保存'),
                           ),
@@ -1454,9 +1434,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                         foregroundColor: textColor,
                         side: BorderSide(color: subTextColor.withOpacity(0.3)),
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        shape: appCornerBorder(radius: 12),
                       ),
                       child: const Text('取消'),
                     ),
@@ -1532,9 +1510,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                         backgroundColor: primaryColor,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        shape: appCornerBorder(radius: 12),
                       ),
                       child: const Text('恢复'),
                     ),
@@ -1583,10 +1559,10 @@ class _JdckPageState extends ConsumerState<JdckPage> {
       appBar: AppBar(
         // 京东助手 AppBar：标题黑色 + 图标主色，覆盖主题默认的白色文字（看不清）
         backgroundColor: Colors.transparent,
-        foregroundColor:
-            isCyber ? CyberColors.titleWhite : AppleColors.textPrimary,
+        foregroundColor: ref.watch(themeProvider).customPrimaryTextColor,
+        // 标题跟随字体设置的主字体颜色
         titleTextStyle: TextStyle(
-          color: isCyber ? CyberColors.titleWhite : AppleColors.textPrimary,
+          color: ref.watch(themeProvider).customPrimaryTextColor,
           fontSize: 17,
           fontWeight: FontWeight.w600,
         ),
@@ -1666,24 +1642,21 @@ class _JdckPageState extends ConsumerState<JdckPage> {
               ),
               forceOpaqueSolid: true,
               child: Container(
-                decoration: BoxDecoration(
+                decoration: ShapeDecoration(
+                  shape: appCornerBorder(
+                    radius: isCyber ? 12 : AppleColors.radiusSmall,
+                    side: BorderSide(
+                      color:
+                          isCyber
+                              ? CyberColors.cyan.withValues(alpha: 0.5)
+                              : const Color(0x1A000000),
+                      width: 1,
+                    ),
+                  ),
                   color:
                       isCyber
                           ? Colors.black.withValues(alpha: 0.5)
                           : const Color(0x80FFFFFF),
-                  borderRadius: BorderRadius.circular(
-                    isCyber ? 12 : AppleColors.radiusSmall,
-                  ),
-                  border:
-                      isCyber
-                          ? Border.all(
-                            color: CyberColors.cyan.withValues(alpha: 0.5),
-                            width: 1,
-                          )
-                          : Border.all(
-                            color: const Color(0x1A000000),
-                            width: 1,
-                          ),
                 ),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxHeight: 240),
@@ -1727,9 +1700,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                                                 ? (isCyber
                                                     ? CyberColors.cyan
                                                     : primaryColor)
-                                                : (isCyber
-                                                    ? CyberColors.titleWhite
-                                                    : AppleColors.textPrimary),
+                                                : _dialogTextColor(),
                                         fontSize: 15,
                                       ),
                                     ),
@@ -1749,10 +1720,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                                 Text(
                                   _passwordHidden ? '••••••' : parts[1],
                                   style: TextStyle(
-                                    color:
-                                        isCyber
-                                            ? CyberColors.descColor
-                                            : const Color(0xFF666666),
+                                    color: _dialogSubTextColor(),
                                     fontSize: 13,
                                   ),
                                 ),
@@ -1787,10 +1755,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                 '青龙面板已连接',
                 style: TextStyle(
                   fontSize: 13,
-                  color:
-                      isCyber
-                          ? CyberColors.descColor
-                          : AppleColors.textSecondary,
+                  color: _dialogSubTextColor(),
                 ),
               ),
             ),
@@ -1815,8 +1780,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
               '未登录青龙面板，上传Cookie前请先登录',
               style: TextStyle(
                 fontSize: 13,
-                color:
-                    isCyber ? CyberColors.descColor : AppleColors.textSecondary,
+                color: _dialogSubTextColor(),
               ),
             ),
           ),
@@ -1860,18 +1824,18 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                         horizontal: 12,
                         vertical: 12,
                       ),
-                      decoration: BoxDecoration(
+                      decoration: ShapeDecoration(
+                        shape: appCornerBorder(
+                          radius: AppleColors.radiusButton,
+                          side: BorderSide(
+                            color: CyberColors.cardStroke,
+                            width: 0.5,
+                          ),
+                        ),
                         color:
                             isCyber
                                 ? Colors.white.withOpacity(0.08)
                                 : Colors.white.withOpacity(0.55),
-                        borderRadius: BorderRadius.circular(
-                          AppleColors.radiusSmall,
-                        ),
-                        border: Border.all(
-                          color: CyberColors.cardStroke,
-                          width: 0.5,
-                        ),
                       ),
                       child: Row(
                         children: [
@@ -1881,12 +1845,8 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                               style: TextStyle(
                                 color:
                                     _selectedPhone != null
-                                        ? (isCyber
-                                            ? CyberColors.titleWhite
-                                            : AppleColors.textPrimary)
-                                        : (isCyber
-                                            ? CyberColors.descColor
-                                            : AppleColors.textSecondary),
+                                        ? _dialogTextColor()
+                                        : _dialogSubTextColor(),
                                 fontSize: 15,
                               ),
                               overflow: TextOverflow.ellipsis,
@@ -1894,10 +1854,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
                           ),
                           Icon(
                             Icons.arrow_drop_down,
-                            color:
-                                isCyber
-                                    ? CyberColors.descColor
-                                    : AppleColors.textSecondary,
+                            color: _dialogSubTextColor(),
                           ),
                         ],
                       ),
@@ -1972,9 +1929,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
           backgroundColor: isCyber ? const Color(0x20FFFFFF) : primaryColor,
           foregroundColor: isCyber ? CyberColors.cyan : Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 10),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppleColors.radiusSmall),
-          ),
+          shape: appCornerBorder(radius: AppleColors.radiusButton),
           elevation: 0,
         ),
       ),
@@ -1986,8 +1941,10 @@ class _JdckPageState extends ConsumerState<JdckPage> {
       margin: const EdgeInsets.all(AppleColors.spaceMd),
       padding: EdgeInsets.zero,
       sigma: 8,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppleColors.radiusCard),
+      child: ClipPath(
+        clipper: ShapeBorderClipper(
+          shape: appCornerBorder(radius: AppleColors.radiusCard),
+        ),
         child: Stack(
           children: [
             if (_webViewReady)

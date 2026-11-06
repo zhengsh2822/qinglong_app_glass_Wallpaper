@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:qinglong_app/base/app_colors.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 
 /// 高光内发光底部弹层容器（与 CapsuleGlowCard 同设计语言）
 ///
@@ -22,11 +23,11 @@ class GlowSheetContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<BoxShadow> glow;
     final Color bg;
-    final Border border;
+    final BorderSide border;
 
     if (isCyber) {
       bg = CyberColors.cardBg;
-      border = Border.all(
+      border = BorderSide(
         color: CyberColors.cyan.withValues(alpha: 0.2),
         width: 1,
       );
@@ -54,7 +55,7 @@ class GlowSheetContainer extends StatelessWidget {
       ];
     } else {
       bg = const Color(0xFFF7F7F7); // 未置顶卡片纯色
-      border = Border.all(color: Colors.white, width: 1);
+      border = BorderSide(color: Colors.white, width: 1);
       glow = [
         // 顶部浅灰高光（内发光）
         BoxShadow(
@@ -81,11 +82,10 @@ class GlowSheetContainer extends StatelessWidget {
 
     return Container(
       clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
+        shape: appCornerBorder(radius: 18, side: border),
         color: bg,
-        borderRadius: BorderRadius.circular(18),
-        border: border,
-        boxShadow: glow,
+        shadows: glow,
       ),
       child: child,
     );
@@ -105,9 +105,10 @@ class DragHandle extends StatelessWidget {
       height: 4,
       margin: const EdgeInsets.only(top: 10, bottom: 6),
       decoration: BoxDecoration(
-        color: isCyber
-            ? CyberColors.cyan.withValues(alpha: 0.4)
-            : Colors.black.withValues(alpha: 0.15),
+        color:
+            isCyber
+                ? CyberColors.cyan.withValues(alpha: 0.4)
+                : Colors.black.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(2),
       ),
     );

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 
 /// 可选择 chip 组件
 ///
@@ -35,34 +36,37 @@ class SelectableChip extends ConsumerWidget {
     final _ = ref.watch(themeProvider);
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
 
-    final Color accentColor =
-        isCyber ? CyberColors.cyan : AppleColors.accent;
-    final Color titleColor =
-        isCyber ? CyberColors.titleWhite : AppleColors.textPrimary;
+    final Color accentColor = isCyber ? CyberColors.cyan : AppleColors.accent;
     final Color descColor =
         isCyber ? CyberColors.descColor : AppleColors.textSecondary;
+    // 选中态字体跟随"主字体颜色"，未选中跟随"次字体颜色"
+    final Color selectedText = ref.watch(themeProvider).customPrimaryTextColor;
+    final Color unselectedText =
+        ref.watch(themeProvider).customSecondaryTextColor;
+    final FontWeight fw = FontWeight(ref.watch(textWeightProvider));
 
     // 选中态颜色
     final Color selectedBg = accentColor.withValues(alpha: 0.15);
     final Color selectedBorder = accentColor.withValues(alpha: 0.6);
     // 未选中态颜色
-    final Color unselectedBg = isCyber
-        ? Colors.white.withValues(alpha: 0.05)
-        : AppleColors.bgSecondary;
+    final Color unselectedBg =
+        isCyber
+            ? Colors.white.withValues(alpha: 0.05)
+            : AppleColors.bgSecondary;
     final Color unselectedBorder = descColor.withValues(alpha: 0.3);
 
     return GestureDetector(
-      onTap: disabled || onToggle == null
-          ? null
-          : () => onToggle!(!selected),
+      onTap: disabled || onToggle == null ? null : () => onToggle!(!selected),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: selected ? selectedBg : unselectedBg,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: selected ? selectedBorder : unselectedBorder,
+        decoration: ShapeDecoration(
+          shape: appCornerBorder(
+            radius: 10,
+            side: BorderSide(
+              color: selected ? selectedBorder : unselectedBorder,
+            ),
           ),
+          color: selected ? selectedBg : unselectedBg,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -72,18 +76,25 @@ class SelectableChip extends ConsumerWidget {
                   ? CupertinoIcons.checkmark_circle_fill
                   : CupertinoIcons.circle,
               size: 14,
-              color: selected
-                  ? accentColor
-                  : (disabled ? descColor.withValues(alpha: 0.5) : descColor),
+              color:
+                  selected
+                      ? accentColor
+                      : (disabled
+                          ? descColor.withValues(alpha: 0.5)
+                          : descColor),
             ),
             const SizedBox(width: 4),
             Text(
               label,
               style: TextStyle(
                 fontSize: 12,
-                color: selected
-                    ? titleColor
-                    : (disabled ? descColor.withValues(alpha: 0.5) : descColor),
+                fontWeight: fw,
+                color:
+                    selected
+                        ? selectedText
+                        : (disabled
+                            ? descColor.withValues(alpha: 0.5)
+                            : unselectedText),
               ),
             ),
           ],

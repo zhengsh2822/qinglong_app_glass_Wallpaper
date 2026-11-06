@@ -11,6 +11,7 @@ import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/module/others/update/panel_upgrade_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_dialog.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
@@ -82,8 +83,10 @@ class _AboutPageState extends ConsumerState<AboutPage>
             children: [
               SizedBox(height: MediaQuery.of(context).size.height / 25),
               Center(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(18),
+                child: ClipPath(
+                  clipper: ShapeBorderClipper(
+                    shape: appCornerBorder(radius: 18),
+                  ),
                   child: Image.asset("assets/images/ql.png", height: 60),
                 ),
               ),

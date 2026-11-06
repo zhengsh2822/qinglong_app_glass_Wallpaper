@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 
@@ -27,10 +28,7 @@ import 'package:qinglong_app/utils/sp_utils.dart';
 class TagChip extends ConsumerWidget {
   final String label;
 
-  const TagChip({
-    super.key,
-    required this.label,
-  });
+  const TagChip({super.key, required this.label});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -42,13 +40,15 @@ class TagChip extends ConsumerWidget {
     // 统一毛玻璃封装：sigma<=0 时自动退化为纯色（无 BackdropFilter）
     return OptimizedFrostedGlass(
       sigma: sigma,
-      borderRadius: BorderRadius.circular(5),
+      borderRadius: BorderRadius.circular(10),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
+        decoration: ShapeDecoration(
+          shape: appCornerBorder(
+            radius: 10,
+            side: BorderSide(color: accentColor.withValues(alpha: 0.4)),
+          ),
           color: accentColor.withValues(alpha: 0.15), // 主题色高亮背景（叠于毛玻璃上）
-          borderRadius: BorderRadius.circular(5),
-          border: Border.all(color: accentColor.withValues(alpha: 0.4)),
         ),
         child: Text(
           label,
@@ -56,7 +56,7 @@ class TagChip extends ConsumerWidget {
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
             fontSize: 12,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight(ref.watch(textWeightProvider)),
             color: accentColor,
           ),
         ),

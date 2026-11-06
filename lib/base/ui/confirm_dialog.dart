@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/blur_effect.dart';
 import 'package:qinglong_app/base/ui/capsule_glow_card.dart';
 import 'package:qinglong_app/utils/extension.dart';
@@ -62,17 +63,19 @@ class DialogButton extends StatelessWidget {
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
+          decoration: ShapeDecoration(
+            shape: appCornerBorder(
+              radius: _dialogButtonRadius,
+              side:
+                  primary || danger
+                      ? BorderSide.none
+                      : BorderSide(color: borderColor, width: 1),
+            ),
             // 确定按钮：赛博模式 alpha 0.2，非赛博模式完全主色（避免透明度太浅）
             color:
                 primary || danger
                     ? (isCyber ? btnColor.withValues(alpha: 0.2) : btnColor)
                     : Colors.transparent,
-            borderRadius: BorderRadius.circular(_dialogButtonRadius),
-            border:
-                primary || danger
-                    ? null
-                    : Border.all(color: borderColor, width: 1),
           ),
           child: Center(
             child: Text(
@@ -223,7 +226,7 @@ Widget _buildDialogPage({
                       padding: const EdgeInsets.symmetric(horizontal: 32),
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 380),
-                        child: CapsuleGlowCard(
+                        child: CapsuleGlowCard.continuous(
                           isCyber: isCyber,
                           isPinned: false,
                           child: child,
@@ -273,9 +276,9 @@ Widget _buildDialogPage({
                     padding: const EdgeInsets.symmetric(horizontal: 32),
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 380),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(
-                          _dialogBorderRadius,
+                      child: ClipPath(
+                        clipper: ShapeBorderClipper(
+                          shape: appCornerBorder(radius: _dialogBorderRadius),
                         ),
                         child:
                             blurEnabled
@@ -304,11 +307,13 @@ Widget _buildDialogPage({
 /// 弹窗卡片背景容器（提取复用，避免 blurEnabled 分支重复代码）
 Widget _dialogCard(Color cardBg, _DialogTheme theme, Widget child) {
   return Container(
-    decoration: BoxDecoration(
+    decoration: ShapeDecoration(
+      shape: appCornerBorder(
+        radius: _dialogBorderRadius,
+        side: BorderSide(color: theme.borderColor, width: theme.borderWidth),
+      ),
       color: cardBg,
-      borderRadius: BorderRadius.circular(_dialogBorderRadius),
-      border: Border.all(color: theme.borderColor, width: theme.borderWidth),
-      boxShadow: theme.shadows,
+      shadows: theme.shadows,
     ),
     child: child,
   );

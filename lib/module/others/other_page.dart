@@ -13,6 +13,7 @@ import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/userinfo_viewmodel.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/container_transform_route.dart';
@@ -316,8 +317,10 @@ class OtherPageState extends ConsumerState<OtherPage>
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
+                ClipPath(
+                  clipper: ShapeBorderClipper(
+                    shape: appCornerBorder(radius: 18),
+                  ),
                   child:
                       (userIcon != null && userIcon!.isNotEmpty)
                           ? Image.network(

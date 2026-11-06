@@ -9,22 +9,18 @@ import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
-import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_slidable.dart';
-import 'package:qinglong_app/base/ui/cyber/cyber_slide_action.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/base/ui/floating_search_bar_area.dart';
 import 'package:qinglong_app/base/ui/selector_card.dart';
-import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
+import 'package:qinglong_app/base/ui/swipe_glass_card.dart';
 import 'package:qinglong_app/module/others/task_log/task_log_bean.dart';
 import 'package:qinglong_app/module/task/intime_log/intime_history_log_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
-import 'package:qinglong_app/utils/sp_utils.dart';
 import 'package:qinglong_app/utils/ql_debug_log.dart';
 
 import '../../../main.dart';
@@ -170,191 +166,65 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                           }
 
                           if ((item.isDir ?? false)) {
-                            if (isCyber) {
-                              return Container(
-                                margin: const EdgeInsets.fromLTRB(
-                                  12,
-                                  0,
-                                  12,
-                                  12,
-                                ),
-                                child: CyberSlidable(
-                                  slidableKey: ValueKey(item.name ?? ""),
-                                  endActions: [
-                                    CyberSlideAction(
-                                      label: '删除',
-                                      icon: CupertinoIcons.delete,
-                                      color: const Color(0xffEA4D3E),
-                                      onTap: () {
-                                        showConfirmDialog(
-                                          context,
-                                          title: "确认删除",
-                                          content: "确定删除这个文件夹吗",
-                                          danger: true,
-                                        ).then((confirmed) {
-                                          if (confirmed != true) return;
-                                          deleteFold(item);
-                                        });
-                                        ;
-                                      },
-                                    ),
-                                  ],
-                                  child: OptimizedFrostedGlass(
-                                    sigma: SpUtil.getDouble(
-                                      spCardBlurSigma,
-                                      defValue: 4,
-                                    ),
-                                    borderRadius: BorderRadius.circular(18),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.transparent,
-                                        borderRadius: BorderRadius.circular(18),
-                                        border: Border.all(
-                                          color: CyberColors.cardStroke,
-                                          width: 1,
-                                        ),
-                                      ),
-                                      child: SelectorCard(
-                                        title: item.name ?? "",
-                                        collapseOnSelect: false,
-                                        items:
-                                            (item.files?.isNotEmpty ?? false)
-                                                ? item.files!
-                                                    .map(
-                                                      (e) => SelectorCardItem(
-                                                        title: e,
-                                                        onTap: () {
-                                                          Navigator.of(
-                                                            context,
-                                                          ).push(
-                                                            WallpaperPageRoute(
-                                                              blurSigma: 6,
-                                                              blurTintColor:
-                                                                  CyberColors.bg
-                                                                      .withOpacity(
-                                                                        0.50,
-                                                                      ),
-                                                              builder:
-                                                                  (
-                                                                    context,
-                                                                  ) => InTimeHistoryLogPage(
-                                                                    path:
-                                                                        item.name ??
-                                                                        "",
-                                                                    title: e,
-                                                                  ),
-                                                            ),
-                                                          );
-                                                        },
-                                                      ),
-                                                    )
-                                                    .toList()
-                                                : (item.children ?? [])
-                                                    .map(
-                                                      (e) => SelectorCardItem(
-                                                        title: e.title ?? "",
-                                                        onTap: () {
-                                                          Navigator.of(context)
-                                                              .push(
-                                                                WallpaperPageRoute(
-                                                                  blurSigma: 6,
-                                                                  blurTintColor:
-                                                                      CyberColors
-                                                                          .bg
-                                                                          .withOpacity(
-                                                                            0.50,
-                                                                          ),
-                                                                  builder:
-                                                                      (
-                                                                        context,
-                                                                      ) => InTimeHistoryLogPage(
-                                                                        path:
-                                                                            item.name ??
-                                                                            "",
-                                                                        title:
-                                                                            e.title ??
-                                                                            "",
-                                                                      ),
-                                                                ),
-                                                              )
-                                                              .then((value) {
-                                                                if (value !=
-                                                                        null &&
-                                                                    value ==
-                                                                        true) {
-                                                                  loadData();
-                                                                }
-                                                              });
-                                                        },
-                                                      ),
-                                                    )
-                                                    .toList(),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }
-                            return Container(
+                            return SwipeGlassCard(
+                              slidableKey: ValueKey(item.name ?? ""),
                               margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                              decoration: BoxDecoration(
-                                color: Colors.transparent,
-                                borderRadius: BorderRadius.circular(18),
-                                border: Border.all(
-                                  color: CyberColors.cardStroke,
-                                  width: 1,
+                              radius: 18,
+                              endActions: [
+                                SwipeActionSpec(
+                                  label: '删除',
+                                  icon: CupertinoIcons.delete,
+                                  color: const Color(0xffEA4D3E),
+                                  onTap: () {
+                                    showConfirmDialog(
+                                      context,
+                                      title: "确认删除",
+                                      content: "确定删除这个文件夹吗",
+                                      danger: true,
+                                    ).then((confirmed) {
+                                      if (confirmed != true) return;
+                                      deleteFold(item);
+                                    });
+                                  },
                                 ),
-                              ),
-                              child: OptimizedFrostedGlass(
-                                sigma: SpUtil.getDouble(
-                                  spCardBlurSigma,
-                                  defValue: 4,
-                                ),
-                                borderRadius: BorderRadius.circular(18),
-                                child: Slidable(
-                                  key: ValueKey(item.name ?? ""),
-                                  endActionPane: ActionPane(
-                                    motion: const ScrollMotion(),
-                                    extentRatio: 0.22,
-                                    children: [
-                                      AppSlideButton(
-                                        context: context,
-                                        color: const Color(0xffEA4D3E),
-                                        icon: CupertinoIcons.delete,
-                                        onTap: () {
-                                          showConfirmDialog(
-                                            context,
-                                            title: "确认删除",
-                                            content: "确定删除这个文件夹吗",
-                                            danger: true,
-                                          ).then((confirmed) {
-                                            if (confirmed != true) return;
-                                            deleteFold(item);
-                                          });
-                                          ;
-                                        },
-                                        cyberMode: false,
-                                        width: double.infinity,
-                                        cornerRadius: 12,
-                                        iconSize: 22,
-                                        outerGap: 5,
-                                        innerGap: 6,
-                                      ),
-                                    ],
-                                  ),
-                                  child: SelectorCard(
-                                    title: item.name ?? "",
-                                    collapseOnSelect: false,
-                                    items:
-                                        (item.files?.isNotEmpty ?? false)
-                                            ? item.files!
-                                                .map(
-                                                  (e) => SelectorCardItem(
-                                                    title: e,
-                                                    onTap: () {
-                                                      Navigator.of(
-                                                        context,
-                                                      ).push(
+                              ],
+                              child: SelectorCard(
+                                title: item.name ?? "",
+                                collapseOnSelect: false,
+                                items:
+                                    (item.files?.isNotEmpty ?? false)
+                                        ? item.files!
+                                            .map(
+                                              (e) => SelectorCardItem(
+                                                title: e,
+                                                onTap: () {
+                                                  Navigator.of(context).push(
+                                                    WallpaperPageRoute(
+                                                      blurSigma: 6,
+                                                      blurTintColor: CyberColors
+                                                          .bg
+                                                          .withOpacity(0.50),
+                                                      builder:
+                                                          (context) =>
+                                                              InTimeHistoryLogPage(
+                                                                path:
+                                                                    item.name ??
+                                                                    "",
+                                                                title: e,
+                                                              ),
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                            )
+                                            .toList()
+                                        : (item.children ?? [])
+                                            .map(
+                                              (e) => SelectorCardItem(
+                                                title: e.title ?? "",
+                                                onTap: () {
+                                                  Navigator.of(context)
+                                                      .push(
                                                         WallpaperPageRoute(
                                                           blurSigma: 6,
                                                           blurTintColor:
@@ -369,216 +239,77 @@ class _TaskLogPageState extends ConsumerState<TaskLogPage>
                                                                 path:
                                                                     item.name ??
                                                                     "",
-                                                                title: e,
+                                                                title:
+                                                                    e.title ??
+                                                                    "",
                                                               ),
                                                         ),
-                                                      );
-                                                    },
-                                                  ),
-                                                )
-                                                .toList()
-                                            : (item.children ?? [])
-                                                .map(
-                                                  (e) => SelectorCardItem(
-                                                    title: e.title ?? "",
-                                                    onTap: () {
-                                                      Navigator.of(context)
-                                                          .push(
-                                                            WallpaperPageRoute(
-                                                              blurSigma: 6,
-                                                              blurTintColor:
-                                                                  CyberColors.bg
-                                                                      .withOpacity(
-                                                                        0.50,
-                                                                      ),
-                                                              builder:
-                                                                  (
-                                                                    context,
-                                                                  ) => InTimeHistoryLogPage(
-                                                                    path:
-                                                                        item.name ??
-                                                                        "",
-                                                                    title:
-                                                                        e.title ??
-                                                                        "",
-                                                                  ),
-                                                            ),
-                                                          )
-                                                          .then((value) {
-                                                            if (value != null &&
-                                                                value == true) {
-                                                              loadData();
-                                                            }
-                                                          });
-                                                    },
-                                                  ),
-                                                )
-                                                .toList(),
-                                  ),
-                                ),
+                                                      )
+                                                      .then((value) {
+                                                        if (value != null &&
+                                                            value == true) {
+                                                          loadData();
+                                                        }
+                                                      });
+                                                },
+                                              ),
+                                            )
+                                            .toList(),
                               ),
                             );
                           } else {
-                            if (isCyber) {
-                              return Container(
-                                margin: const EdgeInsets.fromLTRB(
-                                  12,
-                                  0,
-                                  12,
-                                  12,
-                                ),
-                                child: CyberSlidable(
-                                  slidableKey: ValueKey(item.name ?? ""),
-                                  endActions: [
-                                    CyberSlideAction(
-                                      label: '删除',
-                                      icon: CupertinoIcons.delete,
-                                      color: const Color(0xffEA4D3E),
-                                      onTap: () {
-                                        showConfirmDialog(
-                                          context,
-                                          title: "确认删除",
-                                          content: "确定删除这个文件吗",
-                                          danger: true,
-                                        ).then((confirmed) {
-                                          if (confirmed != true) return;
-                                          deleteFold(item);
-                                        });
-                                        ;
-                                      },
-                                    ),
-                                  ],
-                                  child: OptimizedFrostedGlass(
-                                    sigma: SpUtil.getDouble(
-                                      spCardBlurSigma,
-                                      defValue: 4,
-                                    ),
-                                    borderRadius: BorderRadius.circular(18),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.transparent,
-                                        borderRadius: BorderRadius.circular(18),
-                                        border: Border.all(
-                                          color: CyberColors.cardStroke,
-                                          width: 1,
-                                        ),
-                                      ),
-                                      child: ListTile(
-                                        onTap: () {
-                                          if (item.isDir ?? false) {
-                                            "该文件夹为空".toast();
-                                            return;
-                                          }
-
-                                          Navigator.of(context).push(
-                                            WallpaperPageRoute(
-                                              blurSigma: 6,
-                                              blurTintColor: CyberColors.bg
-                                                  .withOpacity(0.50),
-                                              builder:
-                                                  (context) =>
-                                                      InTimeHistoryLogPage(
-                                                        path: "",
-                                                        title: item.name ?? "",
-                                                      ),
-                                            ),
-                                          );
-                                        },
-                                        title: Text(
-                                          item.name ?? "",
-                                          style: TextStyle(
-                                            color:
-                                                ref
-                                                    .watch(themeProvider)
-                                                    .themeColor
-                                                    .titleColor(),
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }
-                            return Container(
+                            return SwipeGlassCard(
+                              slidableKey: ValueKey(item.name ?? ""),
                               margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                              decoration: BoxDecoration(
-                                color: Colors.transparent,
-                                borderRadius: BorderRadius.circular(18),
-                                border: Border.all(
-                                  color: CyberColors.cardStroke,
-                                  width: 1,
+                              radius: 18,
+                              endActions: [
+                                SwipeActionSpec(
+                                  label: '删除',
+                                  icon: CupertinoIcons.delete,
+                                  color: const Color(0xffEA4D3E),
+                                  onTap: () {
+                                    showConfirmDialog(
+                                      context,
+                                      title: "确认删除",
+                                      content: "确定删除这个文件吗",
+                                      danger: true,
+                                    ).then((confirmed) {
+                                      if (confirmed != true) return;
+                                      deleteFold(item);
+                                    });
+                                  },
                                 ),
-                              ),
-                              child: OptimizedFrostedGlass(
-                                sigma: SpUtil.getDouble(
-                                  spCardBlurSigma,
-                                  defValue: 4,
-                                ),
-                                borderRadius: BorderRadius.circular(18),
-                                child: Slidable(
-                                  key: ValueKey(item.name ?? ""),
-                                  endActionPane: ActionPane(
-                                    motion: const ScrollMotion(),
-                                    extentRatio: 0.22,
-                                    children: [
-                                      AppSlideButton(
-                                        context: context,
-                                        color: const Color(0xffEA4D3E),
-                                        icon: CupertinoIcons.delete,
-                                        onTap: () {
-                                          showConfirmDialog(
-                                            context,
-                                            title: "确认删除",
-                                            content: "确定删除这个文件吗",
-                                            danger: true,
-                                          ).then((confirmed) {
-                                            if (confirmed != true) return;
-                                            deleteFold(item);
-                                          });
-                                          ;
-                                        },
-                                        cyberMode: false,
-                                        width: double.infinity,
-                                        cornerRadius: 12,
-                                        iconSize: 22,
-                                        outerGap: 5,
-                                        innerGap: 6,
-                                      ),
-                                    ],
-                                  ),
-                                  child: ListTile(
-                                    onTap: () {
-                                      if (item.isDir ?? false) {
-                                        "该文件夹为空".toast();
-                                        return;
-                                      }
+                              ],
+                              child: ListTile(
+                                onTap: () {
+                                  if (item.isDir ?? false) {
+                                    "该文件夹为空".toast();
+                                    return;
+                                  }
 
-                                      Navigator.of(context).push(
-                                        WallpaperPageRoute(
-                                          blurSigma: 6,
-                                          blurTintColor: CyberColors.bg
-                                              .withOpacity(0.50),
-                                          builder:
-                                              (context) => InTimeHistoryLogPage(
-                                                path: "",
-                                                title: item.name ?? "",
-                                              ),
-                                        ),
-                                      );
-                                    },
-                                    title: Text(
-                                      item.name ?? "",
-                                      style: TextStyle(
-                                        color:
-                                            ref
-                                                .watch(themeProvider)
-                                                .themeColor
-                                                .titleColor(),
-                                        fontSize: 16,
+                                  Navigator.of(context).push(
+                                    WallpaperPageRoute(
+                                      blurSigma: 6,
+                                      blurTintColor: CyberColors.bg.withOpacity(
+                                        0.50,
                                       ),
+                                      builder:
+                                          (context) => InTimeHistoryLogPage(
+                                            path: "",
+                                            title: item.name ?? "",
+                                          ),
                                     ),
+                                  );
+                                },
+                                title: Text(
+                                  item.name ?? "",
+                                  style: TextStyle(
+                                    color:
+                                        ref
+                                            .watch(themeProvider)
+                                            .themeColor
+                                            .titleColor(),
+                                    fontSize: 16,
                                   ),
                                 ),
                               ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:qinglong_app/base/app_colors.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 
 /// 胶囊高光内发光卡片容器（可复用组件）
 ///
@@ -32,6 +33,12 @@ class CapsuleGlowCard extends StatelessWidget {
   final EdgeInsetsGeometry? margin;
   final EdgeInsetsGeometry? padding;
   final BorderRadius? borderRadius;
+
+  /// 圆角曲线类型；默认普通圆角，保持既有卡片渲染路径。
+  ///
+  /// 传 [AppCornerStyle.continuous] 时改用引擎原生连续曲率轮廓，
+  /// 此时要求 [borderRadius] 四角半径一致（取左上角半径）。
+  final AppCornerStyle cornerStyle;
   final VoidCallback? onTap;
 
   const CapsuleGlowCard({
@@ -44,8 +51,26 @@ class CapsuleGlowCard extends StatelessWidget {
     this.margin,
     this.padding,
     this.borderRadius = const BorderRadius.all(Radius.circular(18)),
+    this.cornerStyle = AppCornerStyle.circular,
     this.onTap,
   });
+
+  /// 连续曲率卡片：全项目列表卡片统一入口。
+  ///
+  /// 半径 ≤10 或 ≥100（胶囊）时自动回退普通圆角，避免小圆角无收益、
+  /// 胶囊轮廓退化。
+  const CapsuleGlowCard.continuous({
+    super.key,
+    required this.child,
+    required this.isCyber,
+    this.isPinned = false,
+    this.newPinnedStyle = false,
+    this.glowIntensity = 0.5,
+    this.margin,
+    this.padding,
+    this.borderRadius = const BorderRadius.all(Radius.circular(18)),
+    this.onTap,
+  }) : cornerStyle = AppCornerStyle.continuous;
 
   @override
   Widget build(BuildContext context) {
@@ -103,33 +128,54 @@ class CapsuleGlowCard extends StatelessWidget {
       ];
     }
 
-    final Widget content = Container(
-      margin: margin,
-      padding: padding,
-      decoration: BoxDecoration(
-        color: isCyber
+    final Color borderColor =
+        isCyber
+            ? CyberColors.cyan.withValues(alpha: isPinned ? 0.6 : 0.2)
+            : Colors.white;
+    // 赛博置顶边框：newPinnedStyle 1.25px，默认 1.5px（未置顶均 1px）
+    final double borderWidth =
+        isCyber ? (isPinned ? (newPinnedStyle ? 1.25 : 1.5) : 1) : 1;
+
+    final Color backgroundColor =
+        isCyber
             ? CyberColors.cardBg
             // 苹果：newPinnedStyle 互换（置顶浅 #F7F7F7 / 未置顶灰 #EDEDF2），
             // 默认原样式（未置顶 #F7F7F7 / 置顶 #EDEDF2）
             : (newPinnedStyle
-                ? (isPinned
-                    ? const Color(0xFFF7F7F7)
-                    : const Color(0xFFEDEDF2))
+                ? (isPinned ? const Color(0xFFF7F7F7) : const Color(0xFFEDEDF2))
                 : (isPinned
                     ? const Color(0xFFEDEDF2)
-                    : const Color(0xFFF7F7F7))),
-        borderRadius: borderRadius,
-        border: isCyber
-            ? Border.all(
-                color: CyberColors.cyan.withValues(
-                  alpha: isPinned ? 0.6 : 0.2,
-                ),
-                // 赛博置顶边框：newPinnedStyle 1.25px，默认 1.5px（未置顶均 1px）
-                width: isPinned ? (newPinnedStyle ? 1.25 : 1.5) : 1,
+                    : const Color(0xFFF7F7F7)));
+
+    final double cornerRadius = borderRadius?.topLeft.x ?? 18;
+    final bool useContinuous =
+        cornerStyle == AppCornerStyle.continuous &&
+        cornerRadius > 10 &&
+        cornerRadius < 100;
+    final ShapeBorder? shape =
+        useContinuous
+            ? appCornerBorder(
+              radius: cornerRadius,
+              side: BorderSide(color: borderColor, width: borderWidth),
+            )
+            : null;
+
+    final Widget content = Container(
+      margin: margin,
+      padding: padding,
+      decoration:
+          shape == null
+              ? BoxDecoration(
+                color: backgroundColor,
+                borderRadius: borderRadius,
+                border: Border.all(color: borderColor, width: borderWidth),
+                boxShadow: glow,
               )
-            : Border.all(color: Colors.white, width: 1),
-        boxShadow: glow,
-      ),
+              : ShapeDecoration(
+                shape: shape,
+                color: backgroundColor,
+                shadows: glow,
+              ),
       child: child,
     );
 
@@ -137,7 +183,8 @@ class CapsuleGlowCard extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: borderRadius,
+        customBorder: shape,
+        borderRadius: shape == null ? borderRadius : null,
         onTap: onTap,
         child: content,
       ),

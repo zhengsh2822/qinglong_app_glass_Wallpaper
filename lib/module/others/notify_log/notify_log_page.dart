@@ -39,6 +39,7 @@ class _NotifyLogPageState extends ConsumerState<NotifyLogPage>
 
   @override
   Widget build(BuildContext context) {
+    final FontWeight fw = FontWeight(ref.watch(textWeightProvider));
     return Scaffold(
       appBar: QlAppBar(
         canBack: true,
@@ -99,6 +100,7 @@ class _NotifyLogPageState extends ConsumerState<NotifyLogPage>
                                               .themeColor
                                               .titleColor(),
                                       fontSize: 14,
+                                      fontWeight: fw,
                                     ),
                                   ),
                                 ),
@@ -136,6 +138,7 @@ class _NotifyLogPageState extends ConsumerState<NotifyLogPage>
                                 "推送渠道：${item.notifyType}",
                                 style: TextStyle(
                                   fontSize: 12,
+                                  fontWeight: fw,
                                   color:
                                       ref
                                           .watch(themeProvider)
@@ -155,7 +158,7 @@ class _NotifyLogPageState extends ConsumerState<NotifyLogPage>
                                           .themeColor
                                           .titleColor(),
                                   fontSize: 14,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: fw,
                                 ),
                               ),
                             if (item.content != null &&
@@ -175,6 +178,7 @@ class _NotifyLogPageState extends ConsumerState<NotifyLogPage>
                                           .themeColor
                                           .descColor(),
                                   fontSize: 13,
+                                  fontWeight: fw,
                                 ),
                               ),
                               if (!_isShortContent(item.content)) ...[
@@ -183,6 +187,7 @@ class _NotifyLogPageState extends ConsumerState<NotifyLogPage>
                                   expanded ? "收起" : "展开全文",
                                   style: TextStyle(
                                     fontSize: 12,
+                                    fontWeight: fw,
                                     color:
                                         ref.watch(themeProvider).primaryColor,
                                   ),

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
@@ -30,7 +31,8 @@ class CyberDialog {
       barrierLabel: 'CyberDialog',
       barrierColor: Colors.transparent,
       transitionDuration: transitionDuration,
-      transitionBuilder: (context, animation, secondaryAnimation, child) => child,
+      transitionBuilder:
+          (context, animation, secondaryAnimation, child) => child,
       pageBuilder: (context, animation, secondaryAnimation) {
         final curved = CurvedAnimation(
           parent: animation,
@@ -41,7 +43,10 @@ class CyberDialog {
           animation: curved,
           builder: (context, _) {
             final t = curved.value;
-            final baseSigma = SpUtil.getDouble(spCardBlurSigma, defValue: CyberDialog.blurSigma);
+            final baseSigma = SpUtil.getDouble(
+              spCardBlurSigma,
+              defValue: CyberDialog.blurSigma,
+            );
             return Material(
               color: Colors.transparent,
               child: Stack(
@@ -76,16 +81,15 @@ class CyberDialog {
                                 28,
                                 24,
                               ),
-                              decoration: BoxDecoration(
-                                color: Colors.transparent,
-                                borderRadius: BorderRadius.circular(
-                                  CyberDialog.borderRadius,
-                                ),
-                                border: Border.all(
-                                  color: CyberColors.cyan.withValues(
-                                    alpha: 0.2,
+                              decoration: ShapeDecoration(
+                                shape: appCornerBorder(
+                                  radius: CyberDialog.borderRadius,
+                                  side: BorderSide(
+                                    color: CyberColors.cyan.withValues(
+                                      alpha: 0.2,
+                                    ),
+                                    width: 0.5,
                                   ),
-                                  width: 0.5,
                                 ),
                               ),
                               child: child,
@@ -201,10 +205,7 @@ Widget _buildCyberButtonRow({
 }) {
   return Row(
     children: [
-      CyberGhostButton(
-        label: cancelLabel,
-        onTap: onCancel,
-      ),
+      CyberGhostButton(label: cancelLabel, onTap: onCancel),
       const SizedBox(width: 12),
       CyberGhostButton(
         label: confirmLabel,
@@ -456,7 +457,8 @@ Future<String?> showEditScriptDialog(
               confirmLabel: '保存',
               danger: false,
               onCancel: () => Navigator.of(context).pop(),
-              onConfirm: () => Navigator.of(context).pop(contentController.text),
+              onConfirm:
+                  () => Navigator.of(context).pop(contentController.text),
             ),
           ],
         ),

@@ -10,6 +10,7 @@ import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/spring_sheet.dart';
 import 'package:qinglong_app/base/ui/account_page_transition.dart';
 import 'package:qinglong_app/base/ui/container_transform_route.dart';
@@ -308,8 +309,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           ),
           GestureDetector(
             onDoubleTap: () {},
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(5),
+            child: ClipPath(
+              clipper: ShapeBorderClipper(
+                shape: appCornerBorder(radius: 12),
+              ),
               child: Image.asset("assets/images/ql.png", height: 45),
             ),
           ),
@@ -679,11 +682,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             constraints: BoxConstraints(
               maxHeight: MediaQuery.of(context).size.height * 0.7,
             ),
-            decoration: BoxDecoration(
-              color: sheetBg,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(18),
+            decoration: ShapeDecoration(
+              shape: appCornerBorder(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(18),
+                ),
               ),
+              color: sheetBg,
             ),
             child: SafeArea(
               top: false,

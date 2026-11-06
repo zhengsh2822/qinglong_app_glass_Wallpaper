@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 
 /// 通用滑动操作按钮 — 圆角 + 主题自适应
 ///
@@ -52,19 +53,21 @@ class AppSlideButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext buildContext) {
+    final ShapeBorder shape = appCornerBorder(
+      radius: cornerRadius,
+      side:
+          cyberMode
+              ? BorderSide(color: color.withOpacity(0.7), width: 0.5)
+              : BorderSide.none,
+    );
     final inner = Padding(
       // 按钮之间留出缝隙（horizontal），上下各留 4px 与卡片等高
       padding: EdgeInsets.symmetric(horizontal: outerGap, vertical: innerGap),
       child: Container(
-        decoration: BoxDecoration(
+        decoration: ShapeDecoration(
+          shape: shape,
           color: color,
-          borderRadius: BorderRadius.circular(cornerRadius),
-          // 赛博模式才有边框和外发光
-          border:
-              cyberMode
-                  ? Border.all(color: color.withOpacity(0.7), width: 0.5)
-                  : null,
-          boxShadow:
+          shadows:
               cyberMode
                   ? [
                     BoxShadow(
@@ -88,7 +91,7 @@ class AppSlideButton extends StatelessWidget {
                     await Slidable.of(buildContext)?.close();
                     onTap();
                   },
-                  borderRadius: BorderRadius.circular(cornerRadius),
+                  customBorder: shape,
                   child: Center(
                     child:
                         label == null
@@ -187,6 +190,10 @@ class EditModeButton extends ConsumerWidget {
     final accent = color ?? ref.watch(themeProvider).primaryColor;
 
     if (isCyber) {
+      final ShapeBorder shape = appCornerBorder(
+        radius: 12,
+        side: BorderSide(color: accent.withValues(alpha: 0.6), width: 0.5),
+      );
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: 6),
         child: Material(
@@ -196,18 +203,14 @@ class EditModeButton extends ConsumerWidget {
               HapticFeedback.selectionClick();
               onTap();
             },
-            borderRadius: BorderRadius.circular(12),
+            customBorder: shape,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
+              decoration: ShapeDecoration(
+                shape: shape,
                 color: accent.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: accent.withValues(alpha: 0.6),
-                  width: 0.5,
-                ),
                 // 折射光：与同色外发光（blur 5 ≤ 外边距 6，避免被裁剪硬切）
-                boxShadow: [
+                shadows: [
                   BoxShadow(
                     color: accent.withValues(alpha: 0.45),
                     blurRadius: 5,

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 
@@ -42,6 +43,9 @@ class GlassCard extends ConsumerWidget {
   /// 强制 100% 不透明固定纯色（供弹窗使用，透传给 OptimizedFrostedGlass）
   final bool forceOpaqueSolid;
 
+  /// 圆角曲线类型（默认连续曲率 G2）
+  final AppCornerStyle cornerStyle;
+
   const GlassCard({
     super.key,
     required this.child,
@@ -57,6 +61,7 @@ class GlassCard extends ConsumerWidget {
     this.borderRadius,
     this.enableScrollCache = false,
     this.forceOpaqueSolid = false,
+    this.cornerStyle = AppCornerStyle.continuous,
   });
 
   @override
@@ -74,6 +79,11 @@ class GlassCard extends ConsumerWidget {
 
     // 卡片模糊：SP 有设置时覆盖默认 sigma（用户在设置页调节）
     final effectiveSigma = SpUtil.getDouble(spCardBlurSigma, defValue: sigma);
+    final ShapeBorder shape = appCornerBorder(
+      borderRadius: br,
+      style: cornerStyle,
+      side: BorderSide(color: effectiveBorder, width: borderWidth),
+    );
 
     return Container(
       margin: margin,
@@ -81,16 +91,13 @@ class GlassCard extends ConsumerWidget {
         sigma: effectiveSigma,
         tintColor: Colors.transparent,
         borderRadius: br,
+        cornerStyle: cornerStyle,
         enableScrollCache: enableScrollCache,
         forceOpaqueSolid: forceOpaqueSolid,
         child: Container(
-          decoration: BoxDecoration(
+          decoration: ShapeDecoration(
+            shape: shape,
             color: effectiveColor,
-            borderRadius: br,
-            border: Border.all(
-              color: effectiveBorder,
-              width: borderWidth,
-            ),
             // 顶部高光：模拟光线照射玻璃边缘
             gradient: LinearGradient(
               begin: Alignment.topCenter,
@@ -103,16 +110,17 @@ class GlassCard extends ConsumerWidget {
             ),
           ),
           padding: padding,
-          child: onTap != null
-              ? Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: onTap,
-                    borderRadius: br,
-                    child: child,
-                  ),
-                )
-              : child,
+          child:
+              onTap != null
+                  ? Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: onTap,
+                      customBorder: shape,
+                      child: child,
+                    ),
+                  )
+                  : child,
         ),
       ),
     );
@@ -138,6 +146,9 @@ class GlassListItemCard extends ConsumerWidget {
   final double sigma;
   final VoidCallback? onTap;
 
+  /// 圆角曲线类型（默认连续曲率 G2）
+  final AppCornerStyle cornerStyle;
+
   const GlassListItemCard({
     super.key,
     required this.child,
@@ -146,6 +157,7 @@ class GlassListItemCard extends ConsumerWidget {
     this.radius = AppleColors.radiusCard,
     this.sigma = 4,
     this.onTap,
+    this.cornerStyle = AppCornerStyle.continuous,
   });
 
   @override
@@ -160,20 +172,26 @@ class GlassListItemCard extends ConsumerWidget {
 
     // 卡片模糊：SP 有设置时覆盖默认 sigma（用户在设置页调节）
     final effectiveSigma = SpUtil.getDouble(spCardBlurSigma, defValue: sigma);
+    final BorderRadius br = BorderRadius.circular(radius);
+    final ShapeBorder shape = appCornerBorder(
+      borderRadius: br,
+      style: cornerStyle,
+      side: BorderSide(color: effectiveBorder, width: 1),
+    );
 
     return Container(
       margin: margin ?? const EdgeInsets.symmetric(horizontal: 15),
       child: OptimizedFrostedGlass(
         sigma: effectiveSigma,
         tintColor: Colors.transparent,
-        borderRadius: BorderRadius.circular(radius),
+        borderRadius: br,
+        cornerStyle: cornerStyle,
         // 关闭滚动缓存：滚动/下拉刷新时保持实时毛玻璃，避免缓存图导致卡片样式变化
         enableScrollCache: false,
         child: Container(
-          decoration: BoxDecoration(
+          decoration: ShapeDecoration(
+            shape: shape,
             color: effectiveColor,
-            borderRadius: BorderRadius.circular(radius),
-            border: Border.all(color: effectiveBorder, width: 1),
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
@@ -185,16 +203,17 @@ class GlassListItemCard extends ConsumerWidget {
             ),
           ),
           padding: padding,
-          child: onTap != null
-              ? Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: onTap,
-                    borderRadius: BorderRadius.circular(radius),
-                    child: child,
-                  ),
-                )
-              : child,
+          child:
+              onTap != null
+                  ? Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: onTap,
+                      customBorder: shape,
+                      child: child,
+                    ),
+                  )
+                  : child,
         ),
       ),
     );
@@ -238,11 +257,7 @@ class GlassPageBackground extends StatelessWidget {
     // 这里只需提供半透明底色即可。
     return Stack(
       children: [
-        Positioned.fill(
-          child: ColoredBox(
-            color: color ?? Colors.transparent,
-          ),
-        ),
+        Positioned.fill(child: ColoredBox(color: color ?? Colors.transparent)),
         child,
       ],
     );
@@ -257,11 +272,7 @@ class GlassAppBarContainer extends ConsumerWidget {
   final Widget child;
   final double sigma;
 
-  const GlassAppBarContainer({
-    super.key,
-    required this.child,
-    this.sigma = 4,
-  });
+  const GlassAppBarContainer({super.key, required this.child, this.sigma = 4});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

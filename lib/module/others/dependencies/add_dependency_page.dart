@@ -10,14 +10,13 @@ import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
+import 'package:qinglong_app/base/ui/glass_text_field.dart';
 import 'package:qinglong_app/base/ui/selector_sheet.dart';
 import 'package:qinglong_app/module/others/dependencies/dependency_viewmodel.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
 class AddDependencyPage extends ConsumerStatefulWidget {
-  const AddDependencyPage({
-    Key? key,
-  }) : super(key: key);
+  const AddDependencyPage({Key? key}) : super(key: key);
 
   @override
   ConsumerState<AddDependencyPage> createState() => _AddDependencyPageState();
@@ -50,96 +49,73 @@ class _AddDependencyPageState extends ConsumerState<AddDependencyPage> {
       ),
       body: GlassPageBackground(
         child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 15,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(
-                  height: 10,
-                ),
-                const Text(
-                  "依赖类型",
-                  style: TextStyle(
-                    fontSize: 16,
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 15),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 10),
+                  const Text("依赖类型", style: TextStyle(fontSize: 16)),
+                  const SizedBox(height: 10),
+                  // 依赖类型选择：底部弹窗选择器（替代原生顶部下拉，与选择通知方式弹窗一致）
+                  SelectorFieldCard(
+                    hintText: "请选择依赖类型",
+                    currentValue: depedencyType.name,
+                    emptyHint: "请选择",
+                    onTap: () async {
+                      final options =
+                          DepedencyEnum.values
+                              .map(
+                                (e) => SelectorOption<DepedencyEnum>(
+                                  value: e,
+                                  label: e.name,
+                                ),
+                              )
+                              .toList();
+                      await showSelectorSheet<DepedencyEnum>(
+                        context: context,
+                        title: "选择依赖类型",
+                        options: options,
+                        selectedValue: depedencyType,
+                        onSelected: (value) {
+                          if (mounted) {
+                            setState(() {
+                              depedencyType = value;
+                            });
+                          }
+                        },
+                      );
+                    },
                   ),
-                ),
-                const SizedBox(
-                  height: 10,
-                ),
-                // 依赖类型选择：底部弹窗选择器（替代原生顶部下拉，与选择通知方式弹窗一致）
-                SelectorFieldCard(
-                  hintText: "请选择依赖类型",
-                  currentValue: depedencyType.name,
-                  emptyHint: "请选择",
-                  onTap: () async {
-                    final options = DepedencyEnum.values
-                        .map(
-                          (e) => SelectorOption<DepedencyEnum>(
-                            value: e,
-                            label: e.name,
-                          ),
-                        )
-                        .toList();
-                    await showSelectorSheet<DepedencyEnum>(
-                      context: context,
-                      title: "选择依赖类型",
-                      options: options,
-                      selectedValue: depedencyType,
-                      onSelected: (value) {
-                        if (mounted) {
-                          setState(() {
-                            depedencyType = value;
-                          });
-                        }
-                      },
-                    );
-                  },
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 15,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(
-                  height: 10,
-                ),
-                const Text(
-                  "名称",
-                  style: TextStyle(
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(
-                  height: 10,
-                ),
-                TextField(
-                  controller: _nameController,
-                  maxLines: 10,
-                  minLines: 1,
-                  decoration: const InputDecoration(
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 15),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 10),
+                  const Text("名称", style: TextStyle(fontSize: 16)),
+                  const SizedBox(height: 10),
+                  GlassTextField(
+                    controller: _nameController,
+                    maxLines: 10,
+                    minLines: 1,
                     hintText: "请输入名称多个依赖换行添加",
+                    autofocus: false,
                   ),
-                  autofocus: false,
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }
@@ -154,16 +130,13 @@ class _AddDependencyPageState extends ConsumerState<AddDependencyPage> {
       List<Map<String, dynamic>> list = [];
 
       List<String> names = _nameController.text.split("\n");
-      list.addAll(names
-          .map(
-            (e) => {
-              "name": e,
-              "type": depedencyType.index,
-            },
-          )
-          .toList());
+      list.addAll(
+        names.map((e) => {"name": e, "type": depedencyType.index}).toList(),
+      );
       await EasyLoading.show(status: " 提交中");
-      HttpResponse<String> response = await SingleAccountPageState.ofApi(context).addDependency(list);
+      HttpResponse<String> response = await SingleAccountPageState.ofApi(
+        context,
+      ).addDependency(list);
 
       await EasyLoading.dismiss();
       if (response.success) {

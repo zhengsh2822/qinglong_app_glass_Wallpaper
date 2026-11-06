@@ -7,6 +7,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/services/wallpaper_service.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/utils/codeeditor_theme.dart';
@@ -47,6 +48,7 @@ class ThemeViewModel extends ChangeNotifier {
     final custom = SpUtil.getInt(spPrimaryTextColor, defValue: -1);
     return custom >= 0 ? Color(custom) : themeColor.titleColor();
   }
+
   Color get customSecondaryTextColor {
     final custom = SpUtil.getInt(spSecondaryTextColor, defValue: -1);
     return custom >= 0 ? Color(custom) : themeColor.descColor();
@@ -200,9 +202,7 @@ class ThemeViewModel extends ChangeNotifier {
       buttonTheme: ButtonThemeData(
         buttonColor: _primaryColor,
         textTheme: ButtonTextTheme.primary,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppleColors.radiusButton),
-        ),
+        shape: appCornerBorder(radius: AppleColors.radiusButton),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -212,9 +212,7 @@ class ThemeViewModel extends ChangeNotifier {
             horizontal: AppleColors.spaceLg,
             vertical: 12,
           ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppleColors.radiusButton),
-          ),
+          shape: appCornerBorder(radius: AppleColors.radiusButton),
           elevation: 0,
         ),
       ),
@@ -225,9 +223,7 @@ class ThemeViewModel extends ChangeNotifier {
             horizontal: AppleColors.spaceLg,
             vertical: 12,
           ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppleColors.radiusButton),
-          ),
+          shape: appCornerBorder(radius: AppleColors.radiusButton),
           side: BorderSide(color: _primaryColor, width: 1),
         ),
       ),
@@ -238,9 +234,7 @@ class ThemeViewModel extends ChangeNotifier {
             horizontal: AppleColors.spaceLg,
             vertical: 12,
           ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppleColors.radiusButton),
-          ),
+          shape: appCornerBorder(radius: AppleColors.radiusButton),
         ),
       ),
       progressIndicatorTheme: ProgressIndicatorThemeData(color: _primaryColor),
@@ -355,9 +349,7 @@ class ThemeViewModel extends ChangeNotifier {
       buttonTheme: ButtonThemeData(
         buttonColor: _primaryColor,
         textTheme: ButtonTextTheme.primary,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppleColors.radiusButton),
-        ),
+        shape: appCornerBorder(radius: AppleColors.radiusButton),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -367,9 +359,7 @@ class ThemeViewModel extends ChangeNotifier {
             horizontal: AppleColors.spaceLg,
             vertical: 12,
           ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppleColors.radiusButton),
-          ),
+          shape: appCornerBorder(radius: AppleColors.radiusButton),
           elevation: 0,
         ),
       ),
@@ -380,9 +370,7 @@ class ThemeViewModel extends ChangeNotifier {
             horizontal: AppleColors.spaceLg,
             vertical: 12,
           ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppleColors.radiusButton),
-          ),
+          shape: appCornerBorder(radius: AppleColors.radiusButton),
           side: BorderSide(color: _primaryColor, width: 1),
         ),
       ),
@@ -393,9 +381,7 @@ class ThemeViewModel extends ChangeNotifier {
             horizontal: AppleColors.spaceLg,
             vertical: 12,
           ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppleColors.radiusButton),
-          ),
+          shape: appCornerBorder(radius: AppleColors.radiusButton),
         ),
       ),
       progressIndicatorTheme: ProgressIndicatorThemeData(color: _primaryColor),
