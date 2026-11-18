@@ -89,4 +89,4 @@
 
 ## 许可证
 
-本项目基于 AGPL-3.0 许可证开源，与上游 [qinglong](https://github.com/whyour/qinglong) 保持一致。
+本项目基于 AGPL-3.0 许可证开源，与上游 [qinglong-app](https://github.com/ayoulx/qinglong-app) 保持一致。
