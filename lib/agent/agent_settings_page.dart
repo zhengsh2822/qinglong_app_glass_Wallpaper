@@ -247,6 +247,9 @@ class _AgentSettingsPageState extends ConsumerState<AgentSettingsPage>
             _loading
                 ? const Center(child: CircularProgressIndicator())
                 : ListView(
+                  // 与项目其它列表页一致：拖动列表即收起键盘
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
                   padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + navBottom),
                   children: <Widget>[
                     _sectionTitle('后端档位', titleColor),

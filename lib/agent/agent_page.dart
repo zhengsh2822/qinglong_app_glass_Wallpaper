@@ -21,6 +21,7 @@ import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/spring_sheet.dart';
 import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/utils/extension.dart';
+import 'package:qinglong_app/utils/utils.dart';
 
 class _ChatEntry {
   final bool fromUser;
@@ -635,95 +636,107 @@ class _AgentPageState extends ConsumerState<AgentPage>
           ),
         ],
       ),
-      body: GlassPageBackground(
-        child: Column(
-          children: <Widget>[
-            _buildBackendBanner(descColor),
-            Expanded(
-              child: Stack(
-                children: <Widget>[
-                  // 消息列表：底部让位 = 输入框悬浮位 + 框高（最新消息不被盖住；
-                  // 滚动时内容从半透明输入框底下穿过）。
-                  // 空态例外：固定让位（不随键盘）——空态是居中定位，若让位随
-                  // 键盘变化，居中内容会整体下坠与输入框重叠（用户实测难看）
-                  Positioned.fill(
-                    child: Padding(
-                      padding: EdgeInsets.only(
-                        bottom: _entries.isEmpty ? navBottom + 58 : listPadding,
-                      ),
-                      child:
-                          _entries.isEmpty
-                              ? (_restoring
-                                  // 恢复中：留白而非空态，避免「空态闪一下」
-                                  ? const SizedBox.shrink()
-                                  : _buildEmpty(titleColor, descColor, accent))
-                              : Builder(
-                                builder: (context) {
-                                  // 内存中只有一段窗口，直接整段渲染即可
-                                  final int visible = _entries.length;
-                                  final int extra = _busy ? 1 : 0;
-                                  return ListView.builder(
-                                    controller: _scroll,
-                                    // 反向列表：index 0 就是底部最新一条，
-                                    // 首帧 offset 0 = 天然停在最新记录，
-                                    // 无需「渲染后滚到底」的动画。
-                                    reverse: true,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 14,
-                                      vertical: 12,
-                                    ),
-                                    itemCount: visible + extra,
-                                    itemBuilder: (context, index) {
-                                      // 忙碌指示器固定在底部（最新一侧）
-                                      if (extra == 1 && index == 0) {
-                                        return Padding(
-                                          padding: const EdgeInsets.all(14),
-                                          child: Center(
-                                            child: SizedBox(
-                                              width: 20,
-                                              height: 20,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                color: accent,
+      // 点击空白处收起键盘（输入框/按钮等自身处理 tap 的子组件优先，
+      // 不会被这里抢走；仅空白区域触发）
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () => Utils.hideKeyBoard(context),
+        child: GlassPageBackground(
+          child: Column(
+            children: <Widget>[
+              _buildBackendBanner(descColor),
+              Expanded(
+                child: Stack(
+                  children: <Widget>[
+                    // 消息列表：底部让位 = 输入框悬浮位 + 框高（最新消息不被盖住；
+                    // 滚动时内容从半透明输入框底下穿过）。
+                    // 空态例外：固定让位（不随键盘）——空态是居中定位，若让位随
+                    // 键盘变化，居中内容会整体下坠与输入框重叠（用户实测难看）
+                    Positioned.fill(
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          bottom:
+                              _entries.isEmpty ? navBottom + 58 : listPadding,
+                        ),
+                        child:
+                            _entries.isEmpty
+                                ? (_restoring
+                                    // 恢复中：留白而非空态，避免「空态闪一下」
+                                    ? const SizedBox.shrink()
+                                    : _buildEmpty(
+                                      titleColor,
+                                      descColor,
+                                      accent,
+                                    ))
+                                : Builder(
+                                  builder: (context) {
+                                    // 内存中只有一段窗口，直接整段渲染即可
+                                    final int visible = _entries.length;
+                                    final int extra = _busy ? 1 : 0;
+                                    return ListView.builder(
+                                      controller: _scroll,
+                                      // 反向列表：index 0 就是底部最新一条，
+                                      // 首帧 offset 0 = 天然停在最新记录，
+                                      // 无需「渲染后滚到底」的动画。
+                                      reverse: true,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 14,
+                                        vertical: 12,
+                                      ),
+                                      itemCount: visible + extra,
+                                      itemBuilder: (context, index) {
+                                        // 忙碌指示器固定在底部（最新一侧）
+                                        if (extra == 1 && index == 0) {
+                                          return Padding(
+                                            padding: const EdgeInsets.all(14),
+                                            child: Center(
+                                              child: SizedBox(
+                                                width: 20,
+                                                height: 20,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                      color: accent,
+                                                    ),
                                               ),
                                             ),
-                                          ),
+                                          );
+                                        }
+                                        final int i = index - extra;
+                                        // _entries 为时间正序：反向列表下从末尾往前取
+                                        return _buildEntry(
+                                          _entries[_entries.length - 1 - i],
+                                          titleColor,
+                                          descColor,
+                                          accent,
                                         );
-                                      }
-                                      final int i = index - extra;
-                                      // _entries 为时间正序：反向列表下从末尾往前取
-                                      return _buildEntry(
-                                        _entries[_entries.length - 1 - i],
-                                        titleColor,
-                                        descColor,
-                                        accent,
-                                      );
-                                    },
-                                  );
-                                },
-                              ),
+                                      },
+                                    );
+                                  },
+                                ),
+                      ),
                     ),
-                  ),
-                  // 悬浮输入框：Positioned 定位在键盘上沿 / 安全区+2
-                  // （与底部导航 margin bottom:2 同源，小白条不遮挡）
-                  Positioned(
-                    left: 12,
-                    right: 12,
-                    bottom: composerBottom,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        if (_pendingAction != null)
-                          _buildConfirmCard(titleColor, descColor, accent),
-                        const SizedBox(height: 8),
-                        _buildComposer(titleColor, descColor, accent),
-                      ],
+                    // 悬浮输入框：Positioned 定位在键盘上沿 / 安全区+2
+                    // （与底部导航 margin bottom:2 同源，小白条不遮挡）
+                    Positioned(
+                      left: 12,
+                      right: 12,
+                      bottom: composerBottom,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          if (_pendingAction != null)
+                            _buildConfirmCard(titleColor, descColor, accent),
+                          const SizedBox(height: 8),
+                          _buildComposer(titleColor, descColor, accent),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
