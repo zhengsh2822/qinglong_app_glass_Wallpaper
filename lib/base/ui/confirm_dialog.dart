@@ -123,18 +123,24 @@ class _DialogTheme {
   });
 }
 
-_DialogTheme _resolveDialogTheme(bool isCyber, bool isDark, bool danger) {
+_DialogTheme _resolveDialogTheme(
+  bool isCyber,
+  bool isDark,
+  bool danger, {
+  Color? primaryText,
+  Color? secondaryText,
+}) {
   if (isCyber) {
     return _DialogTheme(
       cardBg: CyberColors.bg.withValues(alpha: 0.3),
       borderColor: CyberColors.cyan.withValues(alpha: 0.2),
       borderWidth: 0.5,
       titleColor: danger ? CyberColors.neonRed : CyberColors.cyan,
-      contentColor: CyberColors.titleWhite,
+      contentColor: secondaryText ?? CyberColors.titleWhite,
       primaryAction: danger ? CyberColors.neonRed : CyberColors.cyan,
       inputBg: Colors.white.withValues(alpha: 0.05),
       inputBorder: CyberColors.cyan.withValues(alpha: 0.3),
-      inputText: CyberColors.titleWhite,
+      inputText: primaryText ?? CyberColors.titleWhite,
       inputHint: Colors.white.withValues(alpha: 0.3),
       shadows: null,
     );
@@ -144,11 +150,11 @@ _DialogTheme _resolveDialogTheme(bool isCyber, bool isDark, bool danger) {
       borderColor: Colors.white.withValues(alpha: 0.15),
       borderWidth: 0.5,
       titleColor: danger ? const Color(0xFFFF453A) : AppleColors.textPrimary,
-      contentColor: AppleColors.textSecondary,
+      contentColor: secondaryText ?? AppleColors.textSecondary,
       primaryAction: danger ? const Color(0xFFFF453A) : AppleColors.accent,
       inputBg: Colors.white.withValues(alpha: 0.05),
       inputBorder: Colors.white.withValues(alpha: 0.15),
-      inputText: AppleColors.textPrimary,
+      inputText: primaryText ?? AppleColors.textPrimary,
       inputHint: AppleColors.textSecondary,
       shadows: [
         BoxShadow(
@@ -164,11 +170,11 @@ _DialogTheme _resolveDialogTheme(bool isCyber, bool isDark, bool danger) {
       borderColor: Colors.black.withValues(alpha: 0.1),
       borderWidth: 0.5,
       titleColor: danger ? const Color(0xFFFF3B30) : AppleColors.textPrimary,
-      contentColor: const Color(0xFF6B7280),
+      contentColor: secondaryText ?? const Color(0xFF6B7280),
       primaryAction: danger ? const Color(0xFFFF3B30) : AppleColors.accent,
       inputBg: Colors.black.withValues(alpha: 0.03),
       inputBorder: Colors.black.withValues(alpha: 0.1),
-      inputText: AppleColors.textPrimary,
+      inputText: primaryText ?? AppleColors.textPrimary,
       inputHint: const Color(0xFF9CA3AF),
       shadows: [
         BoxShadow(
@@ -359,13 +365,16 @@ Future<bool?> showConfirmDialog(
   String confirmLabel = '确定',
   bool danger = false,
 }) {
-  final isCyber =
-      ProviderScope.containerOf(context).read(themeProvider).themeMode ==
-      modeCyber;
-  final isDark =
-      ProviderScope.containerOf(context).read(themeProvider).themeMode ==
-      modeDark;
-  final theme = _resolveDialogTheme(isCyber, isDark, danger);
+  final themeState = ProviderScope.containerOf(context).read(themeProvider);
+  final isCyber = themeState.themeMode == modeCyber;
+  final isDark = themeState.themeMode == modeDark;
+  final theme = _resolveDialogTheme(
+    isCyber,
+    isDark,
+    danger,
+    primaryText: themeState.customPrimaryTextColor,
+    secondaryText: themeState.customSecondaryTextColor,
+  );
 
   return showGeneralDialog<bool>(
     context: context,
@@ -443,13 +452,16 @@ Future<String?> showInputDialog(
   bool obscureText = false,
   List<TextInputFormatter>? inputFormatters,
 }) {
-  final isCyber =
-      ProviderScope.containerOf(context).read(themeProvider).themeMode ==
-      modeCyber;
-  final isDark =
-      ProviderScope.containerOf(context).read(themeProvider).themeMode ==
-      modeDark;
-  final theme = _resolveDialogTheme(isCyber, isDark, false);
+  final themeState = ProviderScope.containerOf(context).read(themeProvider);
+  final isCyber = themeState.themeMode == modeCyber;
+  final isDark = themeState.themeMode == modeDark;
+  final theme = _resolveDialogTheme(
+    isCyber,
+    isDark,
+    false,
+    primaryText: themeState.customPrimaryTextColor,
+    secondaryText: themeState.customSecondaryTextColor,
+  );
   final controller = TextEditingController(text: initialValue);
 
   return showGeneralDialog<String>(
@@ -561,13 +573,16 @@ Future<int?> showFrequencyDialog(
   /// 这样可以避免"点击后等网络请求才弹窗"的延迟感。
   Future<int?> Function()? valueLoader,
 }) {
-  final isCyber =
-      ProviderScope.containerOf(context).read(themeProvider).themeMode ==
-      modeCyber;
-  final isDark =
-      ProviderScope.containerOf(context).read(themeProvider).themeMode ==
-      modeDark;
-  final theme = _resolveDialogTheme(isCyber, isDark, false);
+  final themeState = ProviderScope.containerOf(context).read(themeProvider);
+  final isCyber = themeState.themeMode == modeCyber;
+  final isDark = themeState.themeMode == modeDark;
+  final theme = _resolveDialogTheme(
+    isCyber,
+    isDark,
+    false,
+    primaryText: themeState.customPrimaryTextColor,
+    secondaryText: themeState.customSecondaryTextColor,
+  );
   final controller = TextEditingController(text: initialValue.toString());
 
   return showGeneralDialog<int>(

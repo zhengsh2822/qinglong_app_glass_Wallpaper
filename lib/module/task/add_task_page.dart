@@ -37,6 +37,9 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage>
   final TextEditingController _commandController = TextEditingController();
   final TextEditingController _cronController = TextEditingController();
 
+  /// 附加定时规则输入控制器（青龙 2.24+ 一任务多规则，Issue #3）
+  final List<TextEditingController> _extraCronControllers = [];
+
   FocusNode focusNode = FocusNode();
 
   @override
@@ -47,6 +50,10 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage>
       _nameController.text = taskBean.name ?? "";
       _commandController.text = taskBean.command ?? "";
       _cronController.text = taskBean.schedule ?? "";
+      // 编辑回填附加规则
+      for (final String s in taskBean.extraSchedules ?? const []) {
+        _extraCronControllers.add(TextEditingController(text: s));
+      }
     } else {
       taskBean = TaskBean();
     }
@@ -146,6 +153,54 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage>
                       ),
                     ),
                   ),
+                  // ── 附加定时规则（动态列表，仿网页版「新增定时规则」）──
+                  const SizedBox(height: 20),
+                  const TitleWidget("附加定时规则"),
+                  const SizedBox(height: 10),
+                  ...List.generate(_extraCronControllers.length, (i) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: GlassTextField(
+                              controller: _extraCronControllers[i],
+                              hintText: "秒(可选) 分 时 天 月 周",
+                              minLines: 1,
+                              textAlignVertical: TextAlignVertical.center,
+                            ),
+                          ),
+                          IconButton(
+                            visualDensity: VisualDensity.compact,
+                            icon: const Icon(Icons.remove_circle_outline),
+                            color: Colors.redAccent,
+                            tooltip: "删除该规则",
+                            onPressed: () {
+                              setState(() {
+                                _extraCronControllers.removeAt(i).dispose();
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _extraCronControllers.add(TextEditingController());
+                      });
+                    },
+                    child: Text(
+                      "+ 新增定时规则",
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: ref.watch(themeProvider).primaryColor,
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 30),
                   Visibility(
                     visible: !widget.hideUploadFile,
@@ -199,6 +254,18 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage>
       return;
     }
 
+    // 附加规则轻量校验：非空行须为 5 或 6 段（秒可选）cron 表达式，
+    // 空行静默丢弃（网页版 required 逻辑的宽松版）
+    for (final TextEditingController c in _extraCronControllers) {
+      final String s = c.text.trim();
+      if (s.isEmpty) continue;
+      final int fields = s.split(RegExp(r"\s+")).length;
+      if (fields != 5 && fields != 6) {
+        "附加规则格式有误：$s（应为 分 时 天 月 周，秒可选）".toast();
+        return;
+      }
+    }
+
     commitReal();
   }
 
@@ -224,6 +291,13 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage>
       taskBean.name = _nameController.text;
       taskBean.command = _commandController.text.trim();
       taskBean.schedule = _cronController.text.trim();
+      // 附加规则：丢弃空行；编辑场景总是全量提交（含空=清空），新增场景
+      // 无附加规则时不带字段
+      final List<String> extras = _extraCronControllers
+          .map((c) => c.text.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+      taskBean.extraSchedules = extras;
 
       await EasyLoading.show(status: "提交中");
       if (!mounted) return;
@@ -235,6 +309,7 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage>
         _cronController.text.trim(),
         id: taskBean.id,
         nId: taskBean.nId,
+        extraSchedules: extras,
       );
       await EasyLoading.dismiss();
       if (!mounted) return;
@@ -259,6 +334,12 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage>
 
   @override
   void dispose() {
+    _nameController.dispose();
+    _commandController.dispose();
+    _cronController.dispose();
+    for (final TextEditingController c in _extraCronControllers) {
+      c.dispose();
+    }
     focusNode.dispose();
     super.dispose();
   }

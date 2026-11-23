@@ -13,11 +13,15 @@ import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 import 'package:qinglong_app/base/ui/highlight/selectable_code_view.dart';
 import 'package:qinglong_app/base/ui/search_cell.dart';
+import 'package:qinglong_app/base/ui/wallpaper_page_route.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
+import '../../../main.dart';
 import '../../code_editor/codemirror/io.dart';
 import '../../code_editor/editor.dart';
 import '../../config/config_detail_page.dart';
+import '../../home/system_bean.dart';
+import 'script_history_page.dart';
 
 class ScriptEditPage extends ConsumerStatefulWidget {
   final String content;
@@ -238,6 +242,25 @@ class _ScriptEditPageState extends ConsumerState<ScriptEditPage> {
                 ),
               ),
             ),
+          if (_supportsHistory())
+            CupertinoButton(
+              color: Colors.transparent,
+              padding: EdgeInsets.zero,
+              onPressed: _openHistory,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 15),
+                child: Center(
+                  child: Icon(
+                    Icons.history,
+                    color:
+                        isCyber
+                            ? CyberColors.cyan
+                            : Theme.of(context).appBarTheme.iconTheme?.color,
+                    size: 22,
+                  ),
+                ),
+              ),
+            ),
           CupertinoButton(
             color: Colors.transparent,
             padding: EdgeInsets.zero,
@@ -246,10 +269,39 @@ class _ScriptEditPageState extends ConsumerState<ScriptEditPage> {
                 await hideKeyboardFocus();
                 await EasyLoading.show(status: " 提交中");
                 if (!context.mounted) return;
-                HttpResponse<NullResponse> response =
-                    await SingleAccountPageState.ofApi(
-                      context,
-                    ).updateScript(widget.title, widget.path, result);
+                final api = SingleAccountPageState.ofApi(context);
+                HttpResponse<NullResponse> response = await api.updateScript(
+                  widget.title,
+                  widget.path,
+                  result,
+                );
+                // 2.23.0+：文件或新内容超出历史记录范围（>1 MiB / 非 UTF-8 文本）时，
+                // 面板返回 413 + historyUnavailable + currentHash；
+                // 用户确认后以 skipHistory + expectedHash 重试（本次不留档）
+                if (!response.success &&
+                    response.code == 413 &&
+                    response.extra?['historyUnavailable'] == true) {
+                  final String? currentHash =
+                      response.extra?['currentHash']?.toString();
+                  await EasyLoading.dismiss();
+                  if (!context.mounted) return;
+                  final bool? confirmed = await showConfirmDialog(
+                    context,
+                    title: '不记录历史直接保存？',
+                    content: '当前文件或新内容超出历史记录范围，本次覆盖前的内容不会保留。',
+                    confirmLabel: '仍然保存',
+                  );
+                  if (confirmed != true || !context.mounted) return;
+                  await EasyLoading.show(status: " 提交中");
+                  if (!context.mounted) return;
+                  response = await api.updateScript(
+                    widget.title,
+                    widget.path,
+                    result,
+                    skipHistory: true,
+                    expectedHash: currentHash,
+                  );
+                }
                 await EasyLoading.dismiss();
                 if (!context.mounted) return;
                 if (response.success) {
@@ -344,6 +396,50 @@ class _ScriptEditPageState extends ConsumerState<ScriptEditPage> {
       if (confirmed != true) return;
       Navigator.of(context).pop();
     });
+  }
+
+  /// 面板是否支持脚本历史（2.23.0+ 且为账号密码登录）
+  bool _supportsHistory() {
+    try {
+      if (SingleAccountPageState.ofUserInfo(context).useSecretLogined) {
+        return false;
+      }
+      return getIt<SystemBean>(
+        instanceName:
+            (SingleAccountPageState.of(context)?.index ?? 0).toString(),
+      ).isUpperVersion2_23_0();
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// 打开历史版本页；有未提交草稿时禁止恢复（与面板网页端一致）
+  Future<void> _openHistory() async {
+    final dynamic value = await Navigator.of(context).push(
+      WallpaperPageRoute(
+        builder:
+            (context) => ScriptHistoryPage(
+              title: widget.title,
+              path: widget.path,
+              hasUnsavedChanges: preResult != result,
+            ),
+        blurSigma: 6,
+        blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
+      ),
+    );
+    if (!mounted) return;
+    if (value is String && value.isNotEmpty && value != result) {
+      _applyRestoredContent(value);
+    }
+  }
+
+  /// 恢复历史版本后同步编辑器与"未保存"基准
+  void _applyRestoredContent(String content) {
+    setState(() {
+      result = content;
+      preResult = content;
+    });
+    controller?.setValue(content);
   }
 
   GlobalKey<CodeMirrorViewState> codeKey = GlobalKey();

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -6,6 +7,7 @@ import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get_it/get_it.dart';
+import 'package:qinglong_app/agent/agent_mcp_server.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:logger/logger.dart';
 import 'package:qinglong_app/base/http/http.dart';
@@ -53,6 +55,9 @@ void main() async {
   MultiAccountUserInfoViewModel.payedVIP(typeSVIP);
   getIt.get<MultiAccountUserInfoViewModel>().initVipState();
   openAuth = SpUtil.getBool(spOpenAuth, defValue: false);
+  // AI 助手本地 MCP Server 恢复监听（HttpServer 不跨进程存活，开关持久化；
+  // 不恢复会出现「显示已启用、端口没开」）
+  unawaited(AgentMCPServer.restore());
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,

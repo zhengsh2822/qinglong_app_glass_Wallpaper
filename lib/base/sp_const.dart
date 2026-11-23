@@ -26,7 +26,6 @@ const String spTextScaleFactor = "spTextScaleFactor";
 const String spTextFontWeight = "spTextFontWeight"; // 全局字体粗细（400/500/600/700 四档），默认 400
 const String spPrimaryTextColor = "spPrimaryTextColor";
 const String spSecondaryTextColor = "spSecondaryTextColor";
-const String spTextAutoContrast = "spTextAutoContrast"; // 主/次字体自动根据壁纸亮度反色（默认开启，自定义颜色优先）
 const String spLogAutoJump2Bottom = "spLogAutoJump2Bottom";
 const String spAndroidKeyboardError = "spAndroidKeyboardError";
 const String spSingleInstance = "spSingleInstance";

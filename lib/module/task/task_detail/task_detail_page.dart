@@ -186,7 +186,11 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage>
                       ),
                       TaskDetailCell(
                         title: "任务定时",
-                        desc: widget.taskBean.schedule ?? "",
+                        desc:
+                            [
+                              widget.taskBean.schedule ?? "",
+                              ...?widget.taskBean.extraSchedules,
+                            ].where((s) => s.isNotEmpty).join("\n"),
                       ),
                       Obx(() {
                         return TaskDetailCell(

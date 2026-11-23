@@ -198,19 +198,20 @@ class OtherPageState extends ConsumerState<OtherPage>
             children: [
               // 顶部用户信息区（替代原 250px 图片色块，使用毛玻璃卡片）
               _buildUserHeader(),
-              const SizedBox(height: AppleColors.spaceLg),
+              // 卡片间距对齐列表页标准（12px，此前 spaceLg 明显宽于其他页）
+              const SizedBox(height: 12),
               // APP功能介绍
               _buildAppIntroCard(),
-              const SizedBox(height: AppleColors.spaceLg),
-              // 多帐号设置/第三方功能
+              const SizedBox(height: 12),
+              // 账号设置/第三方功能
               _buildMultiAccountCard(),
-              const SizedBox(height: AppleColors.spaceLg),
+              const SizedBox(height: 12),
               // 高级功能
               _buildAdvancedCard(),
-              const SizedBox(height: AppleColors.spaceLg),
+              const SizedBox(height: 12),
               // 日志管理
               _buildLogCard(),
-              const SizedBox(height: AppleColors.spaceLg),
+              const SizedBox(height: 12),
               // 基础功能
               _buildBasicCard(),
               SizedBox(
@@ -506,7 +507,7 @@ class OtherPageState extends ConsumerState<OtherPage>
         children: [
           const SizedBox(height: 5),
           Text(
-            "多帐号设置/第三方功能",
+            "账号设置/第三方功能",
             style: TextStyle(
               fontWeight: FontWeight(ref.watch(textWeightProvider)),
               fontSize: 17,
@@ -534,6 +535,18 @@ class OtherPageState extends ConsumerState<OtherPage>
                   );
                 },
               ),
+              if (!SpUtil.getBool(spSingleInstance, defValue: false))
+                _buildFeatureButton(
+                  title: "账号排序",
+                  icon: CupertinoIcons.arrow_swap,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      WallpaperPageRoute(
+                        builder: (context) => const SortAccountPage(),
+                      ),
+                    );
+                  },
+                ),
               _buildFeatureButton(
                 title: "京东助手",
                 icon: CupertinoIcons.gift,
@@ -612,18 +625,13 @@ class OtherPageState extends ConsumerState<OtherPage>
                   Navigator.of(context).pushNamed(Routes.routeFileBackup);
                 },
               ),
-              if (!SpUtil.getBool(spSingleInstance, defValue: false))
-                _buildFeatureButton(
-                  title: "账号排序",
-                  icon: CupertinoIcons.arrow_swap,
-                  onTap: () {
-                    Navigator.of(context).push(
-                      WallpaperPageRoute(
-                        builder: (context) => const SortAccountPage(),
-                      ),
-                    );
-                  },
-                ),
+              _buildFeatureButton(
+                title: "AI 助手",
+                icon: Icons.auto_awesome_outlined,
+                onTap: () {
+                  Navigator.of(context).pushNamed(Routes.routeAgent);
+                },
+              ),
             ],
           ),
           const SizedBox(height: 10),

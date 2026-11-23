@@ -1106,6 +1106,7 @@ class Http {
             success: false,
             code: data["code"],
             message: message,
+            extra: Map<String, dynamic>.from(data),
           );
         }
       } catch (e) {
@@ -1145,10 +1146,18 @@ class Http {
       }
     } else {
       code = response.statusCode ?? 0;
+      // 非 200 也尽量保留响应体附加字段（如 413 historyUnavailable/currentHash）
+      Map<String, dynamic>? extra;
+      try {
+        dynamic body = response.data;
+        if (body is String) body = jsonDecode(body);
+        if (body is Map) extra = Map<String, dynamic>.from(body);
+      } catch (_) {}
       return HttpResponse(
         success: false,
         code: code,
-        message: response.statusMessage,
+        message: (extra?["message"]?.toString()) ?? response.statusMessage,
+        extra: extra,
       );
     }
   }
@@ -1163,12 +1172,18 @@ class HttpResponse<T> {
   /// 标记响应被识别为 token 失效（HTML 登录页 / 401），需触发静默刷新
   bool needRelogin;
 
+  /// 服务端原始响应体（仅错误时保留）。
+  /// 用于读取附加字段，如 2.23.0 保存脚本超限返回的
+  /// `historyUnavailable` / `currentHash`。
+  Map<String, dynamic>? extra;
+
   HttpResponse({
     required this.success,
     this.message,
     required this.code,
     this.bean,
     this.needRelogin = false,
+    this.extra,
   });
 }
 

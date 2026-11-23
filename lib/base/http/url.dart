@@ -223,6 +223,24 @@ class Url {
           ? "/open/scripts/download"
           : "/api/scripts/download";
 
+  /// 2.23.0+ 脚本编辑历史：版本列表（?filename=&path=）
+  get scriptHistory =>
+      getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
+          ? "/open/scripts/history"
+          : "/api/scripts/history";
+
+  /// 2.23.0+ 历史版本内容（?filename=&path=&id=）
+  get scriptHistoryDetail =>
+      getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
+          ? "/open/scripts/history/detail"
+          : "/api/scripts/history/detail";
+
+  /// 2.23.0+ 恢复到历史版本（body: filename/path/id/expectedHash）
+  get scriptHistoryRestore =>
+      getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
+          ? "/open/scripts/history/restore"
+          : "/api/scripts/history/restore";
+
   get dependencies =>
       getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined
           ? "/open/dependencies"

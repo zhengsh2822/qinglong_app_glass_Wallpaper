@@ -510,9 +510,10 @@ class HomePageState extends ConsumerState<HomePage> {
     final theme = ref.watch(themeProvider);
     final double screenW = MediaQuery.of(context).size.width;
     final double barWidth = (screenW - 16 * 2).clamp(280.0, 560.0);
-    // 选中色：主色（cyan）；未选中：壁纸反色次要文字（SP 自定义/壁纸反色）
+    // 选中色：主色（cyan）；未选中：赛博=纯白、浅色=纯黑（主题独立常量）
     final activeColor = theme.primaryColor;
-    final inactiveColor = theme.themeColor.title2Color();
+    final bool isCyber = theme.themeMode == modeCyber;
+    final inactiveColor = isCyber ? Colors.white : Colors.black;
 
     return LiquidGlassTabBar.withImpeller(
       items: _navItems,
@@ -553,10 +554,10 @@ class HomePageState extends ConsumerState<HomePage> {
         // 壁纸版仅赛博模式：固定深色半透明胶囊 + 光学边框
         shape: cyberShape(30),
         appearance: const LiquidGlassAppearance(
-          // 底色不透明度 0xB3(约70%)：壁纸版需适配大量背景元素，保证可读性又不过黑
-          color: Color(0xB312121A), // 半透明深色（对齐主题版赛博结构，透出壁纸）
-          // 模糊值 5→2：降低底部导航毛玻璃模糊（对齐主题版"液态玻璃曾试改2/3最终确定2"）
-          blur: LiquidGlassBlur(sigmaX: 2, sigmaY: 2),
+          // 底色不透明度 0x99(约60%)：40% 太透看不清文案、70% 偏实，取中间值
+          color: Color(0x9912121A),
+          // 模糊值 1：降低底部导航毛玻璃模糊（对齐主题版 2026-11-23 调参）
+          blur: LiquidGlassBlur(sigmaX: 1, sigmaY: 1),
           shadow: LiquidGlassShadow(blur: 9, opacity: 0.2),
         ),
         refraction: const LiquidGlassRefraction(
@@ -623,21 +624,17 @@ class HomePageState extends ConsumerState<HomePage> {
       final (outlined, filled) = icons[i];
       return LiquidGlassTabBarItem(
         label: labels[i],
-        // 标签文字跟随字体设置的主/次字体色与全局字重；图标保持主题色
+        // 标签颜色与图标同源（对齐主题版 2026-11-23：不再跟随字体设置）——
+        // label.color 即 itemStyle.colorFor(selected)：未选中白/黑、选中主色；
+        // 仅保留全局字重
         labelBuilder: (context, label) {
-          final ThemeViewModel theme = ProviderScope.containerOf(
-            context,
-          ).read(themeProvider);
           final FontWeight fw = FontWeight(
             ProviderScope.containerOf(context).read(textWeightProvider),
           );
           return Text(
             label.text ?? '',
             style: label.textStyle.copyWith(
-              color:
-                  label.selected
-                      ? theme.customPrimaryTextColor
-                      : theme.customSecondaryTextColor,
+              color: label.color,
               fontWeight: fw,
             ),
           );

@@ -1145,7 +1145,7 @@ class TaskItemCell extends StatelessWidget {
 
   /// 构建卡片内容（任务名称、状态胶囊、定时规则、命令 + 运行按钮）
   /// 移植自主题版定时任务卡片新设计：左侧状态竖条 + 状态胶囊标签 +
-  /// 运行/停止胶囊按钮，字重跟随全局粗细调节，配色使用壁纸动态反色。
+  /// 运行/停止胶囊按钮，字重跟随全局粗细调节。
   Widget _buildCardContent(BuildContext context) {
     final bool dark = isCyber;
     final bool isPinnedT = bean.isPinned == 1;
@@ -1309,11 +1309,44 @@ class TaskItemCell extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Text(
-                              bean.schedule ?? "",
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 12, color: cronColor),
+                            child: Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    bean.schedule ?? "",
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: cronColor,
+                                    ),
+                                  ),
+                                ),
+                                // 附加规则数徽章（青龙 2.24+ 一任务多规则，Issue #3）
+                                if ((bean.extraSchedules?.length ?? 0) > 0)
+                                  Container(
+                                    margin: const EdgeInsets.only(left: 6),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 1,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: cronColor.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(999),
+                                      border: Border.all(
+                                        color: cronColor.withValues(alpha: 0.4),
+                                        width: 0.8,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      "+${bean.extraSchedules!.length}",
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: cronColor,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
                         ],

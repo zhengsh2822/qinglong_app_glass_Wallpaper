@@ -421,12 +421,21 @@ class Api {
     String cron, {
     int? id,
     String? nId,
+    List<String>? extraSchedules,
   }) async {
     var data = <String, dynamic>{
       "name": name,
       "command": command,
       "schedule": cron,
     };
+
+    // 附加定时规则（青龙 2.24+ 一任务多规则，Issue #3）：
+    // 编辑场景传空列表表示清空；null 表示不改动（老面板不带字段零影响）
+    if (extraSchedules != null) {
+      data["extra_schedules"] = extraSchedules
+          .map((s) => {"schedule": s})
+          .toList();
+    }
 
     if (id != null || nId != null) {
       if (id != null) {
@@ -689,14 +698,72 @@ class Api {
     );
   }
 
+  /// 保存已有脚本（PUT /scripts）。
+  /// 2.23.0+ 面板会为覆盖前的旧内容留档；内容超过 1 MiB 时返回 413 +
+  /// `historyUnavailable` + `currentHash`，确认后可带
+  /// [skipHistory]=true 与 [expectedHash] 重试（本次不记录历史）。
   Future<HttpResponse<NullResponse>> updateScript(
     String name,
     String path,
-    String content,
-  ) async {
+    String content, {
+    bool skipHistory = false,
+    String? expectedHash,
+  }) async {
+    final Map<String, dynamic> body = {
+      "filename": name,
+      "path": path,
+      "content": content,
+    };
+    if (skipHistory) {
+      body["skipHistory"] = true;
+      if (expectedHash != null) body["expectedHash"] = expectedHash;
+    }
     return await getIt<Http>(instanceName: index.toString()).put<NullResponse>(
       getIt<Url>(instanceName: index.toString()).scriptDetail,
-      {"filename": name, "path": path, "content": content},
+      body,
+    );
+  }
+
+  /// 2.23.0+ 脚本历史版本列表
+  /// 返回 `{versions: [{id, createdAt, source, hash, size, identical}],
+  /// currentHash, limit}` 的 JSON 字符串
+  Future<HttpResponse<String>> scriptHistory(String name, String? path) async {
+    return await getIt<Http>(instanceName: index.toString()).get<String>(
+      getIt<Url>(instanceName: index.toString()).scriptHistory,
+      {"filename": name, "path": path ?? ""},
+    );
+  }
+
+  /// 2.23.0+ 单个历史版本内容
+  /// 返回 `{version: {id, createdAt, source, hash, content}, current, currentHash}`
+  Future<HttpResponse<String>> scriptHistoryDetail(
+    String name,
+    String? path,
+    String id,
+  ) async {
+    return await getIt<Http>(instanceName: index.toString()).get<String>(
+      getIt<Url>(instanceName: index.toString()).scriptHistoryDetail,
+      {"filename": name, "path": path ?? "", "id": id},
+    );
+  }
+
+  /// 2.23.0+ 恢复到历史版本。
+  /// [expectedHash] 必须是预览时拿到的 currentHash：文件在预览后被改动会返回 409。
+  /// 返回 `{content, changed, historyRecorded, cleanupPending}`
+  Future<HttpResponse<String>> restoreScriptHistory(
+    String name,
+    String? path,
+    String id,
+    String expectedHash,
+  ) async {
+    return await getIt<Http>(instanceName: index.toString()).put<String>(
+      getIt<Url>(instanceName: index.toString()).scriptHistoryRestore,
+      {
+        "filename": name,
+        "path": path ?? "",
+        "id": id,
+        "expectedHash": expectedHash,
+      },
     );
   }
 

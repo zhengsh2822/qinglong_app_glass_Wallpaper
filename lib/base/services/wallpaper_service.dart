@@ -181,33 +181,6 @@ class WallpaperService extends ChangeNotifier {
   bool _downloading = false;
   bool get isDownloading => _downloading;
 
-  /// 当前壁纸的代表色（用于文字反色计算）。
-  /// null 表示尚未计算完成（此时 UI 应使用默认色）。
-  Color? _averageColor;
-  Color? get averageColor => _averageColor;
-
-  /// 背景是否偏亮（考虑蒙层后的实际亮度）。
-  /// true → 文字应使用深色；false → 文字应使用浅色。
-  bool _isLightBackground = false;
-  bool get isLightBackground => _isLightBackground;
-
-  /// 根据背景亮度返回对比文字色（黑或白）。
-  /// 亮背景返回深色（保证可读），暗背景返回浅色。
-  Color get contrastTextColor =>
-      _isLightBackground ? const Color(0xFF1A1A1A) : const Color(0xFFE0E0FF);
-
-  /// 根据背景亮度返回次级文字色（比主文字色稍弱）。
-  Color get contrastSubTextColor =>
-      _isLightBackground ? const Color(0xFF4A4A4A) : const Color(0xFFB8B8D8);
-
-  /// 根据背景亮度返回提示文字色（更弱）。
-  Color get contrastHintTextColor =>
-      _isLightBackground ? const Color(0xFF6A6A6A) : const Color(0xFF8A8AAC);
-
-  /// 根据背景亮度返回描述文字色。
-  Color get contrastDescTextColor =>
-      _isLightBackground ? const Color(0xFF5A5A5A) : const Color(0xFF9A9AB8);
-
   WallpaperConfig get config => _config;
 
   /// 当前背景类型。
@@ -240,8 +213,6 @@ class WallpaperService extends ChangeNotifier {
       _networkCachedPath = _findCachedNetworkFile(_config.networkUrl!);
     }
     _applyAutoSwitch();
-    // 异步计算壁纸平均色，用于文字反色
-    _computeAverageColor();
   }
 
   // —— 配置变更 API ——
@@ -251,7 +222,6 @@ class WallpaperService extends ChangeNotifier {
     _config = _config.copyWith(type: type);
     await _save();
     notifyListeners();
-    _computeAverageColor();
   }
 
   /// 设置纯色背景颜色。
@@ -262,7 +232,6 @@ class WallpaperService extends ChangeNotifier {
     );
     await _save();
     notifyListeners();
-    _computeAverageColor();
   }
 
   /// 选择预设渐变（index 对应 [PresetGradients.all] 索引）。
@@ -273,7 +242,6 @@ class WallpaperService extends ChangeNotifier {
     );
     await _save();
     notifyListeners();
-    _computeAverageColor();
   }
 
   /// 设置自定义渐变（两色线性，左上→右下）。
@@ -287,7 +255,6 @@ class WallpaperService extends ChangeNotifier {
     );
     await _save();
     notifyListeners();
-    _computeAverageColor();
   }
 
   /// 当前生效的渐变（仅 [WallpaperType.gradient] 时有意义）。
@@ -330,7 +297,6 @@ class WallpaperService extends ChangeNotifier {
       );
       await _save();
       notifyListeners();
-      _computeAverageColor();
       return savedPath;
     } catch (e) {
       debugPrint('相册选图失败: $e');
@@ -348,9 +314,6 @@ class WallpaperService extends ChangeNotifier {
     _networkCachedPath = _findCachedNetworkFile(url);
     await _save();
     notifyListeners();
-    // 先尝试用 URL 提取主色（预览阶段），下载完成后 _downloadAndCacheNetwork
-    // 会再次触发 _computeAverageColor 切换到本地文件提取（更快更稳定）
-    _computeAverageColor();
     // 后台下载（不阻塞 UI）
     if (_networkCachedPath == null) {
       _downloadAndCacheNetwork(url);
@@ -381,8 +344,6 @@ class WallpaperService extends ChangeNotifier {
       _networkCachedPath = 'network_cache/$name';
       _downloading = false;
       notifyListeners();
-      // 下载完成，用本地缓存文件重新提取主色（比 NetworkImage 更快更稳定）
-      _computeAverageColor();
     } catch (e) {
       debugPrint('下载网络壁纸异常: $e');
       _downloading = false;
@@ -430,8 +391,7 @@ class WallpaperService extends ChangeNotifier {
   Future<void> setDimOpacity(double opacity) async {
     _config = _config.copyWith(dimOpacity: opacity.clamp(0.0, 1.0));
     await _save();
-    // 蒙层影响实际亮度，需重新计算反色
-    _updateLightFlag();
+    // 蒙层变化直接影响壁纸显示，通知 UI 重建
     notifyListeners();
   }
 
@@ -465,7 +425,6 @@ class WallpaperService extends ChangeNotifier {
     await _save();
     _applyAutoSwitch();
     notifyListeners();
-    _computeAverageColor();
   }
 
   /// 返回本地图片的绝对 File（仅 [WallpaperType.local] 有意义）。
@@ -509,96 +468,6 @@ class WallpaperService extends ChangeNotifier {
     if (!_config.autoSwitchEnabled || _config.autoSwitchPool.isEmpty) return;
     final duration = Duration(minutes: _config.autoSwitchMinutes);
     _autoSwitchTimer = Timer.periodic(duration, (_) => rotateAutoSwitch());
-  }
-
-  // —— 壁纸平均色 / 文字反色 ——
-
-  /// 异步计算当前壁纸的代表色，并更新 [_averageColor] 与 [_isLightBackground]。
-  ///
-  /// 不同类型壁纸的计算方式：
-  /// - gradient：取渐变两端颜色的平均
-  /// - solid：直接用 solidColor
-  /// - local/network：用 Flutter 内置 [ColorScheme.fromImageProvider]
-  ///   提取图片主色（Material 3 能力，无需第三方依赖）
-  ///
-  /// 计算完成后通知 UI 刷新文字色。
-  Future<void> _computeAverageColor() async {
-    final cfg = _config;
-    Color? color;
-    try {
-      switch (cfg.type) {
-        case WallpaperType.gradient:
-          final grad = currentGradient.colors;
-          if (grad.length >= 2) {
-            color = _blendColors(grad[0], grad[1]);
-          } else if (grad.isNotEmpty) {
-            color = grad[0];
-          }
-          break;
-        case WallpaperType.solid:
-          if (cfg.solidColor != null) {
-            color = Color(cfg.solidColor!);
-          }
-          break;
-        case WallpaperType.local:
-          final file = localImageFile;
-          if (file != null) {
-            color = await _extractFromImage(FileImage(file));
-          }
-          break;
-        case WallpaperType.network:
-          final cached = networkCachedFile;
-          if (cached != null) {
-            color = await _extractFromImage(FileImage(cached));
-          } else if (cfg.networkUrl != null && isHttpUrl(cfg.networkUrl!)) {
-            color = await _extractFromImage(NetworkImage(cfg.networkUrl!));
-          }
-          break;
-      }
-    } catch (e) {
-      debugPrint('计算壁纸平均色失败: $e');
-    }
-    _averageColor = color;
-    _updateLightFlag();
-    notifyListeners();
-  }
-
-  /// 用 [ColorScheme.fromImageProvider] 提取图片主色。
-  /// 这是 Flutter Material 3 内置能力，无需 palette_generator 等第三方包。
-  Future<Color?> _extractFromImage(ImageProvider provider) async {
-    final scheme = await ColorScheme.fromImageProvider(
-      provider: provider,
-      brightness: Brightness.light,
-    );
-    return scheme.primary;
-  }
-
-  /// 混合两个颜色（算术平均，忽略 alpha）。
-  Color _blendColors(Color a, Color b) {
-    return Color.fromARGB(
-      255,
-      ((a.r * 255 + b.r * 255) / 2).round(),
-      ((a.g * 255 + b.g * 255) / 2).round(),
-      ((a.b * 255 + b.b * 255) / 2).round(),
-    );
-  }
-
-  /// 根据 [_averageColor] 和 [dimOpacity] 更新 [_isLightBackground]。
-  ///
-  /// 实际显示亮度 = 壁纸亮度 × (1 - dimOpacity)
-  /// - dimOpacity=0.35 时，亮度 0.8 的壁纸实际显示亮度约 0.52，仍算亮色
-  /// - dimOpacity=0.5 时，亮度 0.8 的壁纸实际显示亮度 0.4，算暗色
-  ///
-  /// 阈值 0.5：高于此值文字用深色，低于用浅色。
-  void _updateLightFlag() {
-    final base = _averageColor;
-    if (base == null) {
-      _isLightBackground = false;
-      return;
-    }
-    final rawLum = base.computeLuminance();
-    final effectiveLum = rawLum * (1.0 - _config.dimOpacity);
-    _isLightBackground = effectiveLum > 0.5;
   }
 
   @override

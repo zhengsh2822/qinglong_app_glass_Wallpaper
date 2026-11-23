@@ -5,6 +5,11 @@ class TaskBean {
   String? name;
   String? command;
   String? schedule;
+
+  /// 附加定时规则（青龙 2.24+ 一任务多规则，Issue #3）。
+  /// API 字段 extra_schedules 为对象数组 [{schedule: "..."}]，
+  /// 客户端只关心表达式字符串，解析/提交时做映射。
+  List<String>? extraSchedules;
   bool? saved;
   String? sId;
   int? id;
@@ -26,6 +31,7 @@ class TaskBean {
     this.name,
     this.command,
     this.schedule,
+    this.extraSchedules,
     this.saved,
     this.sId,
     this.created,
@@ -47,6 +53,16 @@ class TaskBean {
       name = json['name'].toString();
       command = json['command'].toString();
       schedule = json['schedule'].toString();
+      // 附加定时规则（老面板无此字段 → null，零影响）：
+      // [{schedule: "0 8 * * *"}, ...] → ["0 8 * * *", ...]
+      final dynamic extra = json['extra_schedules'];
+      if (extra is List) {
+        extraSchedules = extra
+            .map((e) => e is Map ? e['schedule']?.toString() : e?.toString())
+            .whereType<String>()
+            .where((s) => s.isNotEmpty)
+            .toList();
+      }
       saved = json['saved'];
       id = json['id'];
       _id = json['_id'];
@@ -76,6 +92,12 @@ class TaskBean {
     data['name'] = name;
     data['command'] = command;
     data['schedule'] = schedule;
+    // 回写对象数组格式（编辑全量覆盖需要；null 时不带字段，老面板零影响）
+    if (extraSchedules != null) {
+      data['extra_schedules'] = extraSchedules!
+          .map((s) => {'schedule': s})
+          .toList();
+    }
     data['saved'] = saved;
     data['_id'] = sId;
     data['created'] = created;

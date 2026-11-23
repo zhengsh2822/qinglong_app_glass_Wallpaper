@@ -31,12 +31,13 @@ import 'package:qinglong_app/module/subscribe/subscribe_detail_page.dart';
 import 'package:qinglong_app/module/subscribe/subscribe_page.dart';
 import 'package:qinglong_app/module/task/task_bean.dart';
 import 'package:qinglong_app/module/task/task_detail/task_detail_page.dart';
+import 'package:qinglong_app/agent/agent_page.dart';
+import 'package:qinglong_app/agent/agent_settings_page.dart';
 import 'package:qinglong_app/base/ui/wallpaper_page_route.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 
 class Routes {
-  static const String routeHomePage = "/home/homepage";
-  static const String routeLogin = "/login";
+  static const String routeHomePage = "/home/homepage";  static const String routeLogin = "/login";
   static const String routeSubscribeList = "/task/subscribeList";
   static const String routeTaskDetail = "/task/detail";
   static const String routeSubscribeDetail = "/task/subscribeDetail";
@@ -63,6 +64,8 @@ class Routes {
   static const String routeDashboard = "/dashboard";
   static const String routeDashboardTaskResult = "/dashboard/taskResult";
   static const String routeJdck = "/jdck";
+  static const String routeAgent = "/agent";
+  static const String routeAgentSettings = "/agent/settings";
 
   static const String routeIcloudFile = "/icloudfile";
 
@@ -245,6 +248,19 @@ class Routes {
         );
       case routeJdck:
         return WallpaperPageRoute(builder: (context) => const JdckPage());
+      case routeAgent:
+        return WallpaperPageRoute(
+          builder: (context) => const AgentPage(),
+          // 文字密集页：路由级壁纸模糊 + 底色压暗，保证可读性
+          blurSigma: 6,
+          blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
+        );
+      case routeAgentSettings:
+        return WallpaperPageRoute(
+          builder: (context) => const AgentSettingsPage(),
+          blurSigma: 6,
+          blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
+        );
       case routeWallpaperSetting:
         return WallpaperPageRoute(
           builder: (context) => const WallpaperSettingPage(),

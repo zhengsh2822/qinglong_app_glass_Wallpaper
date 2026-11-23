@@ -9,7 +9,6 @@ import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/spring_sheet.dart';
 import 'package:qinglong_app/base/ui/color_picker_sheet.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
-import 'package:qinglong_app/base/ui/settings_widgets.dart';
 import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
@@ -29,14 +28,11 @@ class _TextSizePageState extends ConsumerState<TextSizePage> {
   int fontWeight = 400;
   Color? _primaryTextColor;
   Color? _secondaryTextColor;
-  /// 主/次字体自动根据壁纸亮度反色（默认开启，自定义颜色优先）
-  bool _autoContrast = true;
 
   @override
   void initState() {
     textScaleFactor = SpUtil.getDouble(spTextScaleFactor, defValue: 1.0);
     fontWeight = SpUtil.getInt(spTextFontWeight, defValue: 400);
-    _autoContrast = SpUtil.getBool(spTextAutoContrast, defValue: true);
     _loadCustomColors();
     super.initState();
   }
@@ -65,8 +61,6 @@ class _TextSizePageState extends ConsumerState<TextSizePage> {
   void _resetFontSettings() {
     textScaleFactor = 1;
     fontWeight = 400;
-    _autoContrast = true;
-    SpUtil.putBool(spTextAutoContrast, true);
     _savePrimaryColor(null);
     _saveSecondaryColor(null);
     final app = context.findAncestorStateOfType<QlAppState>();
@@ -334,30 +328,6 @@ class _TextSizePageState extends ConsumerState<TextSizePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 抵消 SettingsSwitchRow 自带水平 padding，与卡片内容左对齐
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: -15),
-                      child: SettingsSwitchRow(
-                        icon: CupertinoIcons.sun_max,
-                        title: "自动适配壁纸亮度",
-                        value: _autoContrast,
-                        onChanged: (v) {
-                          setState(() => _autoContrast = v);
-                          SpUtil.putBool(spTextAutoContrast, v);
-                          // 反色开关变更立即全局生效（themeProvider rebuild 重新读取）
-                          ref.read(themeProvider).refresh();
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "开启后主/次字体根据壁纸亮度自动反色，自定义颜色优先",
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: theme.customSecondaryTextColor,
-                      ),
-                    ),
-                    const Divider(height: 16, color: Color(0x33FFFFFF)),
                     Text(
                       "字体颜色",
                       style: TextStyle(

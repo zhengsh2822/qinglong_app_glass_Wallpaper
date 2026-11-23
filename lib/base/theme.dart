@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/ui/app_corner.dart';
-import 'package:qinglong_app/base/services/wallpaper_service.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/utils/codeeditor_theme.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
@@ -77,21 +76,6 @@ class ThemeViewModel extends ChangeNotifier {
       SpUtil.putInt(spThemeStyle, modeCyber);
     }
     changeThemeReal(modeCyber, false);
-    // 监听壁纸变化：壁纸平均色改变时，文字色需要自动反色刷新
-    // 所有 watch themeProvider 的页面会 rebuild 并重新调用 titleColor()
-    WallpaperService.instance.addListener(_onWallpaperChanged);
-  }
-
-  void _onWallpaperChanged() {
-    // 壁纸的平均色/蒙层变化时，通知所有监听 themeProvider 的页面 rebuild
-    // CyberThemeColors.titleColor() 等方法会重新读取 WallpaperService 的最新值
-    notifyListeners();
-  }
-
-  @override
-  void dispose() {
-    WallpaperService.instance.removeListener(_onWallpaperChanged);
-    super.dispose();
   }
 
   void changeThemeWithSystemStatus([bool must = true]) {
@@ -857,21 +841,11 @@ class DartThemeColors extends ThemeColors {
 /// - 次字体样式（时间/描述/命令）：[title2Color]/[descColor]/[hintColor]
 ///   优先读 SP[spSecondaryTextColor]
 /// 未设置（-1）时使用固定默认色：主字体 FFFFFF、次字体 9A9A9A。
-/// 开启「自动适配壁纸亮度」（spTextAutoContrast）且壁纸偏亮时，
-/// 默认色自动反色为深色（主字 1A1A1A / 次字 4A4A4A）保证可读性。
 class CyberThemeColors extends ThemeColors {
-  /// 自动反色开关（默认开启）
-  static bool get _autoContrast =>
-      SpUtil.getBool(spTextAutoContrast, defValue: true);
-
-  /// 壁纸是否偏亮（考虑蒙层后的实际亮度）
-  static bool get _lightBg => WallpaperService.instance.isLightBackground;
-
   @override
   Color titleColor() {
     final custom = SpUtil.getInt(spPrimaryTextColor, defValue: -1);
     if (custom >= 0) return Color(custom);
-    if (_autoContrast && _lightBg) return const Color(0xFF1A1A1A);
     return const Color(0xFFFFFFFF);
   }
 
@@ -879,7 +853,6 @@ class CyberThemeColors extends ThemeColors {
   Color title2Color() {
     final custom = SpUtil.getInt(spSecondaryTextColor, defValue: -1);
     if (custom >= 0) return Color(custom);
-    if (_autoContrast && _lightBg) return const Color(0xFF4A4A4A);
     return const Color(0xFF9A9A9A);
   }
 
@@ -887,7 +860,6 @@ class CyberThemeColors extends ThemeColors {
   Color descColor() {
     final custom = SpUtil.getInt(spSecondaryTextColor, defValue: -1);
     if (custom >= 0) return Color(custom);
-    if (_autoContrast && _lightBg) return const Color(0xFF4A4A4A);
     return const Color(0xFF9A9A9A);
   }
 
@@ -895,7 +867,6 @@ class CyberThemeColors extends ThemeColors {
   Color hintColor() {
     final custom = SpUtil.getInt(spSecondaryTextColor, defValue: -1);
     if (custom >= 0) return Color(custom);
-    if (_autoContrast && _lightBg) return const Color(0xFF4A4A4A);
     return const Color(0xFF9A9A9A);
   }
 
@@ -907,10 +878,7 @@ class CyberThemeColors extends ThemeColors {
   Color bg2Color() => Colors.transparent;
 
   @override
-  Color blackAndWhite() =>
-      WallpaperService.instance.isLightBackground
-          ? const Color(0xFF1A1A1A)
-          : const Color(0xFFE0E0FF);
+  Color blackAndWhite() => const Color(0xFFE0E0FF);
 
   @override
   Color codeBgColor() => const Color(0xFF000000);
