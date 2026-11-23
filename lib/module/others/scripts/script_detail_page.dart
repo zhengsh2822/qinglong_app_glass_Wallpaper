@@ -150,7 +150,9 @@ class _ScriptDetailPageState extends ConsumerState<ScriptDetailPage>
         onTap: () async {
           try {
             String name = "${Random().nextInt(40000)}_${widget.title}";
-            await FileUtil(0).writeDownloadFile(name, content ?? "");
+            await FileUtil(
+              SingleAccountPageState.ofIndex(context),
+            ).writeDownloadFile(name, content ?? "");
             "已写入Download/qinglong文件夹下,文件名$name".toast2();
           } catch (e) {
             e.toString().toast();

@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart' show compute;
 import 'package:qinglong_app/utils/sp_utils.dart';
 
 /// 会话的一段时间窗口（按块读盘结果）。
@@ -25,14 +24,15 @@ class AgentSessionWindow {
 
 /// 会话持久化：按块存储（UI 条目 + 模型对话历史），退出重进可恢复。
 ///
-/// v4 分块格式（前缀 `agent_session_v4_<backendId>_<accountIndex>`）：
+/// v5 分块格式（前缀 `agent_session_v5_<backendId>_<槽位>_<host>`）：
 /// - `<p>:meta`  → {version, entryChunk, historyChunk, entryCount, historyCount, savedAt}
 /// - `<p>:e:<i>` → 第 i 块 UI 条目（每块 60 条，块内时间正序）
 /// - `<p>:h:<i>` → 第 i 块模型历史（每块 40 条）
 ///
 /// 这样首屏只解最后一块，内存只保留窗口；追加新消息只重写末尾块，
 /// 7 天保留期的大会话也不会在主线程编解码整段 JSON。
-/// 旧 v3 单 key 数据会在首次读取时自动迁移并删除。
+/// v3/v4 数据在旧版本里可能被「第一个已登录账号」共用过、归属不可判定，
+/// 升级后首次读取时统一清理，绝不跨账号接管。
 class AgentSessionStore {
   AgentSessionStore._();
 
@@ -43,9 +43,6 @@ class AgentSessionStore {
   /// 分块大小
   static const int entryChunkSize = 60;
   static const int historyChunkSize = 40;
-
-  /// 会话 JSON 超过该阈值时用后台 isolate 解码
-  static const int _isolateThreshold = 64 * 1024;
 
   static int get keepDays {
     final v = SpUtil.getInt(keepDaysKey, defValue: defaultKeepDays);
@@ -60,25 +57,61 @@ class AgentSessionStore {
 
   static Duration get maxAge => Duration(days: keepDays);
 
-  /// v4 分块前缀
-  static String keyFor(String backendId, int accountIndex) =>
-      'agent_session_v4_${backendId}_$accountIndex';
+  /// v5 分块前缀。
+  ///
+  /// 账号隔离：key 同时带槽位与面板主机（同一槽位退出后登录另一台面板
+  /// 不会读到上一个账号的会话）。[host] 为空时仅用槽位号。
+  ///
+  /// v4 及更早的会话在旧版本里可能被「全局第一个账号」共用过，无法判断
+  /// 归属；升级到 v5 时统一清理，避免把其他面板的记录带给新账号。
+  static String keyFor(String backendId, int accountIndex, {String? host}) {
+    final String tag = _accountTag(accountIndex, host);
+    return 'agent_session_v5_${backendId}_$tag';
+  }
+
+  static String _accountTag(int index, String? host) {
+    final String h = _hostTag(host ?? '');
+    return h.isEmpty ? '$index' : 'a${index}_$h';
+  }
+
+  static String _hostTag(String host) {
+    var h = host.trim().toLowerCase();
+    if (h.isEmpty) return '';
+    h = h.replaceAll(RegExp(r'[^a-z0-9.\-]+'), '-');
+    h = h.replaceAll(RegExp(r'-+'), '-');
+    h = h.replaceAll(RegExp(r'^-+|-+$'), '');
+    if (h.length > 60) h = h.substring(0, 60);
+    return h;
+  }
 
   static String _metaKey(String p) => '$p:meta';
   static String _entryChunkKey(String p, int i) => '$p:e:$i';
   static String _historyChunkKey(String p, int i) => '$p:h:$i';
 
-  /// v3 单 key（仅用于迁移）
-  static String _legacyKeyOf(String key) => key.startsWith('agent_session_v4_')
-      ? key.replaceFirst('agent_session_v4_', 'agent_session_v3_')
-      : '';
+  /// 旧版会话是否已清理（进程内只扫一次）
+  static bool _legacyPurged = false;
+
+  /// 清理 v3/v4 会话：旧版按「第一个已登录账号」共用存储，归属不可判定，
+  /// 保留会把其他面板的记录带到新账号，直接丢弃最安全。
+  static Future<void> _purgeLegacyOnce() async {
+    if (_legacyPurged) return;
+    _legacyPurged = true;
+    final Set<String>? keys = SpUtil.getKeys();
+    if (keys == null) return;
+    for (final String k in keys.toList()) {
+      if (k.startsWith('agent_session_v3_') ||
+          k.startsWith('agent_session_v4_')) {
+        await SpUtil.remove(k);
+      }
+    }
+  }
 
   /// 读取最近 [limit] 条（只解最后 1~2 块）。
   static Future<AgentSessionWindow> loadRecent(
     String key, {
     int limit = 40,
   }) async {
-    await _migrateIfNeeded(key);
+    await _purgeLegacyOnce();
     final Map<String, dynamic>? meta = _readMeta(key);
     if (meta == null) {
       return const AgentSessionWindow(
@@ -180,7 +213,7 @@ class AgentSessionStore {
 
   /// 读取全部模型历史（用于内置后端恢复上下文）。
   static Future<List<Map<String, dynamic>>> loadHistory(String key) async {
-    await _migrateIfNeeded(key);
+    await _purgeLegacyOnce();
     final Map<String, dynamic>? meta = _readMeta(key);
     final int count = (meta?['historyCount'] as num?)?.toInt() ?? 0;
     if (count <= 0) return <Map<String, dynamic>>[];
@@ -243,8 +276,6 @@ class AgentSessionStore {
       await SpUtil.remove(_historyChunkKey(key, c));
     }
     await SpUtil.remove(_metaKey(key));
-    final String legacy = _legacyKeyOf(key);
-    if (legacy.isNotEmpty) await SpUtil.remove(legacy);
   }
 
   // ── 内部 ──
@@ -268,7 +299,7 @@ class AgentSessionStore {
     int? savedAt,
   }) async {
     final Map<String, dynamic> next = <String, dynamic>{
-      'version': 4,
+      'version': 5,
       'entryChunk': (meta['entryChunk'] as num?)?.toInt() ?? entryChunkSize,
       'historyChunk':
           (meta['historyChunk'] as num?)?.toInt() ?? historyChunkSize,
@@ -295,73 +326,6 @@ class AgentSessionStore {
     }
   }
 
-  /// v3 → v4 迁移（只在 v4 meta 不存在且旧 key 有数据时执行一次）
-  static Future<void> _migrateIfNeeded(String key) async {
-    if (_readMeta(key) != null) return;
-    final String legacy = _legacyKeyOf(key);
-    if (legacy.isEmpty) return;
-    final String raw = SpUtil.getString(legacy);
-    if (raw.isEmpty) return;
-    try {
-      final dynamic decoded =
-          raw.length > _isolateThreshold
-              ? await compute(_decodeJson, raw)
-              : jsonDecode(raw);
-      if (decoded is! Map) {
-        await SpUtil.remove(legacy);
-        return;
-      }
-      final int savedAt =
-          (decoded['savedAt'] as num?)?.toInt() ??
-          DateTime.now().millisecondsSinceEpoch;
-      if (DateTime.now().millisecondsSinceEpoch - savedAt >
-          maxAge.inMilliseconds) {
-        await SpUtil.remove(legacy);
-        return;
-      }
-      final List<Map<String, dynamic>> entries = _listOfMaps(
-        decoded['entries'],
-      );
-      final List<Map<String, dynamic>> history = _listOfMaps(
-        decoded['history'],
-      );
-      for (int i = 0; i < entries.length; i += entryChunkSize) {
-        final int end =
-            i + entryChunkSize > entries.length
-                ? entries.length
-                : i + entryChunkSize;
-        await SpUtil.putString(
-          _entryChunkKey(key, i ~/ entryChunkSize),
-          jsonEncode(entries.sublist(i, end)),
-        );
-      }
-      for (int i = 0; i < history.length; i += historyChunkSize) {
-        final int end =
-            i + historyChunkSize > history.length
-                ? history.length
-                : i + historyChunkSize;
-        await SpUtil.putString(
-          _historyChunkKey(key, i ~/ historyChunkSize),
-          jsonEncode(history.sublist(i, end)),
-        );
-      }
-      await SpUtil.putString(
-        _metaKey(key),
-        jsonEncode(<String, dynamic>{
-          'version': 4,
-          'entryChunk': entryChunkSize,
-          'historyChunk': historyChunkSize,
-          'entryCount': entries.length,
-          'historyCount': history.length,
-          'savedAt': savedAt,
-        }),
-      );
-      await SpUtil.remove(legacy);
-    } catch (_) {
-      // 迁移失败保留旧数据，不阻断使用
-    }
-  }
-
   static List<Map<String, dynamic>> _listOfMaps(dynamic value) {
     if (value is! List) return <Map<String, dynamic>>[];
     return value
@@ -369,11 +333,4 @@ class AgentSessionStore {
         .map((e) => Map<String, dynamic>.from(e))
         .toList();
   }
-}
-
-/// 后台 isolate 解码入口（compute 只接受顶层 / 静态函数）
-Map<String, dynamic> _decodeJson(String raw) {
-  final dynamic decoded = jsonDecode(raw);
-  if (decoded is Map) return Map<String, dynamic>.from(decoded);
-  return <String, dynamic>{};
 }

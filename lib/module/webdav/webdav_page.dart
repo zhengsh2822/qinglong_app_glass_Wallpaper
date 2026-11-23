@@ -17,6 +17,7 @@ import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/wd_dbg.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
+import 'package:qinglong_app/utils/utils.dart';
 import 'package:qinglong_app/utils/webdav_backup_utils.dart';
 import 'package:qinglong_app/utils/webdav_client.dart';
 
@@ -237,9 +238,9 @@ class _WebDavPageState extends ConsumerState<WebDavPage>
         children: [
           SettingsSwitchRow(
             title: "自动备份",
-            value: SpUtil.getBool(spWebDavAuto, defValue: false),
+            value: Utils.accountSpBool(spWebDavAuto, _index),
             onChanged: (v) {
-              SpUtil.putBool(spWebDavAuto, v);
+              SpUtil.putBool(Utils.accountSpKey(spWebDavAuto, _index), v);
               setState(() {});
             },
           ),
@@ -271,7 +272,7 @@ class _WebDavPageState extends ConsumerState<WebDavPage>
             title: "立即备份",
             onTap: _doBackupAll,
             trailing: _timeTrailing(
-              SpUtil.getString(spWebDavLastBackTime, defValue: ""),
+              Utils.accountSpString(spWebDavLastBackTime, _index),
             ),
           ),
           const Divider(height: 1, indent: 15),

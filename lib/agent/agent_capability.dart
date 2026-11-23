@@ -50,13 +50,30 @@ class AgentCapabilityService {
     'label_stats',
   };
 
-  /// 找到当前已登录的账号索引。getIt 里每个账号以 "0"、"1"... 注册。
+  /// 指定槽位是否已登录（getIt 里每个账号以 "0"、"1"... 注册）。
+  static bool hasAccount(int index) {
+    final name = index.toString();
+    if (!getIt.isRegistered<UserInfoViewModel>(instanceName: name)) {
+      return false;
+    }
+    final vm = getIt<UserInfoViewModel>(instanceName: name);
+    return (vm.token ?? '').isNotEmpty;
+  }
+
+  /// 指定槽位的面板地址（直接按 getIt 槽位取，不依赖页面祖先查找）。
+  static String accountHost(int index) {
+    final name = index.toString();
+    if (!getIt.isRegistered<UserInfoViewModel>(instanceName: name)) return '';
+    return getIt<UserInfoViewModel>(instanceName: name).host ?? '';
+  }
+
+  /// 找到第一个已登录的账号索引。
+  ///
+  /// 仅用于「没有页面上下文」的场景（如 MCP 服务启动恢复）；
+  /// 页面内请用 SingleAccountPageState.ofIndex(context) 取当前槽位。
   static int resolveAccountIndex() {
     for (var i = 0; i < 5; i++) {
-      final name = i.toString();
-      if (!getIt.isRegistered<UserInfoViewModel>(instanceName: name)) continue;
-      final vm = getIt<UserInfoViewModel>(instanceName: name);
-      if ((vm.token ?? '').isNotEmpty) return i;
+      if (hasAccount(i)) return i;
     }
     return 0;
   }

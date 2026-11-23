@@ -13,6 +13,7 @@ import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/module/env/env_bean.dart';
 import 'package:qinglong_app/utils/crypto_utils.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
+import 'package:qinglong_app/utils/utils.dart';
 import 'package:qinglong_app/utils/webdav_client.dart';
 import 'package:qinglong_app/utils/wd_dbg.dart';
 
@@ -146,7 +147,10 @@ class WebDavBackupUtils {
               onProgress?.call("上传备份", total > 0 ? sent / total : null),
     );
     WdDbg.log("B8 put done");
-    await SpUtil.putString(spWebDavLastBackTime, _nowText());
+    await SpUtil.putString(
+      Utils.accountSpKey(spWebDavLastBackTime, index),
+      _nowText(),
+    );
     WdDbg.log("B9 all done");
   }
 
@@ -217,9 +221,9 @@ class WebDavBackupUtils {
   /// 自动备份入口：开关开启 + 配置齐全 + 80 秒防抖；静默失败不打扰用户。
   static Future<void> maybeAutoBackup(int index) async {
     try {
-      if (!SpUtil.getBool(spWebDavAuto, defValue: false)) return;
+      if (!Utils.accountSpBool(spWebDavAuto, index)) return;
       if (!_isConfigured()) return;
-      final last = SpUtil.getString(spWebDavLastAutoBackTime, defValue: "");
+      final last = Utils.accountSpString(spWebDavLastAutoBackTime, index);
       if (last.isNotEmpty) {
         final t = DateTime.tryParse(last);
         if (t != null &&
@@ -229,7 +233,7 @@ class WebDavBackupUtils {
       }
       // 先记时间再上传，避免连发请求排队堆积
       await SpUtil.putString(
-        spWebDavLastAutoBackTime,
+        Utils.accountSpKey(spWebDavLastAutoBackTime, index),
         DateTime.now().toIso8601String(),
       );
       await backupAll(index);

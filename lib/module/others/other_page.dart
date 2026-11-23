@@ -629,7 +629,10 @@ class OtherPageState extends ConsumerState<OtherPage>
                 title: "AI 助手",
                 icon: Icons.auto_awesome_outlined,
                 onTap: () {
-                  Navigator.of(context).pushNamed(Routes.routeAgent);
+                  Navigator.of(context).pushNamed(
+                    Routes.routeAgent,
+                    arguments: SingleAccountPageState.ofIndex(context),
+                  );
                 },
               ),
             ],

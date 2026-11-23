@@ -14,10 +14,12 @@ import 'package:qinglong_app/agent/agent_tools.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/routes.dart';
+import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/blur_effect.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/spring_sheet.dart';
+import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
 class _ChatEntry {
@@ -60,7 +62,11 @@ class _ChatEntry {
 /// 取色/字重走项目 themeProvider；键盘用 didChangeMetrics + View.of 取原始
 /// insets（main.dart 全局把 MediaQuery.viewInsets 归零了）。
 class AgentPage extends ConsumerStatefulWidget {
-  const AgentPage({super.key});
+  /// 入口可显式指定账号槽位（如「我的」页按当前账号进入）；
+  /// 为空时由页面上下文解析，避免跨账号读到同一份会话。
+  final int? accountIndex;
+
+  const AgentPage({super.key, this.accountIndex});
 
   @override
   ConsumerState<AgentPage> createState() => _AgentPageState();
@@ -77,6 +83,12 @@ class _AgentPageState extends ConsumerState<AgentPage>
   AgentPendingAction? _pendingAction;
   String _sessionKey = 'ai_session_default';
   int _accountIndex = 0;
+
+  /// 当前账号的面板主机，参与会话 key（同槽位换面板不串记录）
+  String _accountHost = '';
+
+  /// 账号槽位只解析一次（didChangeDependencies 可能被多次调用）
+  bool _slotResolved = false;
   bool _busy = false;
   bool _ready = false;
   double _lastKeyboard = 0;
@@ -130,7 +142,11 @@ class _AgentPageState extends ConsumerState<AgentPage>
   String get _effectiveSessionKey {
     final backend = _backend;
     if (backend == null) return _sessionKey;
-    return AgentSessionStore.keyFor(backend.label, _accountIndex);
+    return AgentSessionStore.keyFor(
+      backend.label,
+      _accountIndex,
+      host: _accountHost,
+    );
   }
 
   @override
@@ -143,6 +159,21 @@ class _AgentPageState extends ConsumerState<AgentPage>
     });
     // 反向列表（0=底部）：滑到顶部附近时按页放出更早的记录
     _scroll.addListener(_onScrollLoadEarlier);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_slotResolved) return;
+    _slotResolved = true;
+    // 优先用入口显式传入的槽位；否则取页面上下文，最后退回当前激活账号。
+    // 绝不能用 resolveAccountIndex()（永远第一个已登录账号 → 跨账号串数据）。
+    final SingleAccountPageState? slot = SingleAccountPageState.of(context);
+    _accountIndex =
+        widget.accountIndex ??
+        slot?.index ??
+        MultiAccountPageState.currentAccountIndex;
+    _accountHost = AgentCapabilityService.accountHost(_accountIndex);
     _initBackend();
   }
 
@@ -208,15 +239,14 @@ class _AgentPageState extends ConsumerState<AgentPage>
           ),
         )
         .whenComplete(() {
-      if (!mounted) return;
-      setState(() => _takeover = false);
-    });
+          if (!mounted) return;
+          setState(() => _takeover = false);
+        });
   }
 
   Future<void> _initBackend() async {
     final config = await AgentConfigStore.load();
-    final index = AgentCapabilityService.resolveAccountIndex();
-    _accountIndex = index; // 固定账号索引，写入/读取用同一个 key
+    final index = _accountIndex; // 已由页面上下文解析，固定不变
     final AgentBackend backend;
     if (config.backendType == AgentBackendType.builtin) {
       backend = BuiltinAgentBackend(
@@ -226,7 +256,11 @@ class _AgentPageState extends ConsumerState<AgentPage>
     } else {
       backend = RemoteAgentBackend(config: config);
     }
-    _sessionKey = AgentSessionStore.keyFor(backend.label, index);
+    _sessionKey = AgentSessionStore.keyFor(
+      backend.label,
+      index,
+      host: _accountHost,
+    );
 
     // 先让页面立刻可用，再异步恢复会话与探测能力，避免初始化阻塞发送。
     if (!mounted) return;
@@ -593,7 +627,9 @@ class _AgentPageState extends ConsumerState<AgentPage>
             tooltip: 'AI 设置',
             icon: const Icon(Icons.settings_outlined),
             onPressed: () async {
-              await Navigator.of(context).pushNamed(Routes.routeAgentSettings);
+              await Navigator.of(
+                context,
+              ).pushNamed(Routes.routeAgentSettings, arguments: _accountIndex);
               await _reload();
             },
           ),
@@ -603,91 +639,90 @@ class _AgentPageState extends ConsumerState<AgentPage>
         child: Column(
           children: <Widget>[
             _buildBackendBanner(descColor),
-          Expanded(
-            child: Stack(
-              children: <Widget>[
-                // 消息列表：底部让位 = 输入框悬浮位 + 框高（最新消息不被盖住；
-                // 滚动时内容从半透明输入框底下穿过）。
-                // 空态例外：固定让位（不随键盘）——空态是居中定位，若让位随
-                // 键盘变化，居中内容会整体下坠与输入框重叠（用户实测难看）
-                Positioned.fill(
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                      bottom:
-                          _entries.isEmpty ? navBottom + 58 : listPadding,
-                    ),
-                    child:
-                        _entries.isEmpty
-                            ? (_restoring
-                                // 恢复中：留白而非空态，避免「空态闪一下」
-                                ? const SizedBox.shrink()
-                                : _buildEmpty(titleColor, descColor, accent))
-                            : Builder(
-                              builder: (context) {
-                                // 内存中只有一段窗口，直接整段渲染即可
-                                final int visible = _entries.length;
-                                final int extra = _busy ? 1 : 0;
-                                return ListView.builder(
-                                  controller: _scroll,
-                                  // 反向列表：index 0 就是底部最新一条，
-                                  // 首帧 offset 0 = 天然停在最新记录，
-                                  // 无需「渲染后滚到底」的动画。
-                                  reverse: true,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 12,
-                                  ),
-                                  itemCount: visible + extra,
-                                  itemBuilder: (context, index) {
-                                    // 忙碌指示器固定在底部（最新一侧）
-                                    if (extra == 1 && index == 0) {
-                                      return Padding(
-                                        padding: const EdgeInsets.all(14),
-                                        child: Center(
-                                          child: SizedBox(
-                                            width: 20,
-                                            height: 20,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: accent,
+            Expanded(
+              child: Stack(
+                children: <Widget>[
+                  // 消息列表：底部让位 = 输入框悬浮位 + 框高（最新消息不被盖住；
+                  // 滚动时内容从半透明输入框底下穿过）。
+                  // 空态例外：固定让位（不随键盘）——空态是居中定位，若让位随
+                  // 键盘变化，居中内容会整体下坠与输入框重叠（用户实测难看）
+                  Positioned.fill(
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        bottom: _entries.isEmpty ? navBottom + 58 : listPadding,
+                      ),
+                      child:
+                          _entries.isEmpty
+                              ? (_restoring
+                                  // 恢复中：留白而非空态，避免「空态闪一下」
+                                  ? const SizedBox.shrink()
+                                  : _buildEmpty(titleColor, descColor, accent))
+                              : Builder(
+                                builder: (context) {
+                                  // 内存中只有一段窗口，直接整段渲染即可
+                                  final int visible = _entries.length;
+                                  final int extra = _busy ? 1 : 0;
+                                  return ListView.builder(
+                                    controller: _scroll,
+                                    // 反向列表：index 0 就是底部最新一条，
+                                    // 首帧 offset 0 = 天然停在最新记录，
+                                    // 无需「渲染后滚到底」的动画。
+                                    reverse: true,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 12,
+                                    ),
+                                    itemCount: visible + extra,
+                                    itemBuilder: (context, index) {
+                                      // 忙碌指示器固定在底部（最新一侧）
+                                      if (extra == 1 && index == 0) {
+                                        return Padding(
+                                          padding: const EdgeInsets.all(14),
+                                          child: Center(
+                                            child: SizedBox(
+                                              width: 20,
+                                              height: 20,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: accent,
+                                              ),
                                             ),
                                           ),
-                                        ),
+                                        );
+                                      }
+                                      final int i = index - extra;
+                                      // _entries 为时间正序：反向列表下从末尾往前取
+                                      return _buildEntry(
+                                        _entries[_entries.length - 1 - i],
+                                        titleColor,
+                                        descColor,
+                                        accent,
                                       );
-                                    }
-                                    final int i = index - extra;
-                                    // _entries 为时间正序：反向列表下从末尾往前取
-                                    return _buildEntry(
-                                      _entries[_entries.length - 1 - i],
-                                      titleColor,
-                                      descColor,
-                                      accent,
-                                    );
-                                  },
-                                );
-                              },
-                            ),
+                                    },
+                                  );
+                                },
+                              ),
+                    ),
                   ),
-                ),
-                // 悬浮输入框：Positioned 定位在键盘上沿 / 安全区+2
-                // （与底部导航 margin bottom:2 同源，小白条不遮挡）
-                Positioned(
-                  left: 12,
-                  right: 12,
-                  bottom: composerBottom,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      if (_pendingAction != null)
-                        _buildConfirmCard(titleColor, descColor, accent),
-                      const SizedBox(height: 8),
-                      _buildComposer(titleColor, descColor, accent),
-                    ],
+                  // 悬浮输入框：Positioned 定位在键盘上沿 / 安全区+2
+                  // （与底部导航 margin bottom:2 同源，小白条不遮挡）
+                  Positioned(
+                    left: 12,
+                    right: 12,
+                    bottom: composerBottom,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        if (_pendingAction != null)
+                          _buildConfirmCard(titleColor, descColor, accent),
+                        const SizedBox(height: 8),
+                        _buildComposer(titleColor, descColor, accent),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
           ],
         ),
       ),
@@ -863,11 +898,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
     );
   }
 
-  Widget _buildComposer(
-    Color titleColor,
-    Color descColor,
-    Color accent,
-  ) {
+  Widget _buildComposer(Color titleColor, Color descColor, Color accent) {
     // 单一层次（对齐 demo）：胶囊是唯一视觉层，TextField 自身不画边框/底色。
     // 必须显式关闭 enabled/focused 等各状态 border —— 全局 InputDecorationTheme
     // 的 focusedBorder 会在聚焦时再画一个内层胶囊（"套着两层 UI"的来源）。
@@ -896,7 +927,10 @@ class _AgentPageState extends ConsumerState<AgentPage>
                 onTap: () => AgentToast.hide(),
                 style: TextStyle(color: titleColor, fontSize: 14),
                 decoration: InputDecoration(
-                  hintText: '说点什么，例如：今天运行了哪些任务？',
+                  hintText: '说点什么，如：今天运行哪些任务？',
+                  // 提示文案最多 1 行（默认跟随 maxLines:4，长文案会把输入框
+                  // 撑高并压住会话卡片）；超出用省略号，输入框高度恒定
+                  hintMaxLines: 1,
                   hintStyle: TextStyle(fontSize: 13, color: descColor),
                   filled: false,
                   isDense: true,

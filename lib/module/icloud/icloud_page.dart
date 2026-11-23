@@ -21,6 +21,7 @@ import 'package:qinglong_app/module/others/other_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/icloud_utils.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
+import 'package:qinglong_app/utils/utils.dart';
 
 import '../../base/theme.dart';
 import 'package:qinglong_app/base/ui/wallpaper_page_route.dart';
@@ -34,6 +35,8 @@ class IcloudPage extends ConsumerStatefulWidget {
 
 class _IcloudPageState extends ConsumerState<IcloudPage>
     with LazyLoadState<IcloudPage> {
+  int get _index => SingleAccountPageState.of(context)?.index ?? 0;
+
   @override
   Widget build(BuildContext context) {
     final bool isCyber = ref.read(themeProvider).themeMode == modeCyber;
@@ -61,9 +64,13 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
                   children: [
                     SettingsSwitchRow(
                       title: "自动备份",
-                      value: SpUtil.getBool(spICloud, defValue: true),
+                      value: Utils.accountSpBool(
+                        spICloud,
+                        _index,
+                        defValue: true,
+                      ),
                       onChanged: (v) {
-                        SpUtil.putBool(spICloud, v);
+                        SpUtil.putBool(Utils.accountSpKey(spICloud, _index), v);
                         setState(() {});
                       },
                     ),
@@ -108,7 +115,10 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
                                   context,
                                 )!.index.toString(),
                           ).asyncEnv(result.bean ?? [], focusUpdate: true);
-                          SpUtil.putString(spEnvBackTime, ICloudUtils.now());
+                          SpUtil.putString(
+                            Utils.accountSpKey(spEnvBackTime, _index),
+                            ICloudUtils.now(),
+                          );
                           setState(() {});
                         } catch (e) { /* ignore: failure is non-critical */ }
                       },
@@ -116,10 +126,7 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            SpUtil.getString(
-                              spEnvBackTime,
-                              defValue: "",
-                            ),
+                            Utils.accountSpString(spEnvBackTime, _index),
                             style: TextStyle(
                               fontSize: 16,
                               color:
@@ -196,7 +203,7 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
                             focusUpdate: true,
                           );
                           SpUtil.putString(
-                            spConfigBackTime,
+                            Utils.accountSpKey(spConfigBackTime, _index),
                             ICloudUtils.now(),
                           );
                           setState(() {});
@@ -208,10 +215,7 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            SpUtil.getString(
-                              spConfigBackTime,
-                              defValue: "",
-                            ),
+                            Utils.accountSpString(spConfigBackTime, _index),
                             style: TextStyle(
                               fontSize: 16,
                               color:
@@ -290,20 +294,19 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
                             focusUpdate: true,
                           );
                           SpUtil.putString(
-                            spSubscribeBackTime,
+                            Utils.accountSpKey(spSubscribeBackTime, _index),
                             ICloudUtils.now(),
                           );
                           setState(() {});
-                        } catch (e) { /* ignore: failure is non-critical */ }
+                        } catch (e) {
+                          /* ignore: failure is non-critical */
+                        }
                       },
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            SpUtil.getString(
-                              spSubscribeBackTime,
-                              defValue: "",
-                            ),
+                            Utils.accountSpString(spSubscribeBackTime, _index),
                             style: TextStyle(
                               fontSize: 16,
                               color:
@@ -414,7 +417,9 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
       fileNum = result["fileNum"].toString();
       fileSizes = getFileSizeString(result["size"] ?? 0, 2);
       setState(() {});
-    } catch (e) { /* ignore: failure is non-critical */ }
+    } catch (e) {
+      /* ignore: failure is non-critical */
+    }
   }
 
   String? fileNum = "-";
@@ -458,7 +463,9 @@ Map<String, int> dirStatSync(String dirPath) {
         }
       });
     }
-  } catch (e) { /* ignore: failure is non-critical */ }
+  } catch (e) {
+    /* ignore: failure is non-critical */
+  }
 
   return {'fileNum': fileNum, 'size': totalSize};
 }

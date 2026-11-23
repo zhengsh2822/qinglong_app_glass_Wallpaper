@@ -188,6 +188,19 @@ class AgentConfigStore {
   static String _encodeScopes(Set<String> scopes) =>
       (scopes.toList()..sort()).join(',');
 
+  /// 本地 MCP 服务当前绑定的账号槽位（-1 = 未绑定过）。
+  ///
+  /// MCP 是设备级单实例服务，同一时间只能服务一个账号；
+  /// 启用时记录槽位，App 重启后按该槽位恢复，避免变成「永远账号 0」。
+  static const String _kMcpAccountIndex = 'agent_mcp_account_index_v1';
+
+  static int get mcpAccountIndex =>
+      int.tryParse(SpUtil.getString(_kMcpAccountIndex)) ?? -1;
+
+  static Future<void> setMcpAccountIndex(int index) async {
+    await SpUtil.putString(_kMcpAccountIndex, index.toString());
+  }
+
   /// 供会话持久化等模块复用的设备口令（单一来源，避免重复实现加密）。
   static Future<String> deviceSecret() async {
     String value = SpUtil.getString(_kDeviceSecret);

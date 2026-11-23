@@ -88,11 +88,14 @@ void showConfigActions(
     CupertinoSheer(
       title: '下载',
       onTap: () async {
+        final int accountIndex = SingleAccountPageState.ofIndex(context);
         final String? text = await _resolveContent(context, bean, content);
         if (text == null) return;
         try {
           String name = "${Random().nextInt(40000)}_$title";
-          await FileUtil(0).writeDownloadFile(name, text);
+          await FileUtil(
+            accountIndex,
+          ).writeDownloadFile(name, text);
           "已写入Download/qinglong文件夹下,文件名$name".toast2();
         } catch (e) {
           e.toString().toast();

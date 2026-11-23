@@ -33,6 +33,10 @@ class AgentMCPServer {
   int _port = 9127;
   int get port => _port;
 
+  /// 当前 MCP 服务绑定的账号槽位（工具执行走该账号的 Http/Token）
+  int _accountIndex = 0;
+  int get accountIndex => _accountIndex;
+
   /// 启动本地 MCP 服务。返回实际监听端口（被占用时自增重试）。
   ///
   /// [lan] 为 true 时绑定 0.0.0.0，PC 端客户端才能用手机 IP 连进来；
@@ -42,10 +46,13 @@ class AgentMCPServer {
     required QingLongToolExecutor executor,
     Set<String> scopes = const <String>{},
     bool lan = false,
+    int accountIndex = 0,
   }) async {
     await stop();
     _executor = executor;
     _scopes = scopes;
+    _accountIndex = accountIndex;
+    await AgentConfigStore.setMcpAccountIndex(accountIndex);
 
     final bindAddr =
         lan ? InternetAddress.anyIPv4 : InternetAddress.loopbackIPv4;
@@ -82,12 +89,18 @@ class AgentMCPServer {
     try {
       final config = await AgentConfigStore.load();
       if (!config.mcpEnabled || instance.running) return;
-      final index = AgentCapabilityService.resolveAccountIndex();
+      // 优先恢复启用时的账号；该账号已退出登录时退回第一个在线账号，
+      // 绝不无条件使用账号 0（多账号下会串到错误面板执行）。
+      int index = AgentConfigStore.mcpAccountIndex;
+      if (index < 0 || index > 4 || !AgentCapabilityService.hasAccount(index)) {
+        index = AgentCapabilityService.resolveAccountIndex();
+      }
       await instance.start(
         port: config.mcpPort,
         executor: QingLongToolExecutor(index, scopes: config.scopes),
         scopes: config.scopes,
         lan: config.mcpLan,
+        accountIndex: index,
       );
     } catch (_) {
       // 端口占用等异常不阻断 App 启动

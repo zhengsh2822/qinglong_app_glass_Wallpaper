@@ -249,15 +249,28 @@ class Routes {
       case routeJdck:
         return WallpaperPageRoute(builder: (context) => const JdckPage());
       case routeAgent:
+        // 入口显式传账号槽位，路由内不再猜「当前是哪个账号」
         return WallpaperPageRoute(
-          builder: (context) => const AgentPage(),
+          builder:
+              (context) => AgentPage(
+                accountIndex:
+                    settings.arguments is int
+                        ? settings.arguments! as int
+                        : null,
+              ),
           // 文字密集页：路由级壁纸模糊 + 底色压暗，保证可读性
           blurSigma: 6,
           blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
         );
       case routeAgentSettings:
         return WallpaperPageRoute(
-          builder: (context) => const AgentSettingsPage(),
+          builder:
+              (context) => AgentSettingsPage(
+                accountIndex:
+                    settings.arguments is int
+                        ? settings.arguments! as int
+                        : null,
+              ),
           blurSigma: 6,
           blurTintColor: CyberColors.bg.withValues(alpha: 0.50),
         );

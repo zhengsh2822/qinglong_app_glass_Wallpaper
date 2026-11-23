@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
+import 'package:qinglong_app/utils/sp_utils.dart';
 
 import '../main.dart';
 
@@ -161,6 +162,27 @@ class Utils {
     } else {
       return DateFormat("yyyy/M/d HH:mm").format(chatTime);
     }
+  }
+
+  /// 账号级 SharedPreferences key：同一偏好按账号槽位隔离，互不覆盖。
+  static String accountSpKey(String base, int index) => '${base}_$index';
+
+  /// 读账号级 bool：账号 key 未写过时回退旧全局值（升级兼容）。
+  static bool accountSpBool(String base, int index, {bool defValue = false}) {
+    final String key = accountSpKey(base, index);
+    if (SpUtil.haveKey(key)) return SpUtil.getBool(key, defValue: defValue);
+    return SpUtil.getBool(base, defValue: defValue);
+  }
+
+  /// 读账号级 string：账号 key 未写过时回退旧全局值（升级兼容）。
+  static String accountSpString(
+    String base,
+    int index, {
+    String defValue = '',
+  }) {
+    final String key = accountSpKey(base, index);
+    if (SpUtil.haveKey(key)) return SpUtil.getString(key, defValue: defValue);
+    return SpUtil.getString(base, defValue: defValue);
   }
 }
 
