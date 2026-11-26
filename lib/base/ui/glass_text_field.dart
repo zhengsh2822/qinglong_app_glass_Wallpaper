@@ -6,6 +6,7 @@ import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 /// 胶囊形毛玻璃输入框
 ///
@@ -116,6 +117,7 @@ class _GlassTextFieldState extends ConsumerState<GlassTextField> {
         ),
         padding: widget.padding,
         child: TextField(
+          contextMenuBuilder: copyableEditableTextMenu,
           controller: widget.controller,
           focusNode: _focusNode,
           maxLines: widget.maxLines,

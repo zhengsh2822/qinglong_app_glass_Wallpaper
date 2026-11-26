@@ -10,6 +10,7 @@ import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/module/subscribe/subscribe_detail_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 class AddSubscribePage extends ConsumerStatefulWidget {
   final Map<String, dynamic> taskBean;
@@ -117,6 +118,7 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
                 height: 10,
               ),
               TextField(
+                contextMenuBuilder: copyableEditableTextMenu,
                 controller: _nameController,
                 decoration: const InputDecoration(
                   hintText: "请输入订阅名",
@@ -186,6 +188,7 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
                 height: 10,
               ),
               TextField(
+                contextMenuBuilder: copyableEditableTextMenu,
                 controller: _linkController,
                 decoration: const InputDecoration(
                   hintText: "请输入订阅链接",
@@ -273,6 +276,7 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
               Visibility(
                 visible: cronType == CronType.cron,
                 child: TextField(
+                  contextMenuBuilder: copyableEditableTextMenu,
                   controller: _cronController,
                   decoration: const InputDecoration(
                     hintText: "秒可选 分时日月周",
@@ -335,6 +339,7 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
                         ),
                         Expanded(
                           child: TextField(
+                            contextMenuBuilder: copyableEditableTextMenu,
                             controller: _intervalController,
                             decoration: const InputDecoration(
                               hintText: "",
@@ -416,6 +421,7 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
               Visibility(
                 visible: type != Type.single,
                 child: TextField(
+                  contextMenuBuilder: copyableEditableTextMenu,
                   controller: _whiteListController,
                   decoration: const InputDecoration(
                     hintText: "请输入脚本筛选白名单关键词,多个关键词竖线分隔",
@@ -444,6 +450,7 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
               Visibility(
                 visible: type != Type.single,
                 child: TextField(
+                  contextMenuBuilder: copyableEditableTextMenu,
                   controller: _blackListController,
                   decoration: const InputDecoration(
                     hintText: "请输入脚本筛选黑名单关键词,多个关键词竖线分隔",
@@ -472,6 +479,7 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
               Visibility(
                 visible: type != Type.single,
                 child: TextField(
+                  contextMenuBuilder: copyableEditableTextMenu,
                   controller: _depController,
                   decoration: const InputDecoration(
                     hintText: "请输入依赖文件关键词,多个关键词竖线分隔",
@@ -500,6 +508,7 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
               Visibility(
                 visible: type != Type.single,
                 child: TextField(
+                  contextMenuBuilder: copyableEditableTextMenu,
                   controller: _suffixController,
                   decoration: const InputDecoration(
                     hintText: "请输入文件后缀",
@@ -528,6 +537,7 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
               Visibility(
                 visible: type != Type.single,
                 child: TextField(
+                  contextMenuBuilder: copyableEditableTextMenu,
                   controller: _taskBeforeController,
                   decoration: const InputDecoration(
                     hintText: "请输入运行订阅前要执行的命令",
@@ -556,6 +566,7 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
               Visibility(
                 visible: type != Type.single,
                 child: TextField(
+                  contextMenuBuilder: copyableEditableTextMenu,
                   controller: _taskAfterController,
                   decoration: const InputDecoration(
                     hintText: "请输入运行订阅后要执行的命令",
@@ -740,6 +751,7 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
             height: 10,
           ),
           TextField(
+            contextMenuBuilder: copyableEditableTextMenu,
             controller: _branchController,
             decoration: const InputDecoration(
               hintText: "请输入分支",
@@ -769,6 +781,7 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
             height: 10,
           ),
           TextField(
+            contextMenuBuilder: copyableEditableTextMenu,
             controller: _branchController,
             decoration: const InputDecoration(
               hintText: "请输入分支",
@@ -842,6 +855,7 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
           Visibility(
             visible: pullType == PullType.privateKey,
             child: TextField(
+              contextMenuBuilder: copyableEditableTextMenu,
               controller: _privateKeyController,
               decoration: const InputDecoration(
                 hintText: "请输入私钥",
@@ -865,6 +879,7 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
           Visibility(
             visible: pullType == PullType.userName,
             child: TextField(
+              contextMenuBuilder: copyableEditableTextMenu,
               controller: _userNameController,
               decoration: const InputDecoration(
                 hintText: "请输入用户名",
@@ -894,6 +909,7 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
           Visibility(
             visible: pullType == PullType.userName,
             child: TextField(
+              contextMenuBuilder: copyableEditableTextMenu,
               controller: _userPasswordController,
               decoration: const InputDecoration(
                 hintText: "请输入密码或者Token",

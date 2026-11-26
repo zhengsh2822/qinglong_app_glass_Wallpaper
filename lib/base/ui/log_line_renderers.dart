@@ -40,19 +40,29 @@ final RegExp _taggedBase64Re = RegExp(
 );
 
 /// Unicode block elements（qrcode-terminal 字符画的主要字符集）
-/// 半角：█▀▄▌▐；上下半：▛▜▙▟▚▞；小方块：▗▖▝▘
-/// 加上全角字符（部分中文字体也用全角空格画）
-const String _blockChars =
-    '█▀▄▌▐▛▜▙▟▚▞▗▖▝▘■□▪▫●○◾◽⬛⬜';
+///
+/// 注意：这里**只能**放真正的方块（█▀▄▌▐ 等）与全角方块，
+/// 不能放 ●○■□▪▫ 这类"圆点/小方块"符号 —— 大量脚本用它们做列表前缀
+/// （`● 开始执行` / `○ 跳过` / `■ 完成`），混进来会让普通日志行被判成
+/// 字符画，塞进 64×64 缩略图卡片里，正文就此丢失（"日志显示不全/没有日志"）。
+const String _blockChars = '█▀▄▌▐▛▜▙▟▚▞▗▖▝▘░▒▓';
 
 /// 单行 block 字符的最小密度阈值（占比）
 const double _asciiArtLineDensity = 0.15;
 
+/// 文字统计时忽略空白（全角空格/制表符是字符画的一部分，不算内容）
+bool _isSpacingChar(String ch) =>
+    ch == ' ' || ch == '\t' || ch == '\u3000' || ch == '\n' || ch == '\r';
+
 /// 过滤 ANSI 控制字符（颜色码 \u001b[31m 等）
 /// 实际日志里还可能出现 \r、\u0000 等
 String stripAnsiAndControls(String s) {
-  // 去掉 ANSI 转义序列：ESC [ ... m
-  var result = s.replaceAll(RegExp(r'\x1B\[[0-9;]*[A-Za-z]'), '');
+  // 去掉 ANSI 转义序列（[0-9;:?]* + 任意终止符，兼容 \x1b[K / \x1b[2J 等）
+  var result = s.replaceAll(RegExp(r'\x1B\[[0-9;:?]*[A-Za-z@`~]'), '');
+  // 去掉 OSC 序列：\x1b]0;title\x07 这类标题设置
+  result = result.replaceAll(RegExp(r'\x1B\][^\x07]*\x07'), '');
+  // 去掉剩余孤立 ESC 与光标移动
+  result = result.replaceAll('\x1B', '');
   // 进度条/进度覆盖用 \r：取最后一个 \r 之后的内容（避免和上一行内容视觉重叠）
   if (result.contains('\r')) {
     result = result.substring(result.lastIndexOf('\r') + 1);
@@ -62,12 +72,40 @@ String stripAnsiAndControls(String s) {
   return result;
 }
 
+/// 图片路径识别的辅助：判断命中是否值得做"图片卡片"
+///
+/// 原实现只要行内含 `xxx.png` 且带 `/` 就整行转成卡片，
+/// 于是 `导出结果到 /ql/data/scripts/out.png 完成` 这种日志正文也会被吞成
+/// 一张只有一个文件名的卡片 —— 用户看到的就是"日志少了一段"。
+/// 这里要求：要么整行几乎就是路径本身，要么行内文字量很少。
+bool _shouldRenderAsImageCard(String raw, String path) {
+  final String trimmed = raw.trim();
+  // 1) 整行就是路径（可带引号）：最典型的脚本"输出图片路径"
+  if (trimmed == path ||
+      trimmed == '"$path"' ||
+      trimmed == "'$path'" ||
+      trimmed.endsWith(path) && trimmed.length <= path.length + 6) {
+    return true;
+  }
+  // 2) 去掉路径后，剩下的非空白文字很少（如"二维码已保存: "）
+  final String rest = trimmed.replaceAll(path, '').trim();
+  int visible = 0;
+  for (final rune in rest.runes) {
+    final ch = String.fromCharCode(rune);
+    if (!_isSpacingChar(ch)) visible++;
+  }
+  // 中文日志常见"二维码图片已保存: "约 8~10 字，允许到 12
+  return visible <= 12;
+}
+
 ImagePathLine? tryExtractImagePath(String line) {
   final m = _imgPathRe.firstMatch(line);
   if (m == null) return null;
   final path = m.group(1)!;
   // 启发式：路径必须包含 / 或 \，避免把普通文本中的 .png 字误判
   if (!path.contains('/') && !path.contains('\\')) return null;
+  // 正文夹带图片名（日志段落）→ 保持纯文本，不要吞成卡片
+  if (!_shouldRenderAsImageCard(line, path)) return null;
   return ImagePathLine(line, path);
 }
 
@@ -92,15 +130,21 @@ Base64ImageLine? tryExtractBase64Image(String line) {
 }
 
 /// 单行是否是 block characters 字符画行
-/// 条件：行长度 ≥ 8 且 block 字符占比 ≥ 15%
+///
+/// 条件：非空白字符数 ≥ 8 且 block 字符占比 ≥ 15%。
+/// 统计口径改为"非空白字符"——字符画行里全角空格/空格占大头，
+/// 按整行长度算会把真正的字符画行判成普通文本（显示成乱码方块）。
 bool isAsciiArtLine(String line) {
-  if (line.length < 8) return false;
   int blockCount = 0;
-  for (int i = 0; i < line.length; i++) {
-    if (_blockChars.contains(line[i])) blockCount++;
+  int visible = 0;
+  for (final rune in line.runes) {
+    final ch = String.fromCharCode(rune);
+    if (_isSpacingChar(ch)) continue;
+    visible++;
+    if (_blockChars.contains(ch)) blockCount++;
   }
-  // 允许行尾 \r 残留（前面已处理，但保险起见）
-  return blockCount / line.length >= _asciiArtLineDensity;
+  if (visible < 8) return false;
+  return blockCount / visible >= _asciiArtLineDensity;
 }
 
 /// ============================================================

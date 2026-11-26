@@ -1027,12 +1027,16 @@ class Http {
         // responseType 为 plain 时，response.data 是 String，需先 jsonDecode
         dynamic data = response.data;
         if (data is String) {
-          if (data.isEmpty) {
+          // 纯空白同样视为空响应（部分反代/网关会返回 "\n"）
+          if (data.trim().isEmpty) {
+            // 注意：这里不能标 needRelogin。空响应在正常业务里大量出现
+            // （空日志、空脚本列表等），原实现会触发重建 Dio + 静默刷新 +
+            // 重试，最坏还弹「是否重新登录」，用户看到的就是「日志拉不到」。
+            // 只作为空数据返回，由调用方按空态处理。
             return HttpResponse<T>(
-              success: false,
-              code: -1000,
+              success: true,
+              code: 200,
               message: "服务器返回空响应",
-              needRelogin: true,
             );
           }
           // 先尝试 JSON 解析：脚本/日志等读取接口的 data 字段可能是源码文本，

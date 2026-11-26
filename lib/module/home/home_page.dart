@@ -30,6 +30,7 @@ import 'package:liquid_glass_easy/liquid_glass_easy.dart';
 
 import '../../base/multi_account_userinfo_viewmodel.dart';
 import '../../base/userinfo_viewmodel.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -154,6 +155,7 @@ class HomePageState extends ConsumerState<HomePage> {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     child: TextField(
+                      contextMenuBuilder: copyableEditableTextMenu,
                       textAlign: TextAlign.center,
                       controller: controller,
                       autofocus: false,
@@ -672,6 +674,7 @@ class HomePageState extends ConsumerState<HomePage> {
                 Material(
                   color: Colors.transparent,
                   child: TextField(
+                    contextMenuBuilder: copyableEditableTextMenu,
                     onChanged: (value) {
                       twoFact = value;
                     },

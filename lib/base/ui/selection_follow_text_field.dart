@@ -11,6 +11,7 @@ import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 /// 选区滚动跟随多行文本框 —— 嵌套滚动 + 边缘自动滚动（A 方案，同步主题版）
 ///
@@ -381,6 +382,7 @@ class _SelectionFollowTextFieldState
         ),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: TextField(
+          contextMenuBuilder: copyableEditableTextMenu,
           key: _fieldKey,
           controller: widget.controller,
           focusNode: widget.focusNode,

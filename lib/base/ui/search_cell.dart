@@ -9,6 +9,7 @@ import '../sp_const.dart';
 import '../theme.dart';
 import 'optimized_frosted_glass.dart';
 import '../../utils/sp_utils.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 class SearchCell extends ConsumerStatefulWidget {
   final TextEditingController controller;
@@ -89,6 +90,7 @@ class _SearchCellState extends ConsumerState<SearchCell> {
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
+              contextMenuBuilder: copyableEditableTextMenu,
               controller: widget.controller,
               maxLines: 1,
               textAlign: TextAlign.left,

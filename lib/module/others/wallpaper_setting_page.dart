@@ -9,6 +9,7 @@ import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/settings_widgets.dart';
 import 'package:qinglong_app/utils/extension.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 /// 壁纸设置页
 ///
@@ -315,6 +316,7 @@ class _WallpaperSettingPageState extends ConsumerState<WallpaperSettingPage> {
               children: [
                 Expanded(
                   child: CupertinoTextField(
+                    contextMenuBuilder: copyableEditableTextMenu,
                     controller: _urlController,
                     placeholder: 'https://...',
                     autocorrect: false,

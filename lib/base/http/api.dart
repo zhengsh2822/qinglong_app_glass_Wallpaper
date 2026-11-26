@@ -651,6 +651,9 @@ class Api {
               ).isUpperVersion2_12_2()
               ? "data"
               : "dirs",
+      // 日志列表是动态数据：默认缓存 2 分钟会让新跑出来的任务在列表里
+      // 迟迟不出现，用户以为"这次没产生日志"
+      useCache: false,
     );
   }
 
@@ -675,16 +678,27 @@ class Api {
       }
       return await getIt<Http>(
         instanceName: index.toString(),
-      ).get<String>(url.logDetail, query);
+      ).get<String>(url.logDetail, query, useCache: false);
     }
     if (systemBean.isUpperVersion2_13_0()) {
+      // 日志内容禁止缓存：CacheTtl 给 /logs 分配了 2 分钟 TTL，
+      // 同一任务短时间内再次打开会直接命中旧片段，表现为「日志没更新/
+      // 显示不全/明明是空日志」。这里全部改走实时读取。
       return await getIt<Http>(
         instanceName: index.toString(),
-      ).get<String>('${url.taskLogDetail}$name?path=$path', null);
+      ).get<String>(
+        '${url.taskLogDetail}$name?path=$path',
+        null,
+        useCache: false,
+      );
     }
     return await getIt<Http>(
       instanceName: index.toString(),
-    ).get<String>('${url.taskLogDetail}$path/$name', null);
+    ).get<String>(
+      '${url.taskLogDetail}$path/$name',
+      null,
+      useCache: false,
+    );
   }
 
   Future<HttpResponse<List<ScriptData>>> scripts() async {

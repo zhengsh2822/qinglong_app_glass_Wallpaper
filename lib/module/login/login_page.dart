@@ -31,6 +31,7 @@ import 'package:flip_card/flip_card.dart';
 
 import '../others/change_account_page.dart';
 import 'package:qinglong_app/base/ui/wallpaper_page_route.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   final bool fromAddNewAccount;
@@ -429,6 +430,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               color: ref.watch(themeProvider).themeColor.descColor(),
             );
     final field = TextField(
+      contextMenuBuilder: copyableEditableTextMenu,
       onChanged: (_) => setState(() {}),
       controller: controller,
       obscureText: obscureText,

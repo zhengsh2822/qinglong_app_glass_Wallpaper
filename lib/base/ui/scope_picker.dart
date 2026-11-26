@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/selectable_chip.dart';
 import 'package:qinglong_app/utils/extension.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 /// 一个青龙应用授权资源。中文名与 add_appkey_page.dart 的预设权限保持一致，
 /// 作为唯一数据源，避免两个页面各维护一份。
@@ -169,6 +170,7 @@ class _ScopePickerState extends ConsumerState<ScopePicker> {
           children: <Widget>[
             Expanded(
               child: TextField(
+                contextMenuBuilder: copyableEditableTextMenu,
                 controller: _custom,
                 textInputAction: TextInputAction.done,
                 onSubmitted: (_) => _addCustom(),

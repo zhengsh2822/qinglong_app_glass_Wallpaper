@@ -20,6 +20,7 @@ import 'package:qinglong_app/utils/utils.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 /// 京东助手页面
 /// 集成自 jdck_flutter 项目，适配青龙客户端主题系统
@@ -959,6 +960,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
     final Color labelColor = ref.read(themeProvider).customSecondaryTextColor;
     final Color hintColor = labelColor.withValues(alpha: 0.72);
     return TextField(
+      contextMenuBuilder: copyableEditableTextMenu,
       controller: controller,
       obscureText: obscureText,
       style: TextStyle(color: textColor, fontSize: 16),
@@ -1394,6 +1396,7 @@ class _JdckPageState extends ConsumerState<JdckPage> {
               ),
               const SizedBox(height: 12),
               TextField(
+                contextMenuBuilder: copyableEditableTextMenu,
                 controller: _restoreController,
                 maxLines: 6,
                 style: TextStyle(color: textColor, fontSize: 14),

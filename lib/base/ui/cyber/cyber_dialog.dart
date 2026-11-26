@@ -8,6 +8,7 @@ import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 class CyberDialog {
   static const double borderRadius = 18.0;
@@ -268,6 +269,7 @@ Future<bool?> showEditTaskDialog(
               ),
               const SizedBox(height: 6),
               TextFormField(
+                contextMenuBuilder: copyableEditableTextMenu,
                 controller: nameController,
                 style: _inputStyle,
                 decoration: CyberInputDecoration.standard.copyWith(
@@ -283,6 +285,7 @@ Future<bool?> showEditTaskDialog(
               ),
               const SizedBox(height: 6),
               TextFormField(
+                contextMenuBuilder: copyableEditableTextMenu,
                 controller: commandController,
                 style: _inputStyle,
                 maxLines: 3,
@@ -299,6 +302,7 @@ Future<bool?> showEditTaskDialog(
               ),
               const SizedBox(height: 6),
               TextFormField(
+                contextMenuBuilder: copyableEditableTextMenu,
                 controller: cronController,
                 style: _inputStyle,
                 decoration: CyberInputDecoration.standard.copyWith(
@@ -438,6 +442,7 @@ Future<String?> showEditScriptDialog(
                 padding: const EdgeInsets.all(12),
                 child: SingleChildScrollView(
                   child: TextField(
+                    contextMenuBuilder: copyableEditableTextMenu,
                     controller: contentController,
                     maxLines: null,
                     style: TextStyle(
@@ -507,6 +512,7 @@ Future<String?> showCyberInputDialog(
             ),
             const SizedBox(height: 16),
             TextField(
+              contextMenuBuilder: copyableEditableTextMenu,
               controller: controller,
               keyboardType: keyboardType,
               obscureText: obscureText,
@@ -584,6 +590,7 @@ Future<int?> showCyberFrequencyDialog(
                 SizedBox(
                   width: 100,
                   child: TextField(
+                    contextMenuBuilder: copyableEditableTextMenu,
                     controller: controller,
                     textAlign: TextAlign.center,
                     keyboardType: TextInputType.number,

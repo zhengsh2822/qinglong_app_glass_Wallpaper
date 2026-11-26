@@ -403,3 +403,168 @@ class _CopyableSelectionAreaState extends State<CopyableSelectionArea> {
     );
   }
 }
+
+/// 输入框统一长按菜单（TextField / TextFormField / CupertinoTextField 通用）。
+///
+/// 用法：`TextField(contextMenuBuilder: copyableEditableTextMenu, ...)`。
+///
+/// 背景：Flutter 默认走 [AdaptiveTextSelectionToolbar]，菜单项由各平台/ROM
+/// 自适应决定；部分机型长按不出菜单或缺少「粘贴」，体验不一致。这里统一为
+/// 项目深色玻璃胶囊，动作直接调用 [EditableTextState] 的公开方法：
+/// 剪切 / 复制 / 粘贴 / 全选。「粘贴」不依赖 clipboardStatus 的异步查询
+/// （部分设备查询失败会导致默认菜单缺项），点击时才读取剪贴板。
+Widget copyableEditableTextMenu(
+  BuildContext context,
+  EditableTextState editableTextState,
+) {
+  const double screenPadding = 8;
+  final EdgeInsets mediaPadding = MediaQuery.paddingOf(context);
+  final TextEditingValue value = editableTextState.textEditingValue;
+  final bool isAllSelected =
+      value.selection.isValid &&
+      value.selection.start == 0 &&
+      value.selection.end == value.text.length;
+  // 全选后选区横跨整段文本，锚点会落到屏幕外；沿用冻结锚点让菜单原地保留
+  final TextSelectionToolbarAnchors anchors =
+      (isAllSelected ? _editableFrozenAnchors : null) ??
+      editableTextState.contextMenuAnchors;
+  if (!isAllSelected) {
+    _editableFrozenAnchors = null;
+  }
+
+  final List<_EditableMenuEntry> entries = <_EditableMenuEntry>[
+    if (editableTextState.cutEnabled)
+      _EditableMenuEntry(
+        icon: Icons.content_cut_rounded,
+        label: '剪切',
+        onTap: () {
+          editableTextState.cutSelection(SelectionChangedCause.toolbar);
+          AgentToast.show(context, '已剪切');
+        },
+      ),
+    if (editableTextState.copyEnabled)
+      _EditableMenuEntry(
+        icon: Icons.copy_rounded,
+        label: '复制',
+        onTap: () {
+          editableTextState.copySelection(SelectionChangedCause.toolbar);
+          AgentToast.show(context, '已复制');
+        },
+      ),
+    if (!editableTextState.widget.readOnly)
+      _EditableMenuEntry(
+        icon: Icons.content_paste_rounded,
+        label: '粘贴',
+        onTap: () {
+          editableTextState.pasteText(SelectionChangedCause.toolbar);
+        },
+      ),
+    if (editableTextState.selectAllEnabled)
+      _EditableMenuEntry(
+        icon: Icons.select_all_rounded,
+        label: '全选',
+        onTap: () {
+          _editableFrozenAnchors = editableTextState.contextMenuAnchors;
+          editableTextState.selectAll(SelectionChangedCause.toolbar);
+          // 全选会让 Flutter 重建菜单覆盖层，个别时机下新菜单不可点击；
+          // 下一帧再重建一次，把菜单重新插到 Overlay 顶部恢复可点。
+          void reshow() {
+            if (!editableTextState.mounted) {
+              return;
+            }
+            editableTextState.hideToolbar(false);
+            editableTextState.showToolbar();
+          }
+
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            reshow();
+            Future<void>.delayed(const Duration(milliseconds: 120), reshow);
+          });
+        },
+      ),
+  ];
+
+  if (entries.isEmpty) {
+    return const SizedBox.shrink();
+  }
+
+  return CustomSingleChildLayout(
+    delegate: _SelectionMenuLayoutDelegate(
+      anchorAbove: anchors.primaryAnchor,
+      anchorBelow: anchors.secondaryAnchor ?? anchors.primaryAnchor,
+      padding: EdgeInsets.fromLTRB(
+        mediaPadding.left + screenPadding,
+        mediaPadding.top + screenPadding,
+        mediaPadding.right + screenPadding,
+        mediaPadding.bottom + screenPadding,
+      ),
+    ),
+    child: _EditableSelectionMenu(entries: entries),
+  );
+}
+
+/// 全选瞬间冻结的输入框菜单锚点（全局坐标）
+TextSelectionToolbarAnchors? _editableFrozenAnchors;
+
+class _EditableMenuEntry {
+  const _EditableMenuEntry({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+}
+
+/// 输入框选择菜单：深色玻璃胶囊，动作由可用性动态决定（粘贴在密码框也保留）
+class _EditableSelectionMenu extends StatelessWidget {
+  const _EditableSelectionMenu({required this.entries});
+
+  final List<_EditableMenuEntry> entries;
+
+  @override
+  Widget build(BuildContext context) {
+    final List<Widget> children = <Widget>[];
+    for (int i = 0; i < entries.length; i++) {
+      if (i > 0) {
+        children.add(
+          Container(
+            width: 1,
+            height: 16,
+            color: Colors.white.withValues(alpha: 0.12),
+          ),
+        );
+      }
+      children.add(
+        _SelectionMenuAction(
+          icon: entries[i].icon,
+          label: entries[i].label,
+          onTap: entries[i].onTap,
+        ),
+      );
+    }
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.82),
+          // 胶囊：圆角取高度一半，无需连续曲率
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.28),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: children),
+      ),
+    );
+  }
+}

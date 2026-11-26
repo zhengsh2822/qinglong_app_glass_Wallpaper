@@ -151,7 +151,11 @@ class ScanPageState extends ConsumerState<ScanPage> {
           text = response.bean ?? "";
           String? found = foundReg(command, text);
           if (found != null && found.isNotEmpty) {
-            var result = await autoInstallFounded(api, found, command);
+            var result = await autoInstallFounded(
+              api,
+              found,
+              command.endsWith(".py"),
+            );
             if (result == true) {
               if (command.endsWith(".py")) {
                 pyInstalled.add(found);
@@ -340,10 +344,10 @@ class ScanPageState extends ConsumerState<ScanPage> {
   static Future<bool> autoInstallFounded(
     Api api,
     String found,
-    String command,
+    bool isPython,
   ) async {
     if (found.contains(".") || found.contains("/")) return false;
-    if (command.endsWith(".py")) {
+    if (isPython) {
       List<DependencyBean> pyList = [];
       var pyDep = await api.dependencies("python3");
       if (pyDep.success) {
@@ -436,5 +440,47 @@ class ScanPageState extends ConsumerState<ScanPage> {
     }
 
     return null;
+  }
+
+  /// 同时搜索 NodeJS 和 Python 缺失依赖错误，返回所有找到的依赖名
+  static List<String> foundAllReg(String text) {
+    if (text.isEmpty) return [];
+
+    List<String> results = [];
+    Set<String> seen = {}; // 去重
+
+    // NodeJS: Cannot find module 'xxx' / "xxx"
+    for (final pattern in [
+      RegExp(r"Cannot find module '([^']+)'"),
+      RegExp(r'Cannot find module "([^"]+)"'),
+    ]) {
+      for (final match in pattern.allMatches(text)) {
+        String? dep = match.group(1);
+        if (dep != null &&
+            dep.isNotEmpty &&
+            !dep.contains(".") &&
+            !dep.contains("/")) {
+          if (seen.add(dep)) results.add(dep);
+        }
+      }
+    }
+
+    // Python: No module named 'xxx' / "xxx"
+    for (final pattern in [
+      RegExp(r"No module named '([^']+)'"),
+      RegExp(r'No module named "([^"]+)"'),
+    ]) {
+      for (final match in pattern.allMatches(text)) {
+        String? dep = match.group(1);
+        if (dep != null &&
+            dep.isNotEmpty &&
+            !dep.contains(".") &&
+            !dep.contains("/")) {
+          if (seen.add(dep)) results.add(dep);
+        }
+      }
+    }
+
+    return results;
   }
 }

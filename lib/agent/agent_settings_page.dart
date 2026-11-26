@@ -16,6 +16,7 @@ import 'package:qinglong_app/base/ui/selector_card.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/scope_picker.dart';
 import 'package:qinglong_app/main.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 /// Agent 设置：四档后端在客户端里收敛为「内置 / 远程」两个入口。
 /// 远程入口服务于自建 HTTP 端点与 KSU Agent Core，
@@ -408,6 +409,7 @@ class _AgentSettingsPageState extends ConsumerState<AgentSettingsPage>
                           SizedBox(
                             width: 78,
                             child: TextField(
+                              contextMenuBuilder: copyableEditableTextMenu,
                               controller: _mcpPortCtrl,
                               keyboardType: TextInputType.number,
                               onSubmitted:
@@ -635,6 +637,7 @@ class _AgentSettingsPageState extends ConsumerState<AgentSettingsPage>
   }) => Padding(
     padding: const EdgeInsets.only(bottom: 12),
     child: TextField(
+      contextMenuBuilder: copyableEditableTextMenu,
       controller: controller,
       obscureText: obscure,
       keyboardType: number ? TextInputType.number : null,

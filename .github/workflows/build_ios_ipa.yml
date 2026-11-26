@@ -9,6 +9,7 @@ on:
 jobs:
   build-ios-ipa:
     runs-on: macos-15
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,29 +40,4 @@ jobs:
         with:
           name: qinglong_app_ios_unsigned
           path: qinglong_app_ios_unsigned.ipa
-          if-no-files-found: error
-
-      - name: Build for iOS Simulator
-        run: flutter build ios --simulator
-
-      - name: Run app on iOS Simulator and take screenshots
-        run: |
-          UDID=$(xcrun simctl list devices available | awk -F'[()]' '/iPhone/{print $2; exit}' | tr -d ' ')
-          echo "Using simulator UDID: $UDID"
-          xcrun simctl boot "$UDID" 2>/dev/null || true
-          xcrun simctl bootstatus "$UDID" -b
-          xcrun simctl install "$UDID" build/ios/iphonesimulator/Runner.app
-          xcrun simctl launch "$UDID" com.qlapp.qinglongApp
-          sleep 20
-          xcrun simctl io "$UDID" screenshot simulator_screen_1.png
-          sleep 5
-          xcrun simctl io "$UDID" screenshot simulator_screen_2.png
-
-      - name: Upload simulator screenshots
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios_simulator_screenshots
-          path: |
-            simulator_screen_1.png
-            simulator_screen_2.png
           if-no-files-found: error

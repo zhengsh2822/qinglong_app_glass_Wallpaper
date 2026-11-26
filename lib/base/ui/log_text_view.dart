@@ -29,6 +29,13 @@ class LogTextView extends ConsumerStatefulWidget {
   /// 是否显示右上角"复制全部"悬浮按钮（默认开启，一键复制整段日志）
   final bool showCopyAll;
 
+  /// 内容被截断时的提示文案（如"仅显示最后 512KB，点击查看完整日志"）。
+  /// 为 null 表示内容完整，不显示提示条。
+  final String? truncatedHint;
+
+  /// 点击截断提示条的回调（通常打开完整日志页）
+  final VoidCallback? onShowFull;
+
   const LogTextView({
     super.key,
     required this.content,
@@ -38,6 +45,8 @@ class LogTextView extends ConsumerStatefulWidget {
     this.padding = const EdgeInsets.symmetric(horizontal: 15),
     this.scrollController,
     this.showCopyAll = true,
+    this.truncatedHint,
+    this.onShowFull,
   });
 
   @override
@@ -72,6 +81,9 @@ class _LogTextViewState extends ConsumerState<LogTextView> {
       if (textBuffer.isEmpty) return;
       final text = textBuffer.join('\n');
       textBuffer.clear();
+      // 纯空行块（日志尾部常见连续空白行）不渲染：既没有内容，
+      // 又会让空日志看起来"有东西但什么都没有"
+      if (text.trim().isEmpty) return;
       children.add(buildTextBlock(text, widget.textStyle));
     }
 
@@ -100,20 +112,46 @@ class _LogTextViewState extends ConsumerState<LogTextView> {
     }
     flushText();
 
+    // 解析后没有任何可渲染内容（整份日志只有空白/控制字符）：
+    // 直接给空态，否则会渲染出一张完全空白的页面
+    if (children.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: widget.padding,
+          child: Text(
+            widget.emptyText,
+            style: widget.textStyle ??
+                const TextStyle(fontSize: 12, color: CupertinoColors.systemGrey),
+          ),
+        ),
+      );
+    }
+
     return Stack(
       children: [
-        SingleChildScrollView(
-          controller: widget.scrollController,
-          padding: EdgeInsets.only(
-            left: widget.padding.left,
-            right: widget.padding.right,
-            top: widget.padding.top,
-            bottom: MediaQuery.of(context).viewPadding.bottom + 20,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: children,
-          ),
+        Column(
+          children: [
+            if (widget.truncatedHint != null)
+              _TruncatedBanner(
+                hint: widget.truncatedHint!,
+                onTap: widget.onShowFull,
+              ),
+            Expanded(
+              child: SingleChildScrollView(
+                controller: widget.scrollController,
+                padding: EdgeInsets.only(
+                  left: widget.padding.left,
+                  right: widget.padding.right,
+                  top: widget.padding.top,
+                  bottom: MediaQuery.of(context).viewPadding.bottom + 20,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: children,
+                ),
+              ),
+            ),
+          ],
         ),
         if (widget.showCopyAll)
           Positioned(
@@ -127,6 +165,51 @@ class _LogTextViewState extends ConsumerState<LogTextView> {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// 内容被截断时顶部提示条：说明只显示了尾部，并提供查看完整日志的入口
+class _TruncatedBanner extends StatelessWidget {
+  final String hint;
+  final VoidCallback? onTap;
+
+  const _TruncatedBanner({required this.hint, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        color: AppColors.warning.withValues(alpha: 0.14),
+        child: Row(
+          children: [
+            const Icon(
+              CupertinoIcons.arrow_up_doc,
+              size: 13,
+              color: AppColors.warning,
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                hint,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 11.5),
+              ),
+            ),
+            if (onTap != null)
+              const Icon(
+                CupertinoIcons.chevron_right,
+                size: 13,
+                color: AppColors.warning,
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -8,6 +8,7 @@ import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/upload_script_widget.dart';
 import 'package:qinglong_app/module/subscribe/add_subscribe_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 class FloderAddPage extends ConsumerStatefulWidget {
   const FloderAddPage({
@@ -61,6 +62,7 @@ class ScriptUploadPageState extends ConsumerState<FloderAddPage> {
                     height: 10,
                   ),
                   TextField(
+                    contextMenuBuilder: copyableEditableTextMenu,
                     controller: _nameController,
                     decoration: const InputDecoration(
                       hintText: "请输入文件夹名称",

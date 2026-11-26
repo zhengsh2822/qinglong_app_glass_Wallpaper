@@ -14,6 +14,7 @@ import 'package:qinglong_app/module/task/add_task_page.dart';
 import 'package:qinglong_app/module/task/task_bean.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/base/ui/wallpaper_page_route.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 class ScriptUploadPage extends ConsumerStatefulWidget {
   const ScriptUploadPage({
@@ -67,6 +68,7 @@ class ScriptUploadPageState extends ConsumerState<ScriptUploadPage> {
                     height: 10,
                   ),
                   TextField(
+                    contextMenuBuilder: copyableEditableTextMenu,
                     controller: _nameController,
                     decoration: const InputDecoration(
                       hintText: "上传脚本可自动识别脚本名称",

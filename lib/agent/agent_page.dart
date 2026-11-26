@@ -944,6 +944,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
           children: <Widget>[
             Expanded(
               child: TextField(
+                contextMenuBuilder: copyableEditableTextMenu,
                 controller: _input,
                 minLines: 1,
                 maxLines: 4,
