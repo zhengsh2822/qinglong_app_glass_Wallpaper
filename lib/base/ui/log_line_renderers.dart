@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/http/api.dart';
 import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 import 'package:qinglong_app/base/ui/spring_sheet.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
@@ -115,9 +116,8 @@ class _NoopCallback {
 Widget buildTextBlock(String text, TextStyle? baseStyle) {
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 1),
-    child: SelectableText(
+    child: CopyableSelectableText(
       text,
-      selectionControls: cupertinoTextSelectionControls,
       style: baseStyle ?? const TextStyle(fontSize: 12),
     ),
   );

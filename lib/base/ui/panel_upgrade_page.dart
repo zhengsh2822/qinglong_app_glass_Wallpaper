@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +7,7 @@ import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/button.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 import 'package:qinglong_app/module/others/update/upgrade_status_bean.dart';
 import 'package:qinglong_app/utils/extension.dart';
 
@@ -311,9 +311,8 @@ class _PanelUpgradePageState extends ConsumerState<PanelUpgradePage> {
                 ),
                 child: SingleChildScrollView(
                   reverse: true,
-                  child: SelectableText(
+                  child: CopyableSelectableText(
                     _logTail,
-                    selectionControls: cupertinoTextSelectionControls,
                     style: TextStyle(
                       fontSize: 11,
                       height: 1.35,

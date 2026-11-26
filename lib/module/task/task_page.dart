@@ -874,9 +874,9 @@ class TaskPageState extends ConsumerState<TaskPage>
         child: Container(
           padding: const EdgeInsets.only(left: 15, top: 5, bottom: 5),
           margin: const EdgeInsets.symmetric(horizontal: 10),
-          decoration: BoxDecoration(
+          decoration: ShapeDecoration(
             color: ref.watch(themeProvider).themeColor.blackAndWhite(),
-            borderRadius: BorderRadius.circular(18),
+            shape: appCornerBorder(radius: 18),
           ),
           child: Row(
             children: [

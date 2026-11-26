@@ -1,6 +1,5 @@
 import 'dart:ui';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/http/http.dart';
@@ -8,6 +7,7 @@ import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/content_entrance.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 import 'package:qinglong_app/base/ui/empty_widget.dart';
 import 'package:qinglong_app/base/ui/enable_widget.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
@@ -164,10 +164,8 @@ class _NotifyLogPageState extends ConsumerState<NotifyLogPage>
                             if (item.content != null &&
                                 item.content!.isNotEmpty) ...[
                               const SizedBox(height: 4),
-                              SelectableText(
+                              CopyableSelectableText(
                                 item.content!,
-                                selectionControls:
-                                    cupertinoTextSelectionControls,
                                 selectionWidthStyle: BoxWidthStyle.max,
                                 selectionHeightStyle: BoxHeightStyle.max,
                                 maxLines: expanded ? null : 3,

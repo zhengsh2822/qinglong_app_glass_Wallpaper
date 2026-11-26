@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'app_corner.dart';
+
 /// ASCII 字符画全屏预览
 /// - 白底黑字 + 等宽字体（让 block elements 正确显示）
 /// - InteractiveViewer 支持双指缩放
@@ -45,10 +47,10 @@ class _LogAsciiArtPreviewPageState extends State<LogAsciiArtPreviewPage> {
             Center(
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 24),
-                decoration: BoxDecoration(
+                decoration: ShapeDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: const [
+                  shape: appCornerBorder(radius: 12),
+                  shadows: const [
                     BoxShadow(
                       color: Color(0x66000000),
                       blurRadius: 24,

@@ -4,6 +4,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
+import 'app_corner.dart';
+
 /// 弹性拖拽排序列表（自管槽位弹簧）
 ///
 /// 参数与手感来自 demos/card_drag_reorder_demo 验收结果：
@@ -618,9 +620,9 @@ class _ElasticLiftDecor extends StatelessWidget {
     return Transform.scale(
       scale: scale,
       child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: lift <= 0.001
+        decoration: ShapeDecoration(
+          shape: appCornerBorder(radius: 18),
+          shadows: lift <= 0.001
               ? const <BoxShadow>[]
               : <BoxShadow>[
                   BoxShadow(

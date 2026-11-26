@@ -10,6 +10,8 @@ import 'package:qinglong_app/base/http/api.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 
 /// 可预览的图片扩展名（供各文件入口分流判断共用）
@@ -255,7 +257,7 @@ class _ScriptImagePreviewBodyState extends State<ScriptImagePreviewBody> {
               style: const TextStyle(fontSize: 11, color: Color(0xFFAAAAAA)),
             ),
             const SizedBox(height: 8),
-            SelectableText(
+            CopyableSelectableText(
               _error,
               style: const TextStyle(fontSize: 11, color: Color(0xFF888888)),
             ),
@@ -276,10 +278,10 @@ class _ScriptImagePreviewBodyState extends State<ScriptImagePreviewBody> {
         child: Column(
           children: [
             Container(
-              decoration: BoxDecoration(
+              decoration: ShapeDecoration(
                 color: CupertinoColors.white,
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: const [
+                shape: appCornerBorder(radius: 14),
+                shadows: const [
                   BoxShadow(
                     color: Color(0x33000000),
                     blurRadius: 16,

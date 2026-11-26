@@ -1,8 +1,8 @@
 import 'dart:ui' show BoxHeightStyle, BoxWidthStyle, Color;
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:highlight/highlight.dart' show highlight, Node;
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 
 /// Highlight Flutter Widget
 class HighlightView extends StatelessWidget {
@@ -98,14 +98,13 @@ class HighlightView extends StatelessWidget {
             width: r.maxWidth,
             color: theme[_rootKey]?.backgroundColor ?? _defaultBackgroundColor,
             padding: padding,
-            child: SelectableText.rich(
+            child: CopyableSelectableText.rich(
               TextSpan(
                 style: textStyle,
                 children: _convert(
                   highlight.parse(source, language: language).nodes!,
                 ),
               ),
-              selectionControls: cupertinoTextSelectionControls,
               selectionWidthStyle: BoxWidthStyle.max,
               selectionHeightStyle: BoxHeightStyle.max,
             ),

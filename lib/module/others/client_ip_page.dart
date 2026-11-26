@@ -321,6 +321,7 @@ class ClientIpPageState extends ConsumerState<ClientIpPage> {
                 '保存',
                 style: TextStyle(
                   fontSize: 13,
+                  fontWeight: _globalFw,
                   color:
                       _editable
                           ? ref.watch(themeProvider).primaryColor
@@ -367,6 +368,7 @@ class ClientIpPageState extends ConsumerState<ClientIpPage> {
                 _diagnosing ? '诊断中…' : '开始诊断',
                 style: TextStyle(
                   fontSize: 13,
+                  fontWeight: _globalFw,
                   color: ref.watch(themeProvider).primaryColor,
                 ),
               ),
@@ -488,6 +490,7 @@ class ClientIpPageState extends ConsumerState<ClientIpPage> {
                   '添加',
                   style: TextStyle(
                     fontSize: 13,
+                    fontWeight: _globalFw,
                     color: ref.watch(themeProvider).primaryColor,
                   ),
                 ),

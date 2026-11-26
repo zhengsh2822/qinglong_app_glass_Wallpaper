@@ -117,9 +117,11 @@ class _AboutPageState extends ConsumerState<AboutPage>
                     Material(
                       color: Colors.transparent,
                       child: InkWell(
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(18),
-                          topRight: Radius.circular(18),
+                        customBorder: appCornerBorder(
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(18),
+                            topRight: Radius.circular(18),
+                          ),
                         ),
                         onTap: () => checkGithubUpdate(context),
                         child: Padding(
@@ -174,9 +176,11 @@ class _AboutPageState extends ConsumerState<AboutPage>
                     Material(
                       color: Colors.transparent,
                       child: InkWell(
-                        borderRadius: const BorderRadius.only(
-                          bottomLeft: Radius.circular(18),
-                          bottomRight: Radius.circular(18),
+                        customBorder: appCornerBorder(
+                          borderRadius: const BorderRadius.only(
+                            bottomLeft: Radius.circular(18),
+                            bottomRight: Radius.circular(18),
+                          ),
                         ),
                         onTap: () {
                           _checkUpdate();
@@ -262,9 +266,11 @@ class _AboutPageState extends ConsumerState<AboutPage>
                       childReplace: Material(
                         color: Colors.transparent,
                         child: InkWell(
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(18),
-                            topRight: Radius.circular(18),
+                          customBorder: appCornerBorder(
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(18),
+                              topRight: Radius.circular(18),
+                            ),
                           ),
                           onTap: () async {
                             try {
@@ -322,9 +328,11 @@ class _AboutPageState extends ConsumerState<AboutPage>
                       child: Material(
                         color: Colors.transparent,
                         child: InkWell(
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(18),
-                            topRight: Radius.circular(18),
+                          customBorder: appCornerBorder(
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(18),
+                              topRight: Radius.circular(18),
+                            ),
                           ),
                           onTap: () async {},
                           child: Padding(
@@ -389,9 +397,11 @@ class _AboutPageState extends ConsumerState<AboutPage>
                     Material(
                       color: Colors.transparent,
                       child: InkWell(
-                        borderRadius: const BorderRadius.only(
-                          bottomLeft: Radius.circular(18),
-                          bottomRight: Radius.circular(18),
+                        customBorder: appCornerBorder(
+                          borderRadius: const BorderRadius.only(
+                            bottomLeft: Radius.circular(18),
+                            bottomRight: Radius.circular(18),
+                          ),
                         ),
                         onTap: () {
                           if (Platform.isAndroid) {

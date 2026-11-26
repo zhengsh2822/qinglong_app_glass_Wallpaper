@@ -169,10 +169,16 @@ class CyberGhostButton extends StatelessWidget {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
+        decoration: ShapeDecoration(
           color: bgColor,
-          borderRadius: BorderRadius.circular(12),
-          border: border,
+          // 连续曲率圆角：与弹窗卡片轮廓一致
+          shape: appCornerBorder(
+            radius: 12,
+            side:
+                (border != null && border.isUniform)
+                    ? border.top
+                    : BorderSide.none,
+          ),
         ),
         child: Center(
           child: Text(

@@ -22,8 +22,8 @@ class Http {
   Dio? _dio;
   bool pushedLoginPage = false;
 
-  /// 标记该账号有待处理的登录失败弹窗（后台账号断网时延迟弹窗）
-  /// IndexedStack 会同时构建所有账号，非激活账号断网不应立即弹窗
+  /// 标记该账号有待处理的「登录已失效」弹窗（后台账号延迟弹窗）
+  /// IndexedStack 会同时构建所有账号，非激活账号登录态失效不应立即弹窗
   /// 切换到该账号时由 MultiAccountPageState.updateIndex 触发
   bool pendingExitLogin = false;
 
@@ -111,8 +111,9 @@ class Http {
         );
       }
 
-      // 重试仍失败且 needRelogin=true：说明 token 确实失效，跳转登录页
-      if (result.needRelogin && reloginRetry) {
+      // 重试仍失败且 authFailed=true（服务端仍返回 401）：登录态确实失效，
+      // 才弹窗询问是否重新登录。网络错误/格式异常不在此列，避免误判。
+      if (result.authFailed && reloginRetry) {
         exitLogin();
       }
 
@@ -139,7 +140,7 @@ class Http {
           reloginRetry: true,
         );
       }
-      if (result.needRelogin && reloginRetry) {
+      if (result.authFailed && reloginRetry) {
         exitLogin();
       }
       return result;
@@ -223,7 +224,7 @@ class Http {
           reloginRetry: true,
         );
       }
-      if (result.needRelogin && reloginRetry) {
+      if (result.authFailed && reloginRetry) {
         exitLogin();
       }
 
@@ -240,7 +241,7 @@ class Http {
           reloginRetry: true,
         );
       }
-      if (result.needRelogin && reloginRetry) {
+      if (result.authFailed && reloginRetry) {
         exitLogin();
       }
       return result;
@@ -278,7 +279,7 @@ class Http {
           reloginRetry: true,
         );
       }
-      if (result.needRelogin && reloginRetry) {
+      if (result.authFailed && reloginRetry) {
         exitLogin();
       }
 
@@ -295,7 +296,7 @@ class Http {
           reloginRetry: true,
         );
       }
-      if (result.needRelogin && reloginRetry) {
+      if (result.authFailed && reloginRetry) {
         exitLogin();
       }
       return result;
@@ -354,7 +355,7 @@ class Http {
           receiveTimeout: receiveTimeout,
         );
       }
-      if (result.needRelogin && reloginRetry) {
+      if (result.authFailed && reloginRetry) {
         exitLogin();
       }
 
@@ -377,7 +378,7 @@ class Http {
           receiveTimeout: receiveTimeout,
         );
       }
-      if (result.needRelogin && reloginRetry) {
+      if (result.authFailed && reloginRetry) {
         exitLogin();
       }
       return result;
@@ -667,7 +668,7 @@ class Http {
         await _handleTokenExpired();
         return uploadFile<T>(uri, filePath, fieldName, reloginRetry: true);
       }
-      if (result.needRelogin && reloginRetry) {
+      if (result.authFailed && reloginRetry) {
         exitLogin();
       }
 
@@ -678,7 +679,7 @@ class Http {
         await _handleTokenExpired();
         return uploadFile<T>(uri, filePath, fieldName, reloginRetry: true);
       }
-      if (result.needRelogin && reloginRetry) {
+      if (result.authFailed && reloginRetry) {
         exitLogin();
       }
       return result;
@@ -728,9 +729,10 @@ class Http {
     }
   }
 
-  /// 刷新失败后弹窗让用户选择是否重新登录（不直接跳转）
+  /// 登录态确实失效时弹窗让用户选择是否重新登录（不直接跳转）
+  /// 仅由 authFailed（服务端明确 401）触发，网络错误不会走到这里
   /// 用 pushedLoginPage 防止并发请求触发多个弹窗
-  /// 非当前激活账号延迟弹窗：IndexedStack 后台账号断网时不打扰用户，
+  /// 非当前激活账号延迟弹窗：IndexedStack 后台账号登录态失效时不打扰用户，
   /// 切换到该账号时由 MultiAccountPageState.updateIndex 触发
   Future<void> exitLogin() async {
     if (pushedLoginPage) return;
@@ -757,8 +759,8 @@ class Http {
     // 弹窗让用户选择：重新登录 或 取消（留在当前页面）
     final shouldLogin = await showConfirmDialog(
       context,
-      title: '连接失败',
-      content: '网络连接失败，是否重新登录？',
+      title: '登录已失效',
+      content: '当前账号登录状态已失效，是否重新登录？',
       cancelLabel: '取消',
       confirmLabel: '重新登录',
       danger: false,
@@ -929,18 +931,21 @@ class Http {
             code: 401,
           );
         }
-        // 401 统一标记 needRelogin，由 get/post/put/delete 触发静默刷新
+        // 401：服务端明确拒绝鉴权。标记 authFailed（登录态失效）触发弹窗询问，
+        // needRelogin 只负责"重建连接 + 静默刷新 + 重试一次"
         return HttpResponse<T>(
           success: false,
           message: "登录已过期，请重新登录",
           code: 401,
           needRelogin: true,
+          authFailed: true,
         );
       }
 
-      // 网络错误（死连接 / 超时 / 连接失败）：标记 needRelogin 触发重建 Dio + 重试
+      // 网络错误（死连接 / 超时 / 连接失败）：只标记 needRelogin 触发重建 Dio + 重试
       // 长时间不活动后 Dio keep-alive 连接失效，表现为 connectionTimeout / receiveTimeout / connectionError
       // 重建 Dio 清空连接池后重试即可恢复，无需用户重启 app
+      // ⚠️ 网络错误 ≠ 登录失效：绝不能标记 authFailed，否则慢接口超时会误弹"重新登录"
       final isNetworkError =
           e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.sendTimeout ||
@@ -950,7 +955,7 @@ class Http {
       if (isNetworkError) {
         return HttpResponse<T>(
           success: false,
-          message: "网络连接异常，正在重试...",
+          message: "网络连接失败，请检查网络或面板状态",
           code: -1000,
           needRelogin: true,
         );
@@ -1169,8 +1174,15 @@ class HttpResponse<T> {
   late int code;
   T? bean;
 
-  /// 标记响应被识别为 token 失效（HTML 登录页 / 401），需触发静默刷新
+  /// 标记响应被识别为需要「重建连接 + 静默刷新 + 重试一次」
+  /// 来源：401 / 网络错误 / 响应格式异常 / 空响应。
+  /// ⚠️ 不代表登录态失效，**不能**据此弹重新登录弹窗（见 [authFailed]）。
   bool needRelogin;
+
+  /// 标记「登录态确实失效」：服务端明确返回 401 且非权限不足。
+  /// 只有它在重试后仍为 true 才弹「是否重新登录」，避免网络抖动/慢接口超时
+  /// 被误判成登录失败。
+  bool authFailed;
 
   /// 服务端原始响应体（仅错误时保留）。
   /// 用于读取附加字段，如 2.23.0 保存脚本超限返回的
@@ -1183,6 +1195,7 @@ class HttpResponse<T> {
     required this.code,
     this.bean,
     this.needRelogin = false,
+    this.authFailed = false,
     this.extra,
   });
 }

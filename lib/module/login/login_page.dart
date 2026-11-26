@@ -542,7 +542,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           alignment: Alignment.center,
           width: MediaQuery.of(context).size.width * 0.8,
           padding: const EdgeInsets.symmetric(horizontal: 40),
-          decoration: BoxDecoration(
+          decoration: ShapeDecoration(
             gradient: LinearGradient(
               colors:
                   canClick
@@ -561,9 +561,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             .withValues(alpha: 0.6),
                       ],
             ),
-            borderRadius: BorderRadius.all(
-              Radius.circular(AppleColors.radiusButton),
-            ),
+            shape: appCornerBorder(radius: AppleColors.radiusButton),
           ),
           child: SizedBox(
             width: MediaQuery.of(context).size.width - 80,

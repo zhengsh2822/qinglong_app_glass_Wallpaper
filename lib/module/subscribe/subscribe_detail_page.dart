@@ -9,6 +9,7 @@ import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
@@ -471,9 +472,8 @@ class SubscribeDetailCell extends ConsumerWidget {
                   ? Expanded(
                     child: Align(
                       alignment: Alignment.centerRight,
-                      child: SelectableText(
+                      child: CopyableSelectableText(
                         desc!,
-                        selectionControls: cupertinoTextSelectionControls,
                         textAlign: TextAlign.right,
                         selectionHeightStyle: BoxHeightStyle.max,
                         selectionWidthStyle: BoxWidthStyle.max,

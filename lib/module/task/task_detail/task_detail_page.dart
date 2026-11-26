@@ -11,6 +11,7 @@ import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
@@ -587,9 +588,8 @@ class TaskDetailCell extends ConsumerWidget {
                       child: Align(
                         alignment:
                             left ? Alignment.centerLeft : Alignment.centerRight,
-                        child: SelectableText(
+                        child: CopyableSelectableText(
                           desc!,
-                          selectionControls: cupertinoTextSelectionControls,
                           selectionHeightStyle: BoxHeightStyle.max,
                           selectionWidthStyle: BoxWidthStyle.max,
                           onTap: () {

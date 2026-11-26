@@ -10,6 +10,7 @@ import 'package:qinglong_app/agent/mcp_client_formats.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/ui/agent_toast.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/selector_card.dart';
 import 'package:qinglong_app/base/theme.dart';
@@ -652,9 +653,10 @@ class _AgentSettingsPageState extends ConsumerState<AgentSettingsPage>
   Widget _hintCard(String text, Color color) => Container(
     width: double.infinity,
     padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
+    // 提示卡片：连续曲率圆角（与全局卡片一致）
+    decoration: ShapeDecoration(
       color: color.withValues(alpha: 0.08),
-      borderRadius: BorderRadius.circular(12),
+      shape: appCornerBorder(radius: 12),
     ),
     child: Text(text, style: TextStyle(fontSize: 12, color: color)),
   );

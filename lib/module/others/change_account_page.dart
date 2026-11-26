@@ -7,6 +7,7 @@ import 'package:qinglong_app/base/multi_account_userinfo_viewmodel.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
 import 'package:qinglong_app/base/ui/container_transform_route.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
@@ -438,12 +439,11 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
                       sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
                       borderRadius: BorderRadius.circular(18),
                       child: Container(
-                        decoration: BoxDecoration(
+                        decoration: ShapeDecoration(
                           color: Colors.transparent,
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(
-                            color: CyberColors.cardStroke,
-                            width: 1,
+                          shape: appCornerBorder(
+                            radius: 18,
+                            side: BorderSide(color: CyberColors.cardStroke),
                           ),
                         ),
                         child: Material(
@@ -466,12 +466,11 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
                       sigma: SpUtil.getDouble(spCardBlurSigma, defValue: 4),
                       borderRadius: BorderRadius.circular(18),
                       child: Container(
-                        decoration: BoxDecoration(
+                        decoration: ShapeDecoration(
                           color: Colors.transparent,
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(
-                            color: CyberColors.cardStroke,
-                            width: 1,
+                          shape: appCornerBorder(
+                            radius: 18,
+                            side: BorderSide(color: CyberColors.cardStroke),
                           ),
                         ),
                         child: _buildAddAccountContent(accentColor),

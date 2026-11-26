@@ -9,6 +9,7 @@ import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/http/api.dart';
 import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/wallpaper_page_route.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
@@ -430,9 +431,9 @@ class _BackupRestorePageState extends ConsumerState<BackupRestorePage>
           onTap: _processing ? null : onTap,
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 14),
-            decoration: BoxDecoration(
+            decoration: ShapeDecoration(
               color: ref.watch(themeProvider).primaryColor,
-              borderRadius: BorderRadius.circular(AppleColors.radiusButton),
+              shape: appCornerBorder(radius: AppleColors.radiusButton),
             ),
             child: Center(
               child: Text(
@@ -942,10 +943,10 @@ class _BackupRestorePageState extends ConsumerState<BackupRestorePage>
                           child: Container(
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            decoration: BoxDecoration(
+                            decoration: ShapeDecoration(
                               color: ref.watch(themeProvider).primaryColor,
-                              borderRadius: BorderRadius.circular(
-                                AppleColors.radiusButton,
+                              shape: appCornerBorder(
+                                radius: AppleColors.radiusButton,
                               ),
                             ),
                             child: Center(

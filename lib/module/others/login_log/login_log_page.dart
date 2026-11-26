@@ -1,6 +1,5 @@
 import 'dart:ui';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/http/http.dart';
@@ -10,6 +9,7 @@ import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/enable_widget.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/content_entrance.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/base/ui/empty_widget.dart';
@@ -99,10 +99,8 @@ class _LoginLogPageState extends ConsumerState<LoginLogPage>
                                 ],
                               ),
                               const SizedBox(height: 10),
-                              SelectableText(
+                              CopyableSelectableText(
                                 "${item.ip}",
-                                selectionControls:
-                                    cupertinoTextSelectionControls,
                                 selectionWidthStyle: BoxWidthStyle.max,
                                 selectionHeightStyle: BoxHeightStyle.max,
                                 style: TextStyle(

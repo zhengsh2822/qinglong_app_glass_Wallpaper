@@ -16,7 +16,9 @@ import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/blur_effect.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/spring_sheet.dart';
 import 'package:qinglong_app/main.dart';
@@ -832,17 +834,25 @@ class _AgentPageState extends ConsumerState<AgentPage>
           maxWidth: MediaQuery.of(context).size.width * 0.82,
         ),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
+        // 会话卡片：连续曲率圆角（与项目卡片一致），不用普通圆弧
+        decoration: ShapeDecoration(
           color: background,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: descColor.withValues(alpha: 0.18)),
+          shape: appCornerBorder(
+            radius: 14,
+            side: BorderSide(color: descColor.withValues(alpha: 0.18)),
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
+            // 文本走系统原生选择/复制菜单：复用项目统一的
+            // SelectableText + Cupertino 选择控件（与脚本页、日志页一致）
             if (entry.text.isNotEmpty)
-              Text(_plainText(entry.text), style: TextStyle(color: foreground)),
+              CopyableSelectableText(
+                _plainText(entry.text),
+                style: TextStyle(color: foreground),
+              ),
             if (entry.candidates.isNotEmpty)
               ...entry.candidates.map(
                 (candidate) => Padding(
@@ -853,7 +863,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
                       Icon(Icons.task_alt_outlined, size: 15, color: accent),
                       const SizedBox(width: 6),
                       Flexible(
-                        child: Text(
+                        child: CopyableSelectableText(
                           '#${candidate.id} ${candidate.title}'
                           '${candidate.subtitle.isEmpty ? '' : ' · ${candidate.subtitle}'}',
                           style: TextStyle(color: foreground, fontSize: 12),
@@ -875,10 +885,13 @@ class _AgentPageState extends ConsumerState<AgentPage>
       width: double.infinity,
       margin: const EdgeInsets.fromLTRB(14, 4, 14, 8),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
+      // 写操作确认卡片：连续曲率圆角
+      decoration: ShapeDecoration(
         color: accent.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: accent.withValues(alpha: 0.35)),
+        shape: appCornerBorder(
+          radius: 14,
+          side: BorderSide(color: accent.withValues(alpha: 0.35)),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

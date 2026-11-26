@@ -155,15 +155,17 @@ class _WallpaperSettingPageState extends ConsumerState<WallpaperSettingPage> {
       child: Container(
         width: 64,
         height: 64,
-        decoration: BoxDecoration(
+        decoration: ShapeDecoration(
           gradient: gradient,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color:
-                selected
-                    ? ref.watch(themeProvider).primaryColor
-                    : Colors.transparent,
-            width: 2.5,
+          shape: appCornerBorder(
+            radius: 14,
+            side: BorderSide(
+              color:
+                  selected
+                      ? ref.watch(themeProvider).primaryColor
+                      : Colors.transparent,
+              width: 2.5,
+            ),
           ),
         ),
         alignment: Alignment.center,
@@ -220,15 +222,17 @@ class _WallpaperSettingPageState extends ConsumerState<WallpaperSettingPage> {
       child: Container(
         width: 64,
         height: 64,
-        decoration: BoxDecoration(
+        decoration: ShapeDecoration(
           color: color,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color:
-                selected
-                    ? ref.watch(themeProvider).primaryColor
-                    : AppleColors.cardBorder,
-            width: 2.5,
+          shape: appCornerBorder(
+            radius: 14,
+            side: BorderSide(
+              color:
+                  selected
+                      ? ref.watch(themeProvider).primaryColor
+                      : AppleColors.cardBorder,
+              width: 2.5,
+            ),
           ),
         ),
         alignment: Alignment.center,

@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/ui/confirm_dialog.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 import 'package:qinglong_app/base/ui/highlight/selectable_code_view.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
@@ -161,9 +162,8 @@ class ScriptCodeDetailPageState extends ConsumerState<ScriptCodeDetailPage>
 
   Widget json() {
     return Center(
-      child: SelectableText(
+      child: CopyableSelectableText(
         getPrettyJSONString(),
-        selectionControls: cupertinoTextSelectionControls,
         selectionWidthStyle: BoxWidthStyle.max,
         selectionHeightStyle: BoxHeightStyle.max,
       ),

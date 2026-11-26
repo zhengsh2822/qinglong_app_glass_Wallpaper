@@ -1,8 +1,8 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/app_colors.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 import 'package:qinglong_app/base/ui/cyber/cyber_background.dart';
 
 /// 赛博终端风脚本查看/编辑演示页
@@ -120,7 +120,7 @@ module.exports = main;
         ),
       ),
       child: SingleChildScrollView(
-        child: SelectableText.rich(
+        child: CopyableSelectableText.rich(
           TextSpan(
             children: _highlightCode(content),
             // 【等宽字体】代码强制使用等宽字体
@@ -130,7 +130,6 @@ module.exports = main;
               height: 1.6,
             ),
           ),
-          selectionControls: cupertinoTextSelectionControls,
         ),
       ),
     );

@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/main.dart';
 
 /// 渐变流光圆环进度加载器（方案②：渐变描边 + 光晕 + 头部圆点 + 中心百分比）。
@@ -256,13 +257,13 @@ class _ProgressOverlayPanel extends ConsumerWidget {
                     horizontal: 28,
                     vertical: 22,
                   ),
-                  decoration: BoxDecoration(
+                  decoration: ShapeDecoration(
                     color:
                         ref
                             .watch(themeProvider)
                             .themeColor
                             .settingBordorColor(),
-                    borderRadius: BorderRadius.circular(18),
+                    shape: appCornerBorder(radius: 18),
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,

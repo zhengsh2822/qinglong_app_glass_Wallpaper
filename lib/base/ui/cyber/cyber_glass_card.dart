@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/sp_const.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/optimized_frosted_glass.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 
@@ -49,13 +50,17 @@ class CyberGlassCard extends StatelessWidget {
         sigma: effectiveSigma,
         borderRadius: BorderRadius.circular(borderRadius),
         child: Container(
-          decoration: BoxDecoration(
+          decoration: ShapeDecoration(
             // 半透明白色叠加，产生毛玻璃质感
             color: backgroundColor ?? const Color(0x20FFFFFF),
-            borderRadius: BorderRadius.circular(borderRadius),
-            border:
-                border ??
-                Border.all(color: CyberColors.borderGlow, width: 0.5),
+            // 连续曲率圆角：与 OptimizedFrostedGlass 的裁剪轮廓保持一致
+            shape: appCornerBorder(
+              borderRadius: BorderRadius.circular(borderRadius),
+              side:
+                  (border != null && border!.isUniform)
+                      ? border!.top
+                      : BorderSide(color: CyberColors.borderGlow, width: 0.5),
+            ),
           ),
           padding: padding,
           child:
@@ -64,7 +69,9 @@ class CyberGlassCard extends StatelessWidget {
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: onTap,
-                      borderRadius: BorderRadius.circular(borderRadius),
+                      customBorder: appCornerBorder(
+                        borderRadius: BorderRadius.circular(borderRadius),
+                      ),
                       child: child,
                     ),
                   )

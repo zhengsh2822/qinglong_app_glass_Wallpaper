@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../app_colors.dart';
+import 'app_corner.dart';
 
 /// 全屏图片预览（路径行 / Base64 行共用）
 class LogImagePreviewPage extends StatelessWidget {
@@ -29,10 +30,10 @@ class LogImagePreviewPage extends StatelessWidget {
               Center(
                 child: Container(
                   margin: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
+                  decoration: ShapeDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: const [
+                    shape: appCornerBorder(radius: 16),
+                    shadows: const [
                       BoxShadow(
                         color: Color(0x66000000),
                         blurRadius: 24,

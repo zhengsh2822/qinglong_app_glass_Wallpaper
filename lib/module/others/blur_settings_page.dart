@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/services/wallpaper_service.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/base/ui/color_picker_sheet.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 
@@ -330,9 +331,9 @@ class _BlurSettingsPageState extends ConsumerState<BlurSettingsPage> {
                     behavior: HitTestBehavior.opaque,
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 10),
-                      decoration: BoxDecoration(
+                      decoration: ShapeDecoration(
                         color: Colors.white.withValues(alpha: 0.04),
-                        borderRadius: BorderRadius.circular(12),
+                        shape: appCornerBorder(radius: 12),
                       ),
                       child: Row(
                         children: [

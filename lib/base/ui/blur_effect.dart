@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/sp_const.dart';
+import 'package:qinglong_app/base/ui/app_corner.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
 
 /// 毛玻璃效果全局开关（bool，默认 true=开启）
@@ -41,6 +42,9 @@ class GlassContainer extends ConsumerWidget {
   final Border? border;
   final List<BoxShadow>? boxShadow;
 
+  /// 圆角曲线类型（默认连续曲率 G2，与项目卡片一致）
+  final AppCornerStyle cornerStyle;
+
   const GlassContainer({
     super.key,
     required this.child,
@@ -50,44 +54,54 @@ class GlassContainer extends ConsumerWidget {
     this.maxBlurSigma = kDefaultBlurSigma,
     this.border,
     this.boxShadow,
+    this.cornerStyle = AppCornerStyle.continuous,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final enabled = ref.watch(blurEffectProvider);
+    final BorderRadius br = BorderRadius.circular(borderRadius);
+    final BorderSide side =
+        (border != null && border!.isUniform) ? border!.top : BorderSide.none;
+    final ShapeBorder shape = appCornerBorder(
+      borderRadius: br,
+      style: cornerStyle,
+      side: side,
+    );
 
     if (!enabled) {
       // 关闭：纯色模式（不透明度 1.0），GPU 零模糊开销
       return Container(
-        decoration: BoxDecoration(
+        decoration: ShapeDecoration(
           color: solidBackgroundColor ?? _toSolid(backgroundColor),
-          borderRadius: BorderRadius.circular(borderRadius),
-          border: border,
-          boxShadow: boxShadow,
+          shape: shape,
+          shadows: boxShadow,
         ),
         child: child,
       );
     }
 
-    // 开启：毛玻璃模式 ClipRRect + BackdropFilter
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(borderRadius),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(
-          sigmaX: maxBlurSigma,
-          sigmaY: maxBlurSigma,
+    // 开启：毛玻璃模式 + 圆角裁剪（连续曲率走 ShapeBorderClipper）
+    final Widget frosted = BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: maxBlurSigma, sigmaY: maxBlurSigma),
+      child: Container(
+        decoration: ShapeDecoration(
+          color: backgroundColor,
+          shape: shape,
+          shadows: boxShadow,
         ),
-        child: Container(
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: BorderRadius.circular(borderRadius),
-            border: border,
-            boxShadow: boxShadow,
-          ),
-          child: child,
-        ),
+        child: child,
       ),
     );
+    if (cornerStyle == AppCornerStyle.continuous) {
+      return ClipPath(
+        clipper: ShapeBorderClipper(
+          shape: appCornerBorder(borderRadius: br),
+        ),
+        child: frosted,
+      );
+    }
+    return ClipRRect(borderRadius: br, child: frosted);
   }
 
   /// 将半透明颜色转为不透明版本（alpha=1.0）

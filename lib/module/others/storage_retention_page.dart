@@ -300,6 +300,7 @@ class StorageRetentionPageState extends ConsumerState<StorageRetentionPage> {
                 '保存策略',
                 style: TextStyle(
                   fontSize: 13,
+                  fontWeight: _globalFw,
                   color: ref.watch(themeProvider).primaryColor,
                 ),
               ),
@@ -376,6 +377,7 @@ class StorageRetentionPageState extends ConsumerState<StorageRetentionPage> {
                   _previewing ? '预览中…' : '预览',
                   style: TextStyle(
                     fontSize: 13,
+                    fontWeight: _globalFw,
                     color: ref.watch(themeProvider).primaryColor,
                   ),
                 ),
@@ -390,7 +392,11 @@ class StorageRetentionPageState extends ConsumerState<StorageRetentionPage> {
                 onPressed: _doCleanup,
                 child: Text(
                   '执行清理',
-                  style: TextStyle(fontSize: 13, color: CyberColors.neonRed),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: _globalFw,
+                    color: CyberColors.neonRed,
+                  ),
                 ),
               ),
             ],

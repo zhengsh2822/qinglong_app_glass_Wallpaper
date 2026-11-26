@@ -8,6 +8,7 @@ import 'package:qinglong_app/base/app_colors.dart';
 import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 import 'package:qinglong_app/base/ui/glass_card.dart';
 import 'package:qinglong_app/base/ui/glass_text_field.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
@@ -207,7 +208,7 @@ class _DependencySettingPageState extends ConsumerState<DependencySettingPage> {
           content: SizedBox(
             width: double.maxFinite,
             child: SingleChildScrollView(
-              child: SelectableText(
+              child: CopyableSelectableText(
                 detail,
                 style: TextStyle(color: CyberColors.descColor, fontSize: 12, fontFamily: 'MiSans'),
               ),

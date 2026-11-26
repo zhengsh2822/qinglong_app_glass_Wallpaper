@@ -1,11 +1,10 @@
 import 'dart:async';
-import 'dart:ui' show BoxHeightStyle, BoxWidthStyle;
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:highlight/highlight.dart' show highlight, Node;
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/copyable_selectable_text.dart';
 import 'package:qinglong_app/base/ui/highlight/themes/atom_one_dark.dart';
 import 'package:qinglong_app/base/ui/highlight/themes/github.dart';
 
@@ -17,14 +16,16 @@ import 'package:qinglong_app/base/ui/highlight/themes/github.dart';
 ///    用 [ListView.builder] 按需构建可见块。首帧只布局屏幕可见的 2-3 块（约 200-300 行），
 ///    而非全量 10000 行，首屏时间从「数秒卡顿」降到「亚秒级流畅」。
 ///
-/// 2. **异步解析**：每块的高亮解析在 [compute] Isolate 中执行（首块在主线程同步解析
+/// 2. **异步解析**：每块的高亮解析在微任务中执行（首块在主线程同步解析
 ///    以保证首帧尽快出现，后续块异步解析），主线程不再被 1-2s 的同步词法分析阻塞。
 ///
 /// 3. **块级缓存**：已解析的块缓存在内存，滚动回上方时无需重新解析。
 ///    外层 [RepaintBoundary] 隔离选择手柄拖动产生的重绘。
 ///
-/// 选择能力：每块使用独立的 [SelectableText.rich]，支持块内选择。
-/// 跨块选择不支持（牺牲少量体验换取 10000 行脚本的流畅滚动）。
+/// 选择能力：整片内容包在 [CopyableSelectionArea]（内部是 [SelectionArea]）里，
+/// 各块使用普通 [Text.rich] 渲染，选择域覆盖全部已加载的块，
+/// 因此可以跨块连续拖选/复制，不会卡在块边界；
+/// 尚未加载（或已被回收）的块不在选择域内，这是懒加载的固有边界。
 class SelectableCodeView extends ConsumerStatefulWidget {
   const SelectableCodeView({
     super.key,
@@ -206,46 +207,45 @@ class _SelectableCodeViewState extends ConsumerState<SelectableCodeView> {
     ref.watch(themeProvider);
     _initTheme();
 
-    return ListView.builder(
-      itemCount: _chunks.length,
-      padding: EdgeInsets.zero,
-      addAutomaticKeepAlives: false,
-      addRepaintBoundaries: false, // 已在 itemBuilder 中手动加 RepaintBoundary
-      itemBuilder: (context, index) {
-        // 预解析前后块，实现「滚动时不闪烁」
-        for (final i in [index - 1, index + 1, index + 2]) {
-          if (i >= 0 && i < _chunks.length && !_spanCache.containsKey(i)) {
-            _parseChunkAsync(i);
+    return CopyableSelectionArea(
+      child: ListView.builder(
+        itemCount: _chunks.length,
+        padding: EdgeInsets.zero,
+        addAutomaticKeepAlives: false,
+        addRepaintBoundaries: false, // 已在 itemBuilder 中手动加 RepaintBoundary
+        itemBuilder: (context, index) {
+          // 预解析前后块，实现「滚动时不闪烁」
+          for (final i in [index - 1, index + 1, index + 2]) {
+            if (i >= 0 && i < _chunks.length && !_spanCache.containsKey(i)) {
+              _parseChunkAsync(i);
+            }
           }
-        }
 
-        final span = _spanCache[index];
-        final isFirst = index == 0;
-        final isLast = index == _chunks.length - 1;
+          final span = _spanCache[index];
+          final isFirst = index == 0;
+          final isLast = index == _chunks.length - 1;
 
-        return RepaintBoundary(
-          child: Container(
-            width: double.infinity,
-            padding: EdgeInsets.only(
-              left: widget.padding.horizontal / 2,
-              right: widget.padding.horizontal / 2,
-              top: isFirst ? widget.padding.vertical / 2 : 0,
-              bottom: isLast ? widget.padding.vertical / 2 : 0,
+          return RepaintBoundary(
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.only(
+                left: widget.padding.horizontal / 2,
+                right: widget.padding.horizontal / 2,
+                top: isFirst ? widget.padding.vertical / 2 : 0,
+                bottom: isLast ? widget.padding.vertical / 2 : 0,
+              ),
+              // 普通 Text.rich：选择交给外层 SelectionArea，
+              // 多个块共用同一个选择域，可跨块连续拖选
+              child: span == null
+                  ? _PlaceholderText(
+                      source: _chunks[index],
+                      baseStyle: _baseStyle!,
+                    )
+                  : Text.rich(span),
             ),
-            child: span == null
-                ? _PlaceholderText(
-                    source: _chunks[index],
-                    baseStyle: _baseStyle!,
-                  )
-                : SelectableText.rich(
-                    span,
-                    selectionControls: cupertinoTextSelectionControls,
-                    selectionWidthStyle: BoxWidthStyle.max,
-                    selectionHeightStyle: BoxHeightStyle.max,
-                  ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }
